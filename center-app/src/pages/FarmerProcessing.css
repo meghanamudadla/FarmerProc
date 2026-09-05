@@ -1,0 +1,481 @@
+.processing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.processing-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.processing-nav-bar .back-link {
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Hub Header Card */
+.hub-header-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.hub-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.token-badge-large {
+  background-color: #059669;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+}
+
+.farmer-name-large {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.farmer-meta-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.2rem 0 0 0;
+}
+
+.bank-account-pill {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Stage Timeline Card */
+.timeline-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.timeline-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+.timeline-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  z-index: 1;
+  min-width: 100px;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+}
+
+.step-done .step-circle {
+  background-color: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.step-done .step-label {
+  color: #059669;
+}
+
+.step-current .step-circle {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.step-current .step-label {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.rejected-stage-banner {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Hub Grid Layout */
+.hub-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .hub-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hub-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hub-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.hub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.hub-card-header h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.btn-card-action {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #059669;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+}
+
+/* Weight Grid 2x2 */
+.weight-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.w-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.w-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.w-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.w-box-highlight {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.w-val-big {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+.accepted-weight-bar {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Quality Hub Summary */
+.quality-hub-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.quality-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.q-grade {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.q-result-badge {
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.q-res-accepted {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.q-res-rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.q-res-not_tested {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.q-params-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.q-param-chip {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  color: #475569;
+}
+
+.rejection-note-box {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.825rem;
+}
+
+/* Payment Hub Summary */
+.payment-hub-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.p-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #475569;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.p-row strong {
+  color: #0f172a;
+}
+
+.deduction-val {
+  color: #dc2626 !important;
+}
+
+.p-final-row {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.25rem;
+}
+
+.p-final-row span {
+  font-weight: 800;
+  color: #047857;
+}
+
+.p-final-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #059669 !important;
+}
+
+.utr-status-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.25rem;
+}
+
+.utr-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 700;
+  display: block;
+}
+
+.p-status-pill {
+  font-size: 0.775rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+
+.status-completed { background-color: #d1fae5; color: #047857; }
+.status-processing { background-color: #fef3c7; color: #b45309; }
+.status-not_started { background-color: #f1f5f9; color: #64748b; }
+
+.utr-code {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: monospace;
+}
+
+/* Audit Trail Timeline */
+.audit-count {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.audit-item {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.audit-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.audit-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 90px;
+}
+
+.audit-time {
+  font-size: 0.825rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+.audit-role {
+  font-size: 0.725rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.audit-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.audit-event-title {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.audit-details {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}

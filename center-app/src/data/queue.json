@@ -1,0 +1,418 @@
+[
+  {
+    "token_number": 121,
+    "farmer_id": "FARM-77121",
+    "farmer_name": "Ramesh Singh",
+    "mobile": "98123 45678",
+    "village": "Kishanpur",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 4521",
+    "crop": "Paddy",
+    "variety": "Common",
+    "stage": "WEIGHING",
+    "weight_details": {
+      "declared_bags": 50,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 2500,
+      "weighed_bags": 50,
+      "gross_weight_kg": 2550,
+      "tare_weight_kg": 50,
+      "net_weight_kg": 2500,
+      "accepted_weight_kg": 2500,
+      "accepted_quintals": 25.0
+    },
+    "quality": {
+      "moisture_percent": 12.5,
+      "foreign_matter_percent": 1.2,
+      "damaged_grains_percent": 1.0,
+      "slightly_damaged_percent": 2.0,
+      "shrivelled_broken_percent": 3.0,
+      "other_grains_percent": 1.0,
+      "weevilled_grains_percent": 0.0,
+      "grade": "Common",
+      "result": "NOT_TESTED",
+      "rejection_reason": null,
+      "recommendation": "FAQ_ACCEPTED"
+    },
+    "payment": {
+      "status": "NOT_STARTED",
+      "msp_rate_per_quintal": 2183,
+      "accepted_quintals": 25.0,
+      "base_amount": 54575,
+      "quality_deduction": 0,
+      "final_amount": 54575,
+      "transaction_id": ""
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-121-01",
+        "timestamp": "08:30",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #121 generated for Ramesh Singh (50 bags declared Paddy)."
+      },
+      {
+        "id": "AUD-121-02",
+        "timestamp": "08:45",
+        "date": "05/09/2026",
+        "event": "Farmer Arrived",
+        "role": "Queue Marshal",
+        "details": "Farmer verified at center gate and admitted to weighing queue."
+      }
+    ]
+  },
+  {
+    "token_number": 122,
+    "farmer_id": "FARM-88422",
+    "farmer_name": "Suresh Kumar",
+    "mobile": "98765 43210",
+    "village": "Taraori",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 8892",
+    "crop": "Wheat",
+    "variety": "FAQ",
+    "stage": "QUALITY_CHECK",
+    "weight_details": {
+      "declared_bags": 98,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 4900,
+      "weighed_bags": 98,
+      "gross_weight_kg": 4950,
+      "tare_weight_kg": 100,
+      "net_weight_kg": 4850,
+      "accepted_weight_kg": 4850,
+      "accepted_quintals": 48.5
+    },
+    "quality": {
+      "moisture_percent": 12.0,
+      "foreign_matter_percent": 1.0,
+      "damaged_grains_percent": 1.0,
+      "slightly_damaged_percent": 2.0,
+      "shrivelled_broken_percent": 3.0,
+      "other_grains_percent": 1.0,
+      "weevilled_grains_percent": 0.0,
+      "grade": "FAQ Accepted",
+      "result": "NOT_TESTED",
+      "rejection_reason": null,
+      "recommendation": "FAQ_ACCEPTED"
+    },
+    "payment": {
+      "status": "NOT_STARTED",
+      "msp_rate_per_quintal": 2275,
+      "accepted_quintals": 48.5,
+      "base_amount": 110338,
+      "quality_deduction": 0,
+      "final_amount": 110338,
+      "transaction_id": ""
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-122-01",
+        "timestamp": "09:15",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #122 generated for Suresh Kumar (98 bags Wheat declared)."
+      },
+      {
+        "id": "AUD-122-02",
+        "timestamp": "09:30",
+        "date": "05/09/2026",
+        "event": "Farmer Arrived",
+        "role": "Queue Marshal",
+        "details": "Admitted to center floor."
+      },
+      {
+        "id": "AUD-122-03",
+        "timestamp": "09:42",
+        "date": "05/09/2026",
+        "event": "Weighing Completed",
+        "role": "Weighbridge Operator",
+        "details": "Gross: 4,950 kg, Tare: 100 kg. Net Weight recorded: 4,850 kg (48.50 quintals)."
+      }
+    ]
+  },
+  {
+    "token_number": 123,
+    "farmer_id": "FARM-99123",
+    "farmer_name": "Pritam Sharma",
+    "mobile": "98111 22334",
+    "village": "Gharaunda",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 3341",
+    "crop": "Paddy",
+    "variety": "Grade A",
+    "stage": "ACCEPTED",
+    "weight_details": {
+      "declared_bags": 120,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 6000,
+      "weighed_bags": 120,
+      "gross_weight_kg": 6120,
+      "tare_weight_kg": 120,
+      "net_weight_kg": 6000,
+      "accepted_weight_kg": 6000,
+      "accepted_quintals": 60.0
+    },
+    "quality": {
+      "moisture_percent": 13.0,
+      "foreign_matter_percent": 1.5,
+      "damaged_grains_percent": 2.0,
+      "slightly_damaged_percent": 3.0,
+      "shrivelled_broken_percent": 2.5,
+      "other_grains_percent": 1.0,
+      "weevilled_grains_percent": 0.0,
+      "grade": "Grade A",
+      "result": "ACCEPTED",
+      "rejection_reason": null,
+      "recommendation": "FAQ_ACCEPTED"
+    },
+    "payment": {
+      "status": "NOT_STARTED",
+      "msp_rate_per_quintal": 2203,
+      "accepted_quintals": 60.0,
+      "base_amount": 132180,
+      "quality_deduction": 0,
+      "final_amount": 132180,
+      "transaction_id": ""
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-123-01",
+        "timestamp": "10:00",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #123 created for Pritam Sharma."
+      },
+      {
+        "id": "AUD-123-02",
+        "timestamp": "10:15",
+        "date": "05/09/2026",
+        "event": "Weighing Completed",
+        "role": "Weighbridge Operator",
+        "details": "Net Weight recorded: 6,000 kg (60.00 quintals)."
+      },
+      {
+        "id": "AUD-123-03",
+        "timestamp": "10:30",
+        "date": "05/09/2026",
+        "event": "Quality Inspection Accepted",
+        "role": "Quality Inspector",
+        "details": "Grade A paddy passed moisture (13.0%) and foreign matter (1.5%) limits."
+      }
+    ]
+  },
+  {
+    "token_number": 124,
+    "farmer_id": "FARM-44124",
+    "farmer_name": "Anita Devi",
+    "mobile": "98222 33445",
+    "village": "Nilokheri",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 1104",
+    "crop": "Wheat",
+    "variety": "FAQ",
+    "stage": "PAYMENT_COMPLETED",
+    "weight_details": {
+      "declared_bags": 80,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 4000,
+      "weighed_bags": 80,
+      "gross_weight_kg": 4080,
+      "tare_weight_kg": 80,
+      "net_weight_kg": 4000,
+      "accepted_weight_kg": 4000,
+      "accepted_quintals": 40.0
+    },
+    "quality": {
+      "moisture_percent": 11.5,
+      "foreign_matter_percent": 0.5,
+      "damaged_grains_percent": 1.0,
+      "slightly_damaged_percent": 2.0,
+      "shrivelled_broken_percent": 3.0,
+      "other_grains_percent": 1.0,
+      "weevilled_grains_percent": 0.0,
+      "grade": "FAQ Accepted",
+      "result": "ACCEPTED",
+      "rejection_reason": null,
+      "recommendation": "FAQ_ACCEPTED"
+    },
+    "payment": {
+      "status": "COMPLETED",
+      "msp_rate_per_quintal": 2275,
+      "accepted_quintals": 40.0,
+      "base_amount": 91000,
+      "quality_deduction": 0,
+      "final_amount": 91000,
+      "transaction_id": "TXN-884102"
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-124-01",
+        "timestamp": "10:45",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #124 created for Anita Devi."
+      },
+      {
+        "id": "AUD-124-02",
+        "timestamp": "11:00",
+        "date": "05/09/2026",
+        "event": "Weighing Completed",
+        "role": "Weighbridge Operator",
+        "details": "Net Weight recorded: 4,000 kg (40.00 quintals)."
+      },
+      {
+        "id": "AUD-124-03",
+        "timestamp": "11:15",
+        "date": "05/09/2026",
+        "event": "Quality Inspection Accepted",
+        "role": "Quality Inspector",
+        "details": "FAQ wheat accepted."
+      },
+      {
+        "id": "AUD-124-04",
+        "timestamp": "11:30",
+        "date": "05/09/2026",
+        "event": "Payment Completed",
+        "role": "Accounts Officer",
+        "details": "Disbursed ₹91,000 via UTR TXN-884102."
+      }
+    ]
+  },
+  {
+    "token_number": 125,
+    "farmer_id": "FARM-55125",
+    "farmer_name": "Balwan Yadav",
+    "mobile": "98333 44556",
+    "village": "Indri",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 7789",
+    "crop": "Wheat",
+    "variety": "FAQ",
+    "stage": "REJECTED",
+    "weight_details": {
+      "declared_bags": 60,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 3000,
+      "weighed_bags": 60,
+      "gross_weight_kg": 3060,
+      "tare_weight_kg": 60,
+      "net_weight_kg": 3000,
+      "accepted_weight_kg": 0,
+      "accepted_quintals": 0
+    },
+    "quality": {
+      "moisture_percent": 16.5,
+      "foreign_matter_percent": 3.2,
+      "damaged_grains_percent": 4.5,
+      "slightly_damaged_percent": 6.0,
+      "shrivelled_broken_percent": 8.0,
+      "other_grains_percent": 4.0,
+      "weevilled_grains_percent": 2.0,
+      "grade": "Rejected",
+      "result": "REJECTED",
+      "rejection_reason": "Moisture content (16.5%) exceeds maximum 12.0% procurement limit.",
+      "recommendation": "REJECTED"
+    },
+    "payment": {
+      "status": "NOT_STARTED",
+      "msp_rate_per_quintal": 2275,
+      "accepted_quintals": 0,
+      "base_amount": 0,
+      "quality_deduction": 0,
+      "final_amount": 0,
+      "transaction_id": ""
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-125-01",
+        "timestamp": "11:45",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #125 created for Balwan Yadav."
+      },
+      {
+        "id": "AUD-125-02",
+        "timestamp": "12:00",
+        "date": "05/09/2026",
+        "event": "Weighing Completed",
+        "role": "Weighbridge Operator",
+        "details": "Net Weight recorded: 3,000 kg."
+      },
+      {
+        "id": "AUD-125-03",
+        "timestamp": "12:15",
+        "date": "05/09/2026",
+        "event": "Quality Inspection Rejected",
+        "role": "Quality Inspector",
+        "details": "Rejected due to high moisture (16.5%)."
+      }
+    ]
+  },
+  {
+    "token_number": 126,
+    "farmer_id": "FARM-66126",
+    "farmer_name": "Manjit Kaur",
+    "mobile": "98444 55667",
+    "village": "Assandh",
+    "district": "Karnal",
+    "state": "Haryana",
+    "bank_account_masked": "XXXX XXXX 9910",
+    "crop": "Paddy",
+    "variety": "Common",
+    "stage": "WAITING",
+    "weight_details": {
+      "declared_bags": 110,
+      "bag_weight_kg": 50,
+      "declared_weight_kg": 5500,
+      "weighed_bags": 0,
+      "gross_weight_kg": 0,
+      "tare_weight_kg": 0,
+      "net_weight_kg": 0,
+      "accepted_weight_kg": 0,
+      "accepted_quintals": 0
+    },
+    "quality": {
+      "moisture_percent": 0,
+      "foreign_matter_percent": 0,
+      "damaged_grains_percent": 0,
+      "slightly_damaged_percent": 0,
+      "shrivelled_broken_percent": 0,
+      "other_grains_percent": 0,
+      "weevilled_grains_percent": 0,
+      "grade": "Pending",
+      "result": "NOT_TESTED",
+      "rejection_reason": null,
+      "recommendation": "FAQ_ACCEPTED"
+    },
+    "payment": {
+      "status": "NOT_STARTED",
+      "msp_rate_per_quintal": 2183,
+      "accepted_quintals": 0,
+      "base_amount": 0,
+      "quality_deduction": 0,
+      "final_amount": 0,
+      "transaction_id": ""
+    },
+    "audit_trail": [
+      {
+        "id": "AUD-126-01",
+        "timestamp": "12:30",
+        "date": "05/09/2026",
+        "event": "Token Generated",
+        "role": "Gate Entry Staff",
+        "details": "Token #126 generated for Manjit Kaur (110 bags Paddy declared)."
+      }
+    ]
+  }
+]

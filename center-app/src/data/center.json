@@ -1,0 +1,15 @@
+{
+  "id": 1,
+  "name": "Center A",
+  "status": "BUSY",
+  "farmers_today": 287,
+  "completed_today": 156,
+  "waiting_today": 87,
+  "processing_today": 4,
+  "total_capacity_bags": 10000,
+  "current_stock_bags": 6500,
+  "remaining_quota_bags": 2000,
+  "active_counters": 3,
+  "available_staff": 8,
+  "expected_wait_min": 95
+}
