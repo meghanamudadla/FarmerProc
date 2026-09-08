@@ -3,6 +3,8 @@ from sqlalchemy import text
 from auth.routes import router as auth_router
 from database import engine
 from database import Base
+from farmers.routes import router as farmer_router
+from centers.routes import router as center_router
 
 import models
 
@@ -17,6 +19,9 @@ app = FastAPI(
 
 Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
+app.include_router(farmer_router)
+app.include_router(center_router)
+
 
 @app.get("/")
 def root():
