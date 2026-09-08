@@ -1,8 +1,10 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useQueue } from '../context/QueueContext';
 import StatusBadge from '../components/StatusBadge';
 import { convertKgToQuintals, calculateMspPayout } from '../services/procurementService';
+import { ArrowLeft, Scale, FlaskConical, CreditCard, Clock, CheckCircle2, XCircle, Building, User, MapPin, Phone, History, Sparkles, ArrowRight } from 'lucide-react';
 import './FarmerProcessing.css';
 
 export default function FarmerProcessing() {
@@ -15,11 +17,12 @@ export default function FarmerProcessing() {
     return (
       <div className="processing-container">
         <div className="processing-error-card">
-          <div className="error-icon">⚠️</div>
+          <XCircle size={32} className="text-red-500" />
           <h2>Token Not Found</h2>
           <p>No procurement token matches <strong>#{tokenNumber}</strong>.</p>
           <Link to="/queue" className="btn-back">
-            ← Back to Live Queue
+            <ArrowLeft size={15} />
+            <span>Back to Live Queue</span>
           </Link>
         </div>
       </div>
@@ -65,39 +68,55 @@ export default function FarmerProcessing() {
   return (
     <div className="processing-container">
       {/* Top Header Navigation */}
-      <div className="processing-nav-bar">
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="processing-nav-bar"
+      >
         <Link to="/queue" className="back-link">
-          ← Back to Live Queue
+          <ArrowLeft size={16} />
+          <span>Back to Live Queue</span>
         </Link>
         <div className="nav-actions">
           <StatusBadge status={token.stage} />
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Token Hub Banner Card */}
-      <div className="hub-header-card">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="hub-header-card"
+      >
         <div className="hub-header-left">
-          <div className="token-badge-large">Token #{token.token_number}</div>
+          <div className="token-badge-large font-mono">Token #{token.token_number}</div>
           <div>
             <h1 className="farmer-name-large">{token.farmer_name}</h1>
             <p className="farmer-meta-sub">
-              ID: <strong>{token.farmer_id}</strong> • Mobile: <strong>{token.mobile || 'N/A'}</strong> •{' '}
-              {token.village}, {token.district}, {token.state}
+              ID: <strong className="font-mono">{token.farmer_id}</strong> • Crop: <strong>{token.crop} ({token.variety})</strong> • Mobile: <strong>{token.mobile || 'N/A'}</strong> • {token.village}, {token.district}
             </p>
           </div>
         </div>
-        <div className="bank-account-pill">
-          <span className="bank-icon">🏦</span>
-          <span>Masked Account: <strong>{token.bank_account_masked || 'XXXX XXXX 4521'}</strong></span>
+        <div className="bank-account-pill font-mono">
+          <Building size={16} />
+          <span>Bank Account: <strong>{token.bank_account_masked || 'XXXX XXXX 4521'}</strong></span>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stage Progression Timeline Bar */}
-      <div className="timeline-card">
-        <h3 className="timeline-title">Procurement Stage Progression</h3>
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="timeline-card"
+      >
+        <div className="timeline-title-row">
+          <Sparkles size={16} className="text-emerald-600" />
+          <h3 className="timeline-title">Procurement Stage Progression</h3>
+        </div>
+
         {token.stage === 'REJECTED' ? (
-          <div className="rejected-stage-banner">
-            <span className="rejected-icon">🔴</span>
+          <div className="rejected-stage-banner font-mono">
+            <XCircle size={20} />
             <div>
               <strong>PROCUREMENT REJECTED AT QUALITY INSPECTION</strong>
               <p>Reason: "{quality?.rejection_reason || 'Failed quality limits'}"</p>
@@ -113,79 +132,81 @@ export default function FarmerProcessing() {
                   key={step.key}
                   className={`step-item ${isDone ? 'step-done' : ''} ${isCurrent ? 'step-current' : ''}`}
                 >
-                  <div className="step-circle">{isDone ? '✓' : idx + 1}</div>
+                  <div className="step-circle font-mono">{isDone ? '✓' : idx + 1}</div>
                   <span className="step-label">{step.label}</span>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Detailed Procurement Domain Hub Grid */}
+      {/* Detailed Grid Layout */}
       <div className="hub-grid-layout">
-        {/* Left Column: Weight Breakdown & Quality Specs */}
+        {/* Left Column: Weight & Quality */}
         <div className="hub-col">
           {/* Quantity & Weight Model Breakdown */}
-          <div className="hub-card">
+          <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} className="hub-card">
             <div className="hub-card-header">
-              <h2>⚖️ Quantity & Weight Model</h2>
+              <h2><Scale size={18} /> Quantity & Weight Model</h2>
               <Link to={`/tokens/${token.token_number}/weighing`} className="btn-card-action">
-                {netKg > 0 ? 'Edit Weighing' : 'Start Weighing →'}
+                <span>{netKg > 0 ? 'Edit Weight' : 'Start Weighing'}</span>
+                <ArrowRight size={14} />
               </Link>
             </div>
 
             <div className="weight-grid-2x2">
               <div className="w-box">
                 <span className="w-label">Declared Bag Count</span>
-                <span className="w-val">{declaredBags} bags ({bagWeightKg} kg/bag)</span>
+                <span className="w-val font-mono">{declaredBags} bags ({bagWeightKg} kg/bag)</span>
               </div>
               <div className="w-box">
                 <span className="w-label">Declared Total Weight</span>
-                <span className="w-val">{declaredKg.toLocaleString()} kg ({declaredQuintals} quintals)</span>
+                <span className="w-val font-mono">{declaredKg.toLocaleString()} kg ({declaredQuintals} qtl)</span>
               </div>
               <div className="w-box">
                 <span className="w-label">Weighbridge (Gross / Tare)</span>
-                <span className="w-val">Gross: {grossKg} kg | Tare: {tareKg} kg</span>
+                <span className="w-val font-mono">Gross: {grossKg} kg | Tare: {tareKg} kg</span>
               </div>
               <div className="w-box w-box-highlight">
                 <span className="w-label">Net Measured Weight</span>
-                <span className="w-val-big">{netKg.toLocaleString()} kg ({netQuintals} quintals)</span>
+                <span className="w-val-big font-mono">{netKg.toLocaleString()} kg ({netQuintals} qtl)</span>
               </div>
             </div>
 
-            <div className="accepted-weight-bar">
+            <div className="accepted-weight-bar font-mono">
               <span>Accepted Procurement Weight:</span>
               <strong>{acceptedKg.toLocaleString()} kg ({acceptedQuintals} quintals)</strong>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Quality Inspection & Rule Engine Summary */}
-          <div className="hub-card">
+          {/* Quality Inspection Summary */}
+          <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="hub-card">
             <div className="hub-card-header">
-              <h2>🔬 Quality Inspection Parameters</h2>
+              <h2><FlaskConical size={18} /> Quality Inspection Parameters</h2>
               <Link to={`/tokens/${token.token_number}/quality`} className="btn-card-action">
-                {quality?.result !== 'NOT_TESTED' ? 'View/Edit Lab Report' : 'Start Quality Check →'}
+                <span>{quality?.result !== 'NOT_TESTED' ? 'View/Edit Report' : 'Inspect Quality'}</span>
+                <ArrowRight size={14} />
               </Link>
             </div>
 
             <div className="quality-hub-summary">
               <div className="quality-header-row">
                 <span className="q-grade">Grade: <strong>{quality?.grade || 'Pending Inspection'}</strong></span>
-                <span className={`q-result-badge q-res-${String(quality?.result).toLowerCase()}`}>
+                <span className={`q-result-badge q-res-${String(quality?.result).toLowerCase()} font-mono`}>
                   Result: {quality?.result || 'NOT_TESTED'}
                 </span>
               </div>
 
               {/* 7 Quality Parameters Summary Table */}
-              <div className="q-params-list">
-                <div className="q-param-chip">Moisture: <strong>{quality?.moisture_percent || 0}%</strong> (Limit ≤ 12/14%)</div>
+              <div className="q-params-list font-mono">
+                <div className="q-param-chip">Moisture: <strong>{quality?.moisture_percent || 0}%</strong></div>
                 <div className="q-param-chip">Foreign Matter: <strong>{quality?.foreign_matter_percent || 0}%</strong></div>
-                <div className="q-param-chip">Damaged Grains: <strong>{quality?.damaged_grains_percent || 0}%</strong></div>
+                <div className="q-param-chip">Damaged: <strong>{quality?.damaged_grains_percent || 0}%</strong></div>
                 <div className="q-param-chip">Slightly Damaged: <strong>{quality?.slightly_damaged_percent || 0}%</strong></div>
                 <div className="q-param-chip">Shrivelled/Broken: <strong>{quality?.shrivelled_broken_percent || 0}%</strong></div>
                 <div className="q-param-chip">Other Grains: <strong>{quality?.other_grains_percent || 0}%</strong></div>
-                <div className="q-param-chip">Weevilled Grains: <strong>{quality?.weevilled_grains_percent || 0}%</strong></div>
+                <div className="q-param-chip">Weevilled: <strong>{quality?.weevilled_grains_percent || 0}%</strong></div>
               </div>
 
               {quality?.rejection_reason && (
@@ -194,37 +215,38 @@ export default function FarmerProcessing() {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Right Column: MSP Payout & Audit Trail */}
+        {/* Right Column: Payout & Audit Trail */}
         <div className="hub-col">
-          {/* MSP Payout Calculation & Payment Card */}
-          <div className="hub-card">
+          {/* MSP Payout Card */}
+          <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} className="hub-card">
             <div className="hub-card-header">
-              <h2>💳 MSP Payout & Disbursement</h2>
+              <h2><CreditCard size={18} /> MSP Payout & Disbursement</h2>
               {token.stage === 'ACCEPTED' || token.stage === 'PAYMENT_PROCESSING' || token.stage === 'PAYMENT_COMPLETED' ? (
                 <Link to={`/tokens/${token.token_number}/payment`} className="btn-card-action">
-                  {payment?.status === 'COMPLETED' ? 'View Payment Receipt' : 'Process Payment →'}
+                  <span>{payment?.status === 'COMPLETED' ? 'View Receipt' : 'Process Payment'}</span>
+                  <ArrowRight size={14} />
                 </Link>
               ) : null}
             </div>
 
-            <div className="payment-hub-summary">
+            <div className="payment-hub-summary font-mono">
               <div className="p-row">
                 <span>Accepted Quantity</span>
-                <strong>{acceptedQuintals} quintals ({acceptedKg} kg)</strong>
+                <strong>{acceptedQuintals} qtl ({acceptedKg} kg)</strong>
               </div>
               <div className="p-row">
-                <span>Applicable MSP Rate</span>
-                <strong>₹{mspCalc.mspRatePerQuintal.toLocaleString()} / quintal</strong>
+                <span>MSP Rate</span>
+                <strong>₹{mspCalc.mspRatePerQuintal.toLocaleString()} / qtl</strong>
               </div>
               <div className="p-row">
                 <span>Base MSP Amount</span>
                 <strong>₹{mspCalc.baseMspAmount.toLocaleString()}</strong>
               </div>
               <div className="p-row">
-                <span>Deductions</span>
+                <span>Quality Deductions</span>
                 <strong className="deduction-val">- ₹{(payment?.quality_deduction || 0).toLocaleString()}</strong>
               </div>
               <div className="p-row p-final-row">
@@ -245,20 +267,20 @@ export default function FarmerProcessing() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Chronological Procurement Audit Trail */}
-          <div className="hub-card">
+          {/* Audit Trail Card */}
+          <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="hub-card">
             <div className="hub-card-header">
-              <h2>📜 Audit Trail History</h2>
-              <span className="audit-count">{(audit_trail || []).length} Entries Logged</span>
+              <h2><History size={18} /> Chronological Audit Log</h2>
+              <span className="audit-count font-mono">{(audit_trail || []).length} Entries</span>
             </div>
 
             <div className="audit-timeline">
               {(audit_trail || []).map((entry) => (
                 <div key={entry.id} className="audit-item">
                   <div className="audit-left">
-                    <span className="audit-time">{entry.timestamp}</span>
+                    <span className="audit-time font-mono">{entry.timestamp}</span>
                     <span className="audit-role">{entry.role}</span>
                   </div>
                   <div className="audit-right">
@@ -268,7 +290,7 @@ export default function FarmerProcessing() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

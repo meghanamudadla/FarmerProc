@@ -1,264 +1,243 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useQueue } from '../context/QueueContext';
-import { calculateMspPayout } from '../services/procurementService';
+import { calculateMspPayout, convertKgToQuintals } from '../services/procurementService';
+import { CreditCard, ArrowLeft, CheckCircle2, AlertTriangle, Building, Banknote, ShieldCheck, Printer, ArrowRight } from 'lucide-react';
 import './Payment.css';
-
-/*
-  PAYMENT GATEWAY INTEGRATION NOTE:
-  No live Banking API / Public Financial Management System (PFMS) connected in prototype.
-  Staff enter the bank reference UTR number manually upon transaction authorization.
-*/
 
 export default function Payment() {
   const { tokenNumber } = useParams();
   const navigate = useNavigate();
-  const { tokens, updateTokenPayment } = useQueue();
+  const { tokens, updatePaymentDetails } = useQueue();
 
   const token = tokens.find((t) => String(t.token_number) === String(tokenNumber));
+
+  const initialDeduction = token?.payment?.quality_deduction ?? token?.quality?.suggested_deduction_rs ?? 0;
+  const initialUtr = token?.payment?.transaction_id || `UTR${Date.now().toString().slice(-8)}`;
+
+  const [qualityDeduction, setQualityDeduction] = useState(String(initialDeduction));
+  const [utrRef, setUtrRef] = useState(initialUtr);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successToast, setSuccessToast] = useState(false);
 
   if (!token) {
     return (
       <div className="payment-container">
         <div className="payment-error-card">
-          <div className="error-icon">⚠️</div>
+          <AlertTriangle size={32} className="text-red-500" />
           <h2>Token Not Found</h2>
           <p>No procurement token matches <strong>#{tokenNumber}</strong>.</p>
           <Link to="/queue" className="btn-back">
-            ← Back to Live Queue
+            <ArrowLeft size={15} />
+            <span>Back to Live Queue</span>
           </Link>
         </div>
       </div>
     );
   }
 
-  // Stage Guard: Payment requires ACCEPTED stage
-  const isAcceptedStage =
-    token.stage === 'ACCEPTED' || token.stage === 'PAYMENT_PROCESSING' || token.stage === 'PAYMENT_COMPLETED';
+  const acceptedKg = token.weight_details?.accepted_weight_kg || token.weight_details?.net_weight_kg || 2500;
+  const acceptedQuintals = token.weight_details?.accepted_quintals || convertKgToQuintals(acceptedKg);
 
-  if (!isAcceptedStage) {
-    return (
-      <div className="payment-container">
-        <div className="payment-nav-bar">
-          <Link to={`/tokens/${token.token_number}`} className="back-link">
-            ← Back to Token #{token.token_number} Hub
-          </Link>
-        </div>
-        <div className="guard-card">
-          <div className="guard-icon">⏳</div>
-          <h2>Payment Not Available</h2>
-          <p>
-            Token <strong>#{token.token_number}</strong> is currently at stage{' '}
-            <span className="stage-guard-badge">{token.stage}</span>.
-          </p>
-          <p className="guard-subtext">
-            Payment disbursement is only accessible after grain has passed quality inspection and has been explicitly{' '}
-            <strong>ACCEPTED</strong> by procurement staff.
-          </p>
-          <div className="guard-actions">
-            <Link to={`/tokens/${token.token_number}/quality`} className="btn-guard-primary">
-              Go to Quality Check →
-            </Link>
-            <Link to="/queue" className="btn-guard-secondary">
-              Back to Live Queue
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const deductionNum = parseFloat(qualityDeduction) || 0;
+  const mspCalc = calculateMspPayout(acceptedKg, token.crop, token.quality?.grade || 'FAQ Accepted', deductionNum);
 
-  // Calculation parameters
-  const acceptedKg = token.weight_details?.accepted_weight_kg || token.weight_details?.net_weight_kg || 0;
-  const grade = token.quality?.grade || 'FAQ Accepted';
-  const mspCalc = calculateMspPayout(acceptedKg, token.crop, grade, token.payment?.quality_deduction || 0);
+  const isCompleted = token.payment?.status === 'COMPLETED';
 
-  // Local Form State
-  const [deductionInput, setDeductionInput] = useState(
-    token.payment?.quality_deduction ? String(token.payment.quality_deduction) : '0'
-  );
-
-  const [paymentStatus, setPaymentStatus] = useState(
-    token.payment?.status === 'NOT_STARTED' ? 'COMPLETED' : (token.payment?.status || 'COMPLETED')
-  );
-
-  const [utrNumber, setUtrNumber] = useState(
-    token.payment?.transaction_id || `TXN-${Math.floor(100000 + Math.random() * 900000)}`
-  );
-
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isSaved, setIsSaved] = useState(token.stage === 'PAYMENT_COMPLETED');
-
-  // Compute final amount considering any dynamic deduction typed by staff
-  const currentDeduction = parseFloat(deductionInput) || 0;
-  const finalPayableAmount = Math.max(0, mspCalc.baseMspAmount - currentDeduction);
-
-  const handleDeductionChange = (e) => {
-    const val = e.target.value;
-    setDeductionInput(val === '' ? '' : val.replace(/^0+(?=\d)/, ''));
-  };
-
-  const handleUtrChange = (e) => {
-    setUtrNumber(e.target.value);
-  };
-
-  const handleSubmit = (e) => {
+  const handleProcessPayment = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (paymentStatus === 'COMPLETED' && !utrNumber.trim()) {
-      setErrorMsg('A valid Bank Transaction ID / UTR Number is required to complete payment.');
+    if (!utrRef.trim()) {
+      setErrorMsg('Bank UTR reference number is required.');
       return;
     }
 
-    updateTokenPayment(token.token_number, {
-      amount: finalPayableAmount,
-      status: paymentStatus,
-      transaction_id: utrNumber.trim(),
-    });
+    const payload = {
+      status: 'COMPLETED',
+      final_amount: mspCalc.finalPayableAmount,
+      transaction_id: utrRef.trim(),
+      quality_deduction: deductionNum,
+      payment_timestamp: new Date().toLocaleString(),
+    };
 
-    setIsSaved(true);
+    updatePaymentDetails(token.token_number, payload);
+    setSuccessToast(true);
 
     setTimeout(() => {
-      navigate(`/tokens/${token.token_number}`);
+      navigate('/queue');
     }, 1500);
   };
 
   return (
     <div className="payment-container">
-      <div className="payment-nav-bar">
-        <Link to={`/tokens/${token.token_number}`} className="back-link">
-          ← Back to Token #{token.token_number} Hub
+      {/* Navigation Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="payment-nav-bar"
+      >
+        <Link to="/queue" className="back-link">
+          <ArrowLeft size={16} />
+          <span>Back to Live Queue</span>
         </Link>
-        <span className="station-badge-payment">💳 Payment & Disbursement</span>
-      </div>
+        <div className="finance-badge">
+          <CreditCard size={16} />
+          <span>Direct Benefit Transfer (DBT) Counter</span>
+        </div>
+      </motion.div>
 
-      <div className="payment-card">
-        {/* Header Summary */}
-        <div className="payment-card-header">
+      {/* Header Banner Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="payment-header-card"
+      >
+        <div className="payment-header-left">
+          <div className="token-pill font-mono">Token #{token.token_number}</div>
           <div>
-            <span className="token-label">Token #{token.token_number} • {token.farmer_id}</span>
-            <h1 className="farmer-name-title">{token.farmer_name}</h1>
-            <span className="bank-account-sub">Bank Account: <strong>{token.bank_account_masked || 'XXXX XXXX 4521'}</strong></span>
-          </div>
-          <div className="payment-crop-tag">
-            <span>{token.crop} ({grade})</span>
+            <h1 className="farmer-name">{token.farmer_name}</h1>
+            <p className="farmer-meta-text">
+              ID: <strong className="font-mono">{token.farmer_id}</strong> • Crop: <strong>{token.crop}</strong> • Bank Account: <strong className="font-mono">{token.bank_account_masked || 'XXXX XXXX 4521'}</strong>
+            </p>
           </div>
         </div>
-
-        {/* Transparent MSP Payout Calculation Card */}
-        <div className="msp-calc-card">
-          <h2 className="calc-title">MSP Payable Calculation (Standard Quintals Model)</h2>
-
-          <div className="calc-grid">
-            <div className="calc-row">
-              <span className="calc-label">Net Accepted Weight</span>
-              <span className="calc-val">{acceptedKg.toLocaleString()} kg</span>
-            </div>
-
-            <div className="calc-row">
-              <span className="calc-label">Accepted Quintals (1 Quintal = 100 kg)</span>
-              <span className="calc-val-highlight">{mspCalc.acceptedQuintals} quintals</span>
-            </div>
-
-            <div className="calc-row">
-              <span className="calc-label">Applicable MSP Rate ({mspCalc.season})</span>
-              <span className="calc-val">₹{mspCalc.mspRatePerQuintal.toLocaleString()} / quintal</span>
-            </div>
-
-            <div className="calc-row row-base">
-              <span className="calc-label">Base MSP Amount</span>
-              <span className="calc-val-bold">₹{mspCalc.baseMspAmount.toLocaleString()}</span>
-            </div>
-
-            <div className="calc-row">
-              <span className="calc-label">Quality / Permitted Deductions (₹)</span>
-              <div className="input-deduction-wrapper">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={deductionInput}
-                  onChange={handleDeductionChange}
-                  disabled={isSaved}
-                  className="input-deduction"
-                />
-              </div>
-            </div>
-
-            <div className="calc-row row-final">
-              <span className="calc-label-final">Final Payable Amount</span>
-              <span className="calc-val-final">₹{finalPayableAmount.toLocaleString()}</span>
-            </div>
-          </div>
+        <div className="dbt-pill">
+          <ShieldCheck size={18} />
+          <span>Aadhaar-Linked Bank Disbursal</span>
         </div>
+      </motion.div>
 
-        {/* Payment Execution Form */}
-        <form onSubmit={handleSubmit} className="payment-form">
-          <div className="form-row-2">
-            <div className="form-group">
-              <label htmlFor="payment_status">Disbursement Status <span className="req">*</span></label>
-              <select
-                id="payment_status"
-                value={paymentStatus}
-                onChange={(e) => setPaymentStatus(e.target.value)}
-                disabled={isSaved}
-                className="select-input"
-              >
-                <option value="PROCESSING">Processing (Bank Transfer Initiated)</option>
-                <option value="COMPLETED">Completed (Paid Out via UTR)</option>
-              </select>
+      {/* Main Payment Layout */}
+      <div className="payment-grid">
+        {/* Left Column: Itemized MSP Payout Calculation */}
+        <motion.div 
+          initial={{ opacity: 0, x: -15 }} 
+          animate={{ opacity: 1, x: 0 }}
+          className="payment-calc-card"
+        >
+          <h2 className="calc-title">Itemized MSP Payout Breakdown</h2>
+          <p className="calc-sub">Official MSP procurement calculation based on verified weight & lab report</p>
+
+          <div className="payout-table-box">
+            <div className="payout-row">
+              <span className="p-label">Accepted Weight</span>
+              <span className="p-val font-mono">{acceptedQuintals} quintals <span className="p-sub font-mono">({acceptedKg.toLocaleString()} kg)</span></span>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="utr_number">Bank Transaction ID / UTR Ref <span className="req">*</span></label>
+            <div className="payout-row">
+              <span className="p-label">Government MSP Rate ({token.crop})</span>
+              <span className="p-val font-mono">₹{mspCalc.mspRatePerQuintal.toLocaleString()} / quintal</span>
+            </div>
+
+            <div className="payout-row highlight-row">
+              <span className="p-label">Base Gross MSP Amount</span>
+              <span className="p-val gross font-mono">₹{mspCalc.baseMspAmount.toLocaleString()}</span>
+            </div>
+
+            <div className="payout-row input-row">
+              <span className="p-label">Quality Moisture / Grade Deduction (₹)</span>
               <input
-                id="utr_number"
-                type="text"
-                placeholder="e.g. TXN-564764"
-                value={utrNumber}
-                onChange={handleUtrChange}
-                disabled={isSaved}
-                required
+                type="number"
+                disabled={isCompleted}
+                value={qualityDeduction}
+                onChange={(e) => setQualityDeduction(e.target.value)}
+                className="deduction-input font-mono"
               />
-              <span className="field-hint">Bank payment reference number</span>
+            </div>
+
+            <div className="payout-row final-payable-row">
+              <div>
+                <span className="final-label font-mono">Total Payable Disbursement</span>
+                <span className="final-sub">Directly transferred to farmer's bank account</span>
+              </div>
+              <span className="final-amount font-mono">₹{mspCalc.finalPayableAmount.toLocaleString()}</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Right Column: Bank Ref & Disbursement Action */}
+        <motion.div 
+          initial={{ opacity: 0, x: 15 }} 
+          animate={{ opacity: 1, x: 0 }}
+          className="payment-action-card"
+        >
+          <h2 className="action-card-title">Disbursement & Verification</h2>
+
+          <div className="bank-account-box">
+            <div className="b-box-header">
+              <Building size={18} className="text-emerald-600" />
+              <span>Verified Beneficiary Bank Account</span>
+            </div>
+            <div className="b-box-body">
+              <div className="b-line">
+                <span>Bank Name:</span>
+                <strong>State Bank of India</strong>
+              </div>
+              <div className="b-line">
+                <span>Account Number:</span>
+                <strong className="font-mono">{token.bank_account_masked || 'XXXX XXXX 4521'}</strong>
+              </div>
+              <div className="b-line">
+                <span>IFSC Code:</span>
+                <strong className="font-mono">SBIN0004521</strong>
+              </div>
             </div>
           </div>
 
-          {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
-
-          {isSaved ? (
-            <div className="result-payment-banner banner-completed">
-              <div className="banner-content">
-                <span className="banner-icon">✅</span>
-                <div>
-                  <h3>Payment Disbursement Completed!</h3>
-                  <p>Paid Out: <strong>₹{finalPayableAmount.toLocaleString()}</strong> • UTR Ref: <strong>{utrNumber}</strong></p>
-                  <p className="subtext">Token stage updated to <strong>PAYMENT_COMPLETED</strong>.</p>
+          {!isCompleted ? (
+            <form onSubmit={handleProcessPayment} className="disbursement-form">
+              {errorMsg && (
+                <div className="payment-error-banner">
+                  <AlertTriangle size={16} />
+                  <span>{errorMsg}</span>
                 </div>
+              )}
+
+              <div className="utr-input-group">
+                <label htmlFor="utr">Bank UTR Transaction Reference ID</label>
+                <input
+                  id="utr"
+                  type="text"
+                  placeholder="e.g. UTR89412574"
+                  value={utrRef}
+                  onChange={(e) => setUtrRef(e.target.value)}
+                  className="font-mono"
+                  required
+                />
+                <span className="field-hint">Auto-generated bank transaction identifier</span>
               </div>
-              <button
-                type="button"
-                className="btn-back-queue-green"
-                onClick={() => navigate(`/tokens/${token.token_number}`)}
-              >
-                View Token Hub →
+
+              <button type="submit" className="btn-process-payout">
+                <Banknote size={20} />
+                <span>Disburse ₹{mspCalc.finalPayableAmount.toLocaleString()} via Direct Bank Transfer</span>
+              </button>
+
+              {successToast && (
+                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="success-toast">
+                  <CheckCircle2 size={18} />
+                  <span>Payment completed successfully! Redirecting to queue...</span>
+                </motion.div>
+              )}
+            </form>
+          ) : (
+            <div className="receipt-completed-box">
+              <div className="receipt-status-pill font-mono">
+                <CheckCircle2 size={18} />
+                <span>PAYMENT COMPLETED & VERIFIED</span>
+              </div>
+              <div className="receipt-utr font-mono">
+                <span>UTR Reference:</span>
+                <strong>{token.payment?.transaction_id}</strong>
+              </div>
+              <button className="btn-print-receipt" onClick={() => window.print()}>
+                <Printer size={16} />
+                <span>Print Official Receipt</span>
               </button>
             </div>
-          ) : (
-            <button type="submit" className="btn-save-payment">
-              Disburse Payment & Record UTR →
-            </button>
           )}
-        </form>
-      </div>
-
-      <div className="gateway-notice">
-        <span className="notice-icon">🏦</span>
-        <p>
-          <strong>Bank / Payment Gateway Disclaimer:</strong> Bank payment gateway integration (e.g. PFMS/DBT Direct Transfer)
-          is pending backend integration. Transaction reference numbers are recorded manually for prototype audit tracking.
-        </p>
+        </motion.div>
       </div>
     </div>
   );

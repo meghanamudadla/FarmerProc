@@ -45,6 +45,69 @@ export function validateWeighmentInputs(grossKg, tareKg, bagsWeighed) {
 }
 
 /**
+ * Evaluates Quality Inspection parameters against Government MSP Limits
+ */
+export function evaluateQualityRules(params = {}) {
+  const moisture = parseFloat(params.moisture_percent) || 0;
+  const foreignMatter = parseFloat(params.foreign_matter_percent) || 0;
+  const damagedGrains = parseFloat(params.damaged_grains_percent) || 0;
+  const slightlyDamaged = parseFloat(params.slightly_damaged_percent) || 0;
+  const shrivelledBroken = parseFloat(params.shrivelled_broken_percent) || 0;
+  const otherGrains = parseFloat(params.other_grains_percent) || 0;
+  const weevilledGrains = parseFloat(params.weevilled_grains_percent) || 0;
+
+  // Rejection triggers
+  if (moisture > 14.0) {
+    return { result: 'REJECTED', reason: `Moisture content ${moisture}% exceeds maximum threshold of 14%`, suggestedDeductionRs: 0 };
+  }
+  if (foreignMatter > 2.0) {
+    return { result: 'REJECTED', reason: `Foreign matter ${foreignMatter}% exceeds maximum threshold of 2%`, suggestedDeductionRs: 0 };
+  }
+  if (damagedGrains > 4.0) {
+    return { result: 'REJECTED', reason: `Damaged grains ${damagedGrains}% exceeds maximum threshold of 4%`, suggestedDeductionRs: 0 };
+  }
+  if (slightlyDamaged > 4.0) {
+    return { result: 'REJECTED', reason: `Slightly damaged grains ${slightlyDamaged}% exceeds maximum threshold of 4%`, suggestedDeductionRs: 0 };
+  }
+  if (shrivelledBroken > 6.0) {
+    return { result: 'REJECTED', reason: `Shrivelled / Broken grains ${shrivelledBroken}% exceeds maximum threshold of 6%`, suggestedDeductionRs: 0 };
+  }
+  if (otherGrains > 2.0) {
+    return { result: 'REJECTED', reason: `Other food grains ${otherGrains}% exceeds maximum threshold of 2%`, suggestedDeductionRs: 0 };
+  }
+  if (weevilledGrains > 1.0) {
+    return { result: 'REJECTED', reason: `Weevilled grains ${weevilledGrains}% exceeds maximum threshold of 1%`, suggestedDeductionRs: 0 };
+  }
+
+  // Deduction triggers
+  let totalDeductionRs = 0;
+  if (moisture > 12.0) {
+    const excessPct = moisture - 12.0;
+    totalDeductionRs += Math.round(excessPct * 20); // Rs 20 per 1% excess moisture
+  }
+  if (foreignMatter > 1.0) {
+    totalDeductionRs += 15;
+  }
+  if (damagedGrains > 2.0) {
+    totalDeductionRs += 25;
+  }
+
+  if (totalDeductionRs > 0) {
+    return {
+      result: 'DEDUCTION_APPLIED',
+      reason: 'Slightly above FAQ limits. Quality deduction applied per MSP guidelines.',
+      suggestedDeductionRs: totalDeductionRs,
+    };
+  }
+
+  return {
+    result: 'FAQ_ACCEPTED',
+    reason: 'Meets full Government MSP Fair Average Quality (FAQ) standards.',
+    suggestedDeductionRs: 0,
+  };
+}
+
+/**
  * Calculates MSP payout breakdown:
  * Formula:
  *   Accepted Quintals = Accepted Weight KG / 100

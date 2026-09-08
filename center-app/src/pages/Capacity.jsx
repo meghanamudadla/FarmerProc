@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useQueue } from '../context/QueueContext';
 import CapacityBar from '../components/CapacityBar';
+import { Building2, Users, Layers, Warehouse, CheckCircle2, AlertTriangle, ArrowRight, Info, Gauge } from 'lucide-react';
 import './Capacity.css';
 
-/**
- * Placeholder Heuristic Formula for Effective Processing Capacity (bags per hour):
- * 
- * Formula:
- *   effectiveCapacityBagsPerHour = active_counters * 50 * (available_staff / (active_counters * 2))
- */
 function computeEffectiveCapacity(activeCounters, availableStaff) {
   const counters = Math.max(0, parseInt(activeCounters, 10) || 0);
   const staff = Math.max(0, parseInt(availableStaff, 10) || 0);
@@ -25,36 +21,32 @@ function computeEffectiveCapacity(activeCounters, availableStaff) {
   return Math.round(effectiveBagsPerHour);
 }
 
-/**
- * Operational Status Threshold Logic
- */
 function getCapacityStatusLabel(effectiveBagsPerHour, waitingCount, fillPercentage) {
   if (fillPercentage >= 95) {
-    return { text: '🔴 Critical Capacity Alert (Warehouse Near Full)', className: 'status-red' };
+    return { text: 'Critical Capacity Alert (Warehouse Near Full)', class: 'status-red' };
   }
   if (fillPercentage >= 85) {
-    return { text: '🟡 High Capacity Warning (Space Constrained)', className: 'status-yellow' };
+    return { text: 'High Capacity Warning (Space Constrained)', class: 'status-yellow' };
   }
   if (effectiveBagsPerHour === 0) {
-    return { text: '🔴 Overloaded (No Active Counters)', className: 'status-red' };
+    return { text: 'Overloaded (No Active Counters)', class: 'status-red' };
   }
 
   const estimatedQueueBagsLoad = Math.max(1, waitingCount * 50);
   const throughputRatio = effectiveBagsPerHour / (estimatedQueueBagsLoad / 2);
 
   if (throughputRatio >= 1.0) {
-    return { text: '🟢 Normal (Optimal Throughput)', className: 'status-green' };
+    return { text: 'Normal (Optimal Throughput)', class: 'status-green' };
   } else if (throughputRatio >= 0.5) {
-    return { text: '🟡 Strained (High Demand)', className: 'status-yellow' };
+    return { text: 'Strained (High Demand)', class: 'status-yellow' };
   } else {
-    return { text: '🔴 Overloaded (Counter/Staff Bottleneck)', className: 'status-red' };
+    return { text: 'Overloaded (Counter/Staff Bottleneck)', class: 'status-red' };
   }
 }
 
 export default function Capacity() {
   const { centerInfo, updateCenterConfig, tokens } = useQueue();
 
-  // Store input fields as strings for smooth typing without leading zeros or forced '0' on delete
   const [formData, setFormData] = useState({
     total_capacity_bags: String(centerInfo.total_capacity_bags),
     current_stock_bags: String(centerInfo.current_stock_bags),
@@ -85,7 +77,6 @@ export default function Capacity() {
   const [hasUpdated, setHasUpdated] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Smooth string change handler - allows blank while editing and removes leading zeros
   const handleChange = (e) => {
     const { name, value } = e.target;
     const cleanedValue = value === '' ? '' : value.replace(/^0+(?=\d)/, '');
@@ -125,53 +116,87 @@ export default function Capacity() {
     setEffectiveCapacity(newEffective);
     setStatusInfo(newStatus);
     setHasUpdated(true);
+
+    setTimeout(() => setHasUpdated(false), 3000);
   };
 
   return (
-    <div className="capacity-page-container">
-      <header className="capacity-header">
-        <div className="header-left">
-          <h1>Center Capacity & Operations Control</h1>
-          <p>Shift Staff Manual Storage, Quota & Counter Allocation</p>
+    <div className="capacity-container">
+      {/* Header */}
+      <motion.header 
+        initial={{ opacity: 0, y: -10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="capacity-header-card"
+      >
+        <div>
+          <div className="capacity-header-badge">
+            <Building2 size={13} />
+            <span>Shift Controls & Resource Allocation</span>
+          </div>
+          <h1 className="capacity-title">Center Storage & Throughput</h1>
+          <p className="capacity-subtext">Manage shift personnel, station counters, and warehouse bag limits</p>
         </div>
-        <div className={`status-pill ${statusInfo.className}`}>
-          {statusInfo.text}
+        <div className={`status-pill ${statusInfo.class} font-mono`}>
+          <span>{statusInfo.text}</span>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Real-time Calculation Result Display Card */}
-      <div className="result-card">
-        <div className="result-metric">
-          <span className="result-label">Calculated Effective Capacity</span>
-          <span className="result-value">
-            {effectiveCapacity.toLocaleString()} <span className="unit">bags / hour</span>
-          </span>
-          <span className="result-subtext">
-            Based on {formData.active_counters || 0} active counters & {formData.available_staff || 0} staff members
-          </span>
+      {/* Calculated Result Display Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="result-hero-card"
+      >
+        <div className="result-metric-box">
+          <div className="gauge-icon-box">
+            <Gauge size={24} />
+          </div>
+          <div>
+            <span className="result-label">Calculated Effective Capacity</span>
+            <div className="result-value font-mono">
+              {effectiveCapacity.toLocaleString()} <span className="unit font-mono">bags / hour</span>
+            </div>
+            <span className="result-subtext">
+              Based on {formData.active_counters || 0} active counters & {formData.available_staff || 0} floor staff
+            </span>
+          </div>
         </div>
 
         <div className="result-stock-preview">
           <CapacityBar current={currentStockNum} total={totalCapacityNum} />
           <div className="capacity-meta-row">
-            <span>Remaining Storage Space: <strong>{remainingSpaceNum.toLocaleString()} bags</strong></span>
-            <span>Utilization: <strong>{fillPercentage.toFixed(1)}%</strong></span>
+            <span>Remaining Space: <strong className="font-mono">{remainingSpaceNum.toLocaleString()} bags</strong></span>
+            <span>Utilization: <strong className="font-mono">{fillPercentage.toFixed(1)}%</strong></span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {errorMsg && <div className="error-banner">⚠️ {errorMsg}</div>}
+      {errorMsg && (
+        <div className="capacity-error-banner">
+          <AlertTriangle size={16} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
-      {/* Editable Capacity Form */}
-      <form onSubmit={handleUpdate} className="capacity-form-card">
-        <h2 className="form-section-title">Edit Operational Parameters</h2>
-        <p className="form-section-subtitle">
-          Adjust shift counters and personnel to calculate live center throughput.
-        </p>
+      {/* Editable Form */}
+      <motion.form 
+        initial={{ opacity: 0, y: 15 }} 
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        onSubmit={handleUpdate} 
+        className="capacity-form-card"
+      >
+        <div className="form-card-header">
+          <h2 className="form-card-title">Edit Operational Parameters</h2>
+          <p className="form-card-subtitle">Adjust shift parameters to reflect live floor readiness</p>
+        </div>
 
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="active_counters">Active Counters / Stations</label>
+            <label htmlFor="active_counters">
+              <Layers size={15} />
+              <span>Active Counter Stations</span>
+            </label>
             <input
               id="active_counters"
               type="number"
@@ -180,13 +205,17 @@ export default function Capacity() {
               placeholder="e.g. 5"
               value={formData.active_counters}
               onChange={handleChange}
+              className="font-mono"
               required
             />
-            <span className="field-hint">Number of active weighing/quality counters</span>
+            <span className="field-hint">Active weighing / quality counters</span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="available_staff">Available Shift Staff</label>
+            <label htmlFor="available_staff">
+              <Users size={15} />
+              <span>Available Shift Staff</span>
+            </label>
             <input
               id="available_staff"
               type="number"
@@ -195,13 +224,17 @@ export default function Capacity() {
               placeholder="e.g. 10"
               value={formData.available_staff}
               onChange={handleChange}
+              className="font-mono"
               required
             />
-            <span className="field-hint">Total personnel working on the center floor</span>
+            <span className="field-hint">Total center staff on duty</span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="current_stock_bags">Current Stock (Bags)</label>
+            <label htmlFor="current_stock_bags">
+              <Warehouse size={15} />
+              <span>Current Stock (Bags)</span>
+            </label>
             <input
               id="current_stock_bags"
               type="number"
@@ -210,13 +243,17 @@ export default function Capacity() {
               placeholder="e.g. 6500"
               value={formData.current_stock_bags}
               onChange={handleChange}
+              className="font-mono"
               required
             />
-            <span className="field-hint">Bags currently stored in warehouse</span>
+            <span className="field-hint">Bags currently in warehouse</span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="total_capacity_bags">Total Warehouse Capacity (Bags)</label>
+            <label htmlFor="total_capacity_bags">
+              <Building2 size={15} />
+              <span>Total Warehouse Limit (Bags)</span>
+            </label>
             <input
               id="total_capacity_bags"
               type="number"
@@ -225,13 +262,17 @@ export default function Capacity() {
               placeholder="e.g. 10000"
               value={formData.total_capacity_bags}
               onChange={handleChange}
+              className="font-mono"
               required
             />
-            <span className="field-hint">Maximum storage bag capacity</span>
+            <span className="field-hint">Maximum storage bag limit</span>
           </div>
 
           <div className="form-group full-width">
-            <label htmlFor="remaining_quota_bags">Remaining Daily Quota (Bags)</label>
+            <label htmlFor="remaining_quota_bags">
+              <Warehouse size={15} />
+              <span>Remaining Daily Quota (Bags)</span>
+            </label>
             <input
               id="remaining_quota_bags"
               type="number"
@@ -240,34 +281,36 @@ export default function Capacity() {
               placeholder="e.g. 2000"
               value={formData.remaining_quota_bags}
               onChange={handleChange}
+              className="font-mono"
               required
             />
-            <span className="field-hint">Max additional bags the center can accept today</span>
+            <span className="field-hint">Additional bags accepted today</span>
           </div>
         </div>
 
         <div className="form-actions">
           <button type="submit" className="btn-update-capacity">
-            Update Operational Capacity
+            <CheckCircle2 size={18} />
+            <span>Update Operational Parameters</span>
+            <ArrowRight size={16} />
           </button>
 
           {hasUpdated && (
-            <span className="update-toast">
-              ✓ Center capacity updated in QueueContext!
-            </span>
+            <motion.span initial={{ opacity: 0, x: 5 }} animate={{ opacity: 1, x: 0 }} className="update-toast">
+              ✓ Operational capacity updated!
+            </motion.span>
           )}
         </div>
-      </form>
+      </motion.form>
 
-      {/* Heuristic Formula Documentation Card */}
+      {/* Formula Info */}
       <div className="formula-info-card">
-        <h3>ℹ️ Operational Capacity Heuristic Formula</h3>
-        <p className="formula-code">
-          <code>Effective Capacity (bags/hr) = Active Counters × 50 × (Staff / (Active Counters × 2))</code>
-        </p>
-        <p className="formula-desc">
-          Standard baseline assumes 1 counter operating with 2 staff members processes ~50 bags per hour.
-          If staff count falls below 2 per counter, capacity scales down proportionally.
+        <div className="formula-info-header">
+          <Info size={16} className="text-emerald-600" />
+          <span className="font-mono">Capacity Heuristic Formula</span>
+        </div>
+        <p className="formula-code font-mono">
+          Effective Capacity (bags/hr) = Active Counters × 50 × (Staff / (Active Counters × 2))
         </p>
       </div>
     </div>
