@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { path: '/centers', label: 'Centers', icon: '🏢' },
   { path: '/map', label: 'Map View', icon: '🗺️' },
   { path: '/analytics', label: 'Analytics', icon: '📈' },
-  { path: '/forecast', label: 'Forecast', icon: '🔮' },
+  { path: '/congestion-trends', label: 'Congestion Trends', icon: '📊' },
   { path: '/alerts', label: 'Alerts', icon: '🚨' },
   { path: '/farmers', label: 'Farmers', icon: '👨‍🌾' },
   { path: '/center-management', label: 'Center Mgmt', icon: '⚙️', controlOnly: true },
@@ -54,7 +54,7 @@ export default function Layout({ children }) {
           </div>
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-              <div className="text-sm font-semibold text-text-primary whitespace-nowrap">AgroProcure</div>
+              <div className="text-sm font-semibold text-text-primary whitespace-nowrap">FarmerProc</div>
               <div className="text-[10px] text-text-muted whitespace-nowrap">Government Command Center</div>
             </motion.div>
           )}

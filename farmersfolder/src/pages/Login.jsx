@@ -1,12 +1,11 @@
 export default function Login({
   t, lang, setLang,
   role, setRole, authMode, setAuthMode, signupStep, setSignupStep,
-  signupData, setSD, mobile, setMobile, formatMobile, RECENT_NUMBER,
+  signupData, setSD, mobile, setMobile, formatMobile,
   otpSent, setOtpSent, otp, setOtp, otpRefs, handleOtpChange, handleOtpKeyDown, handleOtpPaste,
   login, addNotif,
 }) {
   const rawDigits = mobile.replace(/\D/g, '');
-  const showSuggestion = rawDigits.length > 0 && rawDigits.length < 10 && RECENT_NUMBER.startsWith(rawDigits);
   const isFarmerSignup = authMode === 'signup' && role === 'farmer';
   const step1Valid = signupData.name.trim().length > 1 && signupData.village.trim().length > 1 && signupData.district.trim().length > 1;
   const step2Valid = signupData.landAcres && signupData.aadhaarLast4.length === 4;
@@ -18,7 +17,7 @@ export default function Login({
   }
 
   return (
-    <div className="login-wrap">
+    <div className="login-wrap" data-theme="light">
       <div className="login-vignette"></div>
 
       <div className="login-card">
@@ -30,7 +29,7 @@ export default function Login({
           <div className="login-header">
             <div className="login-eyebrow">🌾 {t.loginEyebrow}</div>
             <h1>
-              <span className="brand-accent">Fasal</span>Flow
+              <span className="brand-accent">Kisan</span>Seva
             </h1>
             <div className="tag">{t.loginTag}</div>
           </div>
@@ -200,11 +199,6 @@ export default function Login({
                       <span className="phone-flag">🇮🇳 +91</span>
                       <input type="tel" inputMode="numeric" value={mobile} onChange={(e) => setMobile(formatMobile(e.target.value))} placeholder="81254 21544" />
                     </div>
-                    {showSuggestion && role === 'farmer' && (
-                      <button type="button" className="autofill-hint" onClick={() => setMobile(formatMobile(RECENT_NUMBER))}>
-                        <span className="ah-tag">{lang === 'en' ? 'Recent' : 'ఇటీవలి'}</span> {formatMobile(RECENT_NUMBER)}
-                      </button>
-                    )}
                   </div>
                   <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!canSend} onClick={sendOtp}>
                     {t.sendOtp}
@@ -285,7 +279,7 @@ export default function Login({
             </>
           )}
 
-          <div className="lang-toggle-glass">
+          <div className="lang-toggle-glass" style={{ margin: '14px 0 0 0' }}>
             <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>
               🇬🇧 English
             </button>

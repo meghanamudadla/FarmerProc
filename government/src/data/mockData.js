@@ -148,14 +148,15 @@ export const HOURLY_TODAY = [
   { hour: '4PM', arrivals: 23, completed: 13 },
 ];
 
-// ─── FORECAST DATA ──────────────────────────────────────
+// ─── CONGESTION & TREND DATA (DEMO) ──────────────────────────
+// Illustrative threshold and arrival trend data for demonstration purposes
 export const FORECAST = {
-  tomorrowArrivals: { predicted: 1380, low: 1220, high: 1540, confidence: 0.82 },
+  tomorrowArrivals: { estimated: 1380, low: 1220, high: 1540, thresholdRate: 0.82 },
   peakWindow: '9:00 AM – 12:00 PM',
-  modelBasis: 'Based on last 3 harvest-week patterns, current season trends, and weather forecast (clear skies, 32°C)',
+  trendBasis: 'Configured based on last 3 harvest-week patterns, seasonal averages, and current weather context (clear skies, 32°C)',
   atRiskCenters: [
     { centerId: 'c10', name: 'Krishna Delta Point', riskScore: 0.94, expectedQueue: 68, reason: 'Persistent congestion + rising arrivals trend' },
-    { centerId: 'c03', name: 'Gharaunda Purchase Hub', riskScore: 0.87, expectedQueue: 52, reason: 'Storage 91% + high arrival forecast' },
+    { centerId: 'c03', name: 'Gharaunda Purchase Hub', riskScore: 0.87, expectedQueue: 52, reason: 'Storage 91% + high arrival volume' },
     { centerId: 'c08', name: 'Rajahmundry APMC', riskScore: 0.71, expectedQueue: 38, reason: 'Staff shortage (6 of 12 rostered)' },
   ],
   redirections: [

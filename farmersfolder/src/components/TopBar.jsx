@@ -3,21 +3,56 @@ export default function TopBar({
   profileMenuOpen, setProfileMenuOpen,
   changingNumber, setChangingNumber,
   newMobileDraft, setNewMobileDraft, formatMobile, saveNewMobile,
-  setPage, logout,
+  setPage, logout, onOpenSecurityTests,
+  theme, toggleTheme,
 }) {
-  const initials = farmer.name.split(' ').map((w) => w[0]).join('').slice(0, 2);
+  const initials = farmer.fullName.split(' ').map((w) => w[0]).join('').slice(0, 2);
 
   return (
     <div className="topbar">
       <div>
-        <div className="greeting">{t.greeting(farmer.name.split(' ')[0])}</div>
+        <div className="greeting">{t.greeting(farmer.fullName.split(' ')[0])}</div>
         <div className="subtext">{page === 'dashboard' ? t.dashSub : page === 'book' ? t.bookSlotTag : ''}</div>
       </div>
-      <div className="profile-trigger-wrap">
-        <button className="farmer-chip" onClick={() => setProfileMenuOpen((o) => !o)}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Dark / Light Mode Toggle Button */}
+        <button
+          className="btn btn-ghost"
+          style={{
+            padding: '6px 12px',
+            fontSize: 12,
+            border: '1.5px solid var(--border)',
+            background: 'var(--surface)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Toggle dark/light theme"
+        >
+          <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span style={{ fontWeight: 600 }}>
+            {theme === 'dark'
+              ? (lang === 'te' ? 'లైట్ మోడ్' : lang === 'hi' ? 'लाइट मोड' : 'Light Mode')
+              : (lang === 'te' ? 'డార్క్ మోడ్' : lang === 'hi' ? 'डार्क मोड' : 'Dark Mode')}
+          </span>
+        </button>
+
+        {/* Phase 12 Security & Test Suite Action Button */}
+        <button
+          className="btn btn-ghost"
+          style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)', background: 'var(--surface-elevated)' }}
+          onClick={onOpenSecurityTests}
+        >
+          🛡️ Security & Test Suite
+        </button>
+
+        <div className="profile-trigger-wrap">
+          <button className="farmer-chip" onClick={() => setProfileMenuOpen((o) => !o)}>
           <div className="avatar">{initials}</div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>{farmer.name}</div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>{farmer.fullName}</div>
             <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{role === 'farmer' ? t.roleFarmer : role}</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2, opacity: 0.6 }}>
@@ -32,9 +67,9 @@ export default function TopBar({
                 {initials}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{farmer.name}</div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{farmer.fullName}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-muted)' }}>
-                  {t.roleFarmer} · {farmer.location || '—'}
+                  {t.roleFarmer} · {[farmer.village, farmer.district].filter(Boolean).join(', ') || '—'}
                 </div>
               </div>
             </div>
@@ -88,6 +123,18 @@ export default function TopBar({
               <span className="profile-dd-value">{farmer.farmerId || (lang === 'en' ? 'Not linked' : 'లింక్ లేదు')}</span>
             </div>
             <div className="profile-dd-row">
+              <span className="profile-dd-label">{lang === 'te' ? 'థీమ్' : lang === 'hi' ? 'थीम' : 'Theme'}</span>
+              <span className="profile-dd-value">
+                <button
+                  className="dd-link"
+                  style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                  onClick={toggleTheme}
+                >
+                  {theme === 'dark' ? '☀️ ' + (lang === 'te' ? 'లైట్ మోడ్' : lang === 'hi' ? 'लाइट' : 'Light') : '🌙 ' + (lang === 'te' ? 'డార్క్ మోడ్' : lang === 'hi' ? 'डार्क' : 'Dark')}
+                </button>
+              </span>
+            </div>
+            <div className="profile-dd-row">
               <span className="profile-dd-label">{lang === 'en' ? 'Aadhaar' : 'ఆధార్'}</span>
               <span className="profile-dd-value mono">{farmer.aadhaarLast4 ? `•••• ${farmer.aadhaarLast4}` : '—'}</span>
             </div>
@@ -107,8 +154,9 @@ export default function TopBar({
                 {lang === 'en' ? 'Log out' : 'లాగ్ అవుట్'}
               </button>
             </div>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import QR from './QR.jsx';
 
 export default function BookingDetailModal({
   t, lang, detailBooking, setDetailBookingId, queueTick, peopleAhead, estWaitMin,
-  bookingCropLabel, simulateArrival, openReschedule,
+  bookingCropLabel, simulateArrival, openReschedule, completeProcurement,
 }) {
   if (!detailBooking) return null;
 
@@ -128,6 +128,18 @@ export default function BookingDetailModal({
             }}
           >
             {t.reschedule}
+          </button>
+        )}
+        {detailBooking.status !== 'completed' && detailBooking.status !== 'cancelled' && completeProcurement && (
+          <button
+            className="btn btn-primary"
+            style={{ width: '100%', justifyContent: 'center', marginBottom: 10, background: 'var(--accent)' }}
+            onClick={() => {
+              completeProcurement(detailBooking.id);
+              setDetailBookingId(null);
+            }}
+          >
+            ⚖️ {lang === 'en' ? `Finalize Weighment & Complete Procurement (${detailBooking.qty} Qtl)` : `తూకం ఖరారు చేయండి (${detailBooking.qty} క్వి)`}
           </button>
         )}
         {detailBooking.status === 'booked' && (

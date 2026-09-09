@@ -1,8 +1,8 @@
 /**
- * Phase 9 — Mock SMS Gateway Provider Adapter
+ * Mock SMS Gateway Provider Adapter (Simulated Demo Service)
  * 
- * Simulates telecom DLT SMS gateway transmission, delivery status callbacks,
- * and retry workflows.
+ * Simulates telecom SMS gateway transmission, delivery status callbacks,
+ * and retry workflows for demonstration purposes (no live SMS delivery).
  */
 
 class MockSmsService {

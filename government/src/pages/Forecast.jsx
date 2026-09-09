@@ -5,25 +5,25 @@ import { FORECAST } from '../data/mockData';
 
 export default function Forecast() {
   const { canControl } = useAuth();
-  const { tomorrowArrivals, peakWindow, modelBasis, atRiskCenters, redirections } = FORECAST;
+  const { tomorrowArrivals, peakWindow, trendBasis, atRiskCenters, redirections } = FORECAST;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-text-primary">🔮 AI Forecasting Dashboard</h1>
-        <p className="text-xs text-text-muted mt-0.5">Predictions based on historical patterns, season trends, and weather data</p>
+        <h1 className="text-xl font-bold text-text-primary">📊 Congestion & Arrival Trends</h1>
+        <p className="text-xs text-text-muted mt-0.5">Arrival trends based on historical patterns, season trends, and weather data</p>
       </div>
 
-      {/* Prediction cards */}
+      {/* Trend summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Tomorrow's Expected Arrivals</div>
-          <div className="font-tabular text-3xl font-bold text-accent-blue">{tomorrowArrivals.predicted}</div>
+          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Tomorrow's Estimated Arrivals</div>
+          <div className="font-tabular text-3xl font-bold text-accent-blue">{tomorrowArrivals.estimated || tomorrowArrivals.predicted}</div>
           <div className="flex items-center gap-2 mt-2">
             <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-accent-blue to-accent-cyan rounded-full" style={{width:`${tomorrowArrivals.confidence*100}%`}} />
+              <div className="h-full bg-gradient-to-r from-accent-blue to-accent-cyan rounded-full" style={{width:`${(tomorrowArrivals.thresholdRate || 0.82)*100}%`}} />
             </div>
-            <span className="text-xs text-text-muted font-tabular">{Math.round(tomorrowArrivals.confidence*100)}% conf</span>
+            <span className="text-xs text-text-muted font-tabular">{Math.round((tomorrowArrivals.thresholdRate || 0.82)*100)}% threshold</span>
           </div>
           <div className="text-xs text-text-secondary mt-2">Range: {tomorrowArrivals.low} – {tomorrowArrivals.high}</div>
         </motion.div>
@@ -35,8 +35,8 @@ export default function Forecast() {
         </motion.div>
 
         <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.2}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Model Basis</div>
-          <div className="text-sm text-text-secondary leading-relaxed">{modelBasis}</div>
+          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Trend Basis</div>
+          <div className="text-sm text-text-secondary leading-relaxed">{trendBasis || FORECAST.modelBasis}</div>
         </motion.div>
       </div>
 
