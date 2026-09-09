@@ -39,14 +39,7 @@ export default function TopBar({
           </span>
         </button>
 
-        {/* Phase 12 Security & Test Suite Action Button */}
-        <button
-          className="btn btn-ghost"
-          style={{ padding: '6px 12px', fontSize: 12, border: '1.5px solid var(--border)', background: 'var(--surface-elevated)' }}
-          onClick={onOpenSecurityTests}
-        >
-          🛡️ Security & Test Suite
-        </button>
+
 
         <div className="profile-trigger-wrap">
           <button className="farmer-chip" onClick={() => setProfileMenuOpen((o) => !o)}>
