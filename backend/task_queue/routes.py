@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from fastapi import WebSocket, WebSocketDisconnect
+from task_queue.manager import manager
 from auth.dependencies import require_role
 from database import get_db
 from models import (
@@ -119,7 +120,7 @@ def get_center_queue(
 @router.post(
     "/center/{center_id}/next"
 )
-def call_next_farmer(
+async def call_next_farmer(
     center_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
@@ -190,19 +191,28 @@ def call_next_farmer(
     db.commit()
     db.refresh(next_booking)
 
-    return {
-        "message": "Next farmer called",
+    await manager.broadcast(
+    center_id,
+    {
+        "event": "NEXT_FARMER",
         "booking_id": next_booking.id,
         "token_number": next_booking.token_number,
         "status": next_booking.status
     }
+    )
 
+    return {
+    "message": "Next farmer called",
+    "booking_id": next_booking.id,
+    "token_number": next_booking.token_number,
+    "status": next_booking.status
+    }
 
 # ---------------------------------------------------------
 # COMPLETE FARMER
 # ---------------------------------------------------------
 @router.post("/{booking_id}/complete")
-def complete_farmer(
+async def complete_farmer(
     booking_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
@@ -228,11 +238,25 @@ def complete_farmer(
             detail="This farmer is not currently being served"
         )
 
-    # Mark as completed
+        # Mark as completed
     booking.status = "COMPLETED"
 
     db.commit()
     db.refresh(booking)
+
+    slot = db.query(Slot).filter(
+        Slot.id == booking.slot_id
+    ).first()
+
+    await manager.broadcast(
+        slot.center_id,
+        {
+            "event": "FARMER_COMPLETED",
+            "booking_id": booking.id,
+            "token_number": booking.token_number,
+            "status": booking.status
+        }
+    )
 
     return {
         "message": "Farmer processing completed",
@@ -240,3 +264,30 @@ def complete_farmer(
         "token_number": booking.token_number,
         "status": booking.status
     }
+
+
+
+@router.websocket("/ws/{center_id}")
+async def queue_websocket(
+    websocket: WebSocket,
+    center_id: int
+):
+
+    await manager.connect(
+        websocket,
+        center_id
+    )
+
+    try:
+
+        while True:
+
+            # Keep connection alive
+            await websocket.receive_text()
+
+    except WebSocketDisconnect:
+
+        manager.disconnect(
+            websocket,
+            center_id
+        )

@@ -10,6 +10,7 @@ from bookings.routes import router as booking_router
 from task_queue.routes import router as queue_router
 from procurement.routes import router as procurement_router
 from payments.routes import router as payment_router
+from notifications.routes import router as notification_router
 import models
 
 
@@ -30,6 +31,7 @@ app.include_router(booking_router)
 app.include_router(queue_router)
 app.include_router(procurement_router)
 app.include_router(payment_router)
+app.include_router(notification_router)
 
 
 @app.get("/")

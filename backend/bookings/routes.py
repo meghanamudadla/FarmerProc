@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-
+from task_queue.manager import manager
 from database import get_db
 from models import Booking, Slot, User, Farmer
 from schemas import BookingCreate, BookingResponse
 from auth.dependencies import get_current_user
-
+from notifications.service import create_notification
 
 router = APIRouter(
     prefix="/bookings",
@@ -19,7 +19,7 @@ router = APIRouter(
 # =========================
 
 @router.post("/", response_model=BookingResponse)
-def create_booking(
+async def create_booking(
     booking_data: BookingCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -99,8 +99,26 @@ def create_booking(
     db.commit()
     db.refresh(booking)
 
-    return booking
+    # Create a notification for the farmer
+    create_notification(
+        db=db,
+        user_id=farmer.user_id,
+        title="Booking Created",
+        message=f"Your booking is confirmed. Your token number is {booking.token_number}."
+    )
 
+    await manager.broadcast(
+        slot.center_id,
+        {
+            "event": "NEW_BOOKING",
+            "booking_id": booking.id,
+            "token_number": booking.token_number,
+            "farmer_id": farmer.id,
+            "status": booking.status
+        }
+    )
+
+    return booking
 
 # =========================
 # GET MY BOOKINGS

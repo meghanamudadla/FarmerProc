@@ -9,7 +9,7 @@ from sqlalchemy import (
     Time,
     DateTime,
     ForeignKey,
-    Text
+    Boolean
 )
 
 from sqlalchemy.orm import relationship
@@ -31,7 +31,11 @@ class User(Base):
         back_populates="user",
         uselist=False
     )
-
+    notifications = relationship(
+    "Notification",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)
 
 
 
@@ -254,4 +258,43 @@ class Payment(Base):
     procurement = relationship(
         "Procurement",
         back_populates="payment"
+    )
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    title = Column(
+        String(150),
+        nullable=False
+    )
+
+    message = Column(
+        String(500),
+        nullable=False
+    )
+
+    is_read = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    user = relationship(
+        "User",
+        back_populates="notifications"
     )
