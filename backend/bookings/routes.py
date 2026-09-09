@@ -7,6 +7,12 @@ from models import Booking, Slot, User, Farmer
 from schemas import BookingCreate, BookingResponse
 from auth.dependencies import get_current_user
 from notifications.service import create_notification
+import secrets
+
+def generate_token():
+    return "PDC-" + secrets.token_hex(3).upper()
+
+
 
 router = APIRouter(
     prefix="/bookings",
@@ -89,12 +95,10 @@ async def create_booking(
 
     # 7. Create booking
     booking = Booking(
-        farmer_id=farmer.id,
-        slot_id=slot.id,
-        token_number=token_number,
-        status="BOOKED"
-    )
-
+    farmer_id=farmer.id,
+    center_id=booking_data.center_id,
+    token_number=generate_token()
+)
     db.add(booking)
     db.commit()
     db.refresh(booking)

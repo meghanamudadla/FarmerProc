@@ -83,15 +83,35 @@ class SlotResponse(BaseModel):
 
 
 class BookingCreate(BaseModel):
+    center_id: int
+    crop_id: int
+    quantity: float = Field(gt=0)
+    booking_date: date
     slot_id: int
 
 
 class BookingResponse(BaseModel):
     id: int
     farmer_id: int
-    slot_id: int
-    token_number: int
+    center_id: int
+    crop_id: Optional[int] = None
+
+    token_number: str
+
+    quantity: float
+    booking_date: date
+    slot_id: Optional[int] = None
+
     status: str
+
+    price: Optional[float] = None
+
+    payment_status: str
+    payment_method: Optional[str] = None
+
+    checked_in: bool
+    arrival_time: Optional[datetime] = None
+
     created_at: datetime
 
     class Config:
@@ -162,6 +182,58 @@ class NotificationResponse(BaseModel):
     title: str
     message: str
     is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CropCreate(BaseModel):
+    crop_name: str
+    variety: Optional[str] = None
+    season: Optional[str] = None
+    quantity: float = Field(gt=0)
+
+
+class CropResponse(BaseModel):
+    id: int
+    farmer_id: int
+    crop_name: str
+    variety: Optional[str] = None
+    season: Optional[str] = None
+    quantity: float
+    remaining_quantity: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WeighmentCreate(BaseModel):
+    declared_bags: Optional[int] = None
+    bag_weight_kg: Optional[float] = None
+    declared_weight_kg: Optional[float] = None
+
+    weighed_bags: int = Field(gt=0)
+    gross_weight_kg: float = Field(gt=0)
+    tare_weight_kg: float = Field(ge=0)
+
+class WeighmentResponse(BaseModel):
+    id: int
+    booking_id: int
+
+    declared_bags: Optional[int] = None
+    bag_weight_kg: Optional[float] = None
+    declared_weight_kg: Optional[float] = None
+
+    weighed_bags: int
+    gross_weight_kg: float
+    tare_weight_kg: float
+    net_weight_kg: float
+
+    accepted_weight_kg: float
+    accepted_quintals: float
+
     created_at: datetime
 
     class Config:

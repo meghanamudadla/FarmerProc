@@ -70,7 +70,11 @@ class Farmer(Base):
         "Booking",
         back_populates="farmer"
     )
-
+    crops = relationship(
+    "Crop",
+    back_populates="farmer",
+    cascade="all, delete-orphan"
+)
 
 
 
@@ -135,46 +139,70 @@ class Booking(Base):
     farmer_id = Column(
         Integer,
         ForeignKey("farmers.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
+
+    center_id = Column(
+        Integer,
+        ForeignKey("procurement_centers.id"),
+        nullable=False,
+        index=True
+    )
+
+    crop_id = Column(
+        Integer,
+        ForeignKey("crops.id"),
+        nullable=True,
+        index=True
+    )
+
+    token_number = Column(String(30), unique=True, nullable=False, index=True)
+
+    quantity = Column(Float, nullable=False)
+
+    booking_date = Column(Date, nullable=False)
 
     slot_id = Column(
         Integer,
         ForeignKey("slots.id"),
-        nullable=False
-    )
-
-    token_number = Column(
-        Integer,
-        nullable=False
+        nullable=True
     )
 
     status = Column(
-        String(30),
-        default="BOOKED",
+        String(40),
+        default="booked",
         nullable=False
     )
 
+    price = Column(Float, nullable=True)
+
+    payment_status = Column(
+        String(40),
+        default="pending",
+        nullable=False
+    )
+
+    payment_method = Column(String(50), nullable=True)
+
+    checked_in = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    arrival_time = Column(DateTime, nullable=True)
+
     created_at = Column(
         DateTime,
-        default=datetime.utcnow
+        default=datetime.utcnow,
+        nullable=False
     )
 
-    farmer = relationship(
-        "Farmer",
-        back_populates="bookings"
-    )
-
-    slot = relationship(
-        "Slot",
-        back_populates="bookings"
-    )
-
-    procurement = relationship(
-        "Procurement",
-        back_populates="booking",
-        uselist=False
-    )
+    farmer = relationship("Farmer")
+    center = relationship("ProcurementCenter")
+    crop = relationship("Crop")
+    slot = relationship("Slot")
 
 
 
@@ -298,3 +326,91 @@ class Notification(Base):
         "User",
         back_populates="notifications"
     )
+
+
+class Crop(Base):
+    __tablename__ = "crops"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    farmer_id = Column(
+        Integer,
+        ForeignKey("farmers.id"),
+        nullable=False,
+        index=True
+    )
+
+    crop_name = Column(
+        String(100),
+        nullable=False
+    )
+
+    variety = Column(
+        String(100),
+        nullable=True
+    )
+
+    season = Column(
+        String(50),
+        nullable=True
+    )
+
+    quantity = Column(
+        Float,
+        nullable=False
+    )
+
+    remaining_quantity = Column(
+        Float,
+        nullable=False
+    )
+
+    status = Column(
+        String(30),
+        default="REGISTERED",
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    farmer = relationship(
+        "Farmer",
+        back_populates="crops"
+    )
+
+class Weighment(Base):
+    __tablename__ = "weighments"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    booking_id = Column(
+        Integer,
+        ForeignKey("bookings.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    declared_bags = Column(Integer, nullable=True)
+    bag_weight_kg = Column(Float, nullable=True)
+    declared_weight_kg = Column(Float, nullable=True)
+
+    weighed_bags = Column(Integer, nullable=False)
+    gross_weight_kg = Column(Float, nullable=False)
+    tare_weight_kg = Column(Float, nullable=False)
+    net_weight_kg = Column(Float, nullable=False)
+
+    accepted_weight_kg = Column(Float, nullable=False)
+    accepted_quintals = Column(Float, nullable=False)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    booking = relationship("Booking")

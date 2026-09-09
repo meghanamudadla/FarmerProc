@@ -89,7 +89,7 @@ def get_center_queue(
             slot
         )
 
-        if booking.status == "PROCESSING":
+        if booking.status == "WEIGHING":
 
             currently_serving = item
 
@@ -147,7 +147,7 @@ async def call_next_farmer(
         )
         .filter(
             Slot.center_id == center_id,
-            Booking.status == "PROCESSING"
+            Booking.status == "WEIGHING"
         )
         .first()
     )
@@ -186,7 +186,7 @@ async def call_next_farmer(
         )
 
     # Change status
-    next_booking.status = "PROCESSING"
+    next_booking.status = "WEIGHING"
 
     db.commit()
     db.refresh(next_booking)
@@ -231,7 +231,7 @@ async def complete_farmer(
             detail="Booking not found"
         )
 
-    if booking.status != "PROCESSING":
+    if booking.status != "WEIGHING":
 
         raise HTTPException(
             status_code=400,
@@ -239,7 +239,7 @@ async def complete_farmer(
         )
 
         # Mark as completed
-    booking.status = "COMPLETED"
+    booking.status = "PAYMENT_COMPLETED"
 
     db.commit()
     db.refresh(booking)
