@@ -1,81 +1,100 @@
+import { useState } from 'react';
 import { PAY_SEQUENCE } from '../data/domain.js';
+import PaymentTrackerCard from '../components/PaymentTrackerCard.jsx';
 
-export default function Payments({ t, activeBooking, bookings, totalValue }) {
-  const payIdx = activeBooking ? PAY_SEQUENCE.indexOf(activeBooking.paymentStatus) : -1;
-  const steps = [
-    { title: t.payStage1, on: !!activeBooking, time: activeBooking ? activeBooking.date : '—' },
-    { title: t.payStage2, on: payIdx >= 0, time: payIdx >= 0 ? activeBooking.date : '—' },
-    { title: t.payStage3, on: payIdx >= 1, time: payIdx >= 1 ? activeBooking.date : '—' },
-    { title: t.payStage4 + ' (' + (activeBooking ? activeBooking.paymentMethod : '') + ')', on: payIdx >= 2, time: payIdx >= 2 ? activeBooking.date : '—' },
-    { title: t.payStage5, on: payIdx >= 3, time: payIdx >= 3 ? activeBooking.date : '—' },
-  ];
+export default function Payments({ t, lang, activeBooking, bookings = [], totalValue, farmer, onUpdateBookingStatus, onOpenReceipt }) {
+  const [selectedReceiptBooking, setSelectedReceiptBooking] = useState(null);
+
+  const completedOrActiveBookings = bookings.filter((b) => b.status !== 'cancelled');
+
+  function handleRetryPayment(bookingId) {
+    if (onUpdateBookingStatus) {
+      const b = bookings.find((x) => x.id === bookingId);
+      if (b) {
+        onUpdateBookingStatus({
+          ...b,
+          paymentStatus: 'payment_initiated',
+          failureReason: null,
+          failureRefId: null,
+        });
+      }
+    }
+  }
 
   return (
-    <div className="grid-2">
+    <div style={{ maxWidth: 860, margin: '0 auto' }}>
+      {/* Active / Recent DBT Payment Tracker */}
+      {activeBooking && (
+        <div style={{ marginBottom: 20 }}>
+          <PaymentTrackerCard
+            t={t}
+            lang={lang}
+            booking={activeBooking}
+            farmer={farmer}
+            onViewReceipt={(b) => (onOpenReceipt ? onOpenReceipt(b) : setSelectedReceiptBooking(b))}
+            onRetryPayment={handleRetryPayment}
+          />
+        </div>
+      )}
+
+      {/* Financial Summary & Transactions Table */}
       <div className="card">
-        <div className="section-title">
-          <h2 style={{ fontSize: 15 }}>{t.paymentSummary}</h2>
-        </div>
-        {activeBooking && activeBooking.paymentStatus === 'pending_verification' ? (
-          <div className="empty-note">{t.pendingRateNote}</div>
-        ) : (
-          <div className="progress-steps">
-            {steps.map((s, i, arr) => (
-              <div className="pstep" key={i}>
-                <div className="pstep-rail">
-                  <div className={'pstep-dot' + (s.on ? ' on' : '')}></div>
-                  {i < arr.length - 1 && <div className={'pstep-line' + (arr[i + 1].on ? ' on' : '')}></div>}
-                </div>
-                <div className="pstep-body">
-                  <div className="pstep-title">{s.title}</div>
-                  <div className="pstep-time">{s.time}</div>
-                </div>
-              </div>
-            ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 17 }}>🏦 {t.paymentSummary || 'Procurement Payments & DBT Disbursals'}</h3>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Official direct benefit transfer history to verified bank accounts
+            </div>
           </div>
-        )}
-        {activeBooking && activeBooking.paymentStatus !== 'pending_verification' && (
-          <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 8, lineHeight: 1.5 }}>
-            {activeBooking.paymentStatus !== 'credited' && (
-              <>
-                {t.autoUpdateNote}
-                <br />
-              </>
-            )}
-            {t.disbursalMethod}: <strong>{activeBooking.paymentMethod}</strong>
+          <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>
+            ₹{totalValue.toLocaleString('en-IN')}
           </div>
-        )}
-      </div>
-      <div className="card">
-        <div className="section-title">
-          <h2 style={{ fontSize: 15 }}>{t.totalValue}</h2>
         </div>
-        <div className="mono" style={{ fontSize: 26, fontWeight: 600, marginBottom: 14 }}>
-          ₹{totalValue.toLocaleString('en-IN')}
-        </div>
+
         <div className="table-wrap">
-          <table>
+          <table className="table" style={{ width: '100%', fontSize: 13 }}>
             <thead>
               <tr>
                 <th>{t.col.token}</th>
-                <th>{t.disbursalMethod}</th>
-                <th>
-                  {t.paid}/{t.pending}
-                </th>
+                <th>Amount</th>
+                <th>Disbursal Route</th>
+                <th>DBT Stage</th>
+                <th>Digital Receipt</th>
               </tr>
             </thead>
             <tbody>
-              {bookings
-                .filter((b) => b.status !== 'cancelled')
-                .map((b) => (
-                  <tr key={b.id}>
-                    <td className="mono">{b.token}</td>
-                    <td>{b.paymentMethod}</td>
-                    <td>
-                      <span className={'badge ' + (b.paymentStatus === 'credited' ? 'success' : 'warn')}>{b.paymentStatus === 'credited' ? t.paid : t.pending}</span>
-                    </td>
-                  </tr>
-                ))}
+              {completedOrActiveBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="empty-note">No payment transactions recorded yet.</td>
+                </tr>
+              ) : (
+                completedOrActiveBookings.map((b) => {
+                  const isCredited = b.paymentStatus === 'credited';
+                  const isFailed = b.paymentStatus === 'payment_failed';
+
+                  return (
+                    <tr key={b.id}>
+                      <td className="mono font-bold">{b.token}</td>
+                      <td className="mono" style={{ fontWeight: 600 }}>₹{(b.price || 0).toLocaleString('en-IN')}</td>
+                      <td>{b.paymentMethod || 'Direct DBT'}</td>
+                      <td>
+                        <span className={`status-badge ${isCredited ? 'completed' : isFailed ? 'cancelled' : 'processing'}`}>
+                          {(b.paymentStatus || 'Initiated').toUpperCase().replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ padding: '4px 10px', fontSize: 11.5 }}
+                          onClick={() => (onOpenReceipt ? onOpenReceipt(b) : setSelectedReceiptBooking(b))}
+                        >
+                          📄 View Receipt
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

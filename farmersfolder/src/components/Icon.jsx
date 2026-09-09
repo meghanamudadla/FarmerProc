@@ -48,6 +48,32 @@ export default function Icon({ name }) {
         <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
       </>
     ),
+    myCrops: (
+      <>
+        <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+        <path d="M12 6v6l4 2" />
+      </>
+    ),
+    findCentres: (
+      <>
+        <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+        <circle cx="12" cy="10" r="3" />
+      </>
+    ),
+    grievances: (
+      <>
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </>
+    ),
+    mandiStaff: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </>
+    ),
   };
   return <svg {...p}>{paths[name]}</svg>;
 }

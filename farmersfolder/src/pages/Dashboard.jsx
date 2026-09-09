@@ -4,7 +4,10 @@ import { centreById, SLOT_TIMES } from '../data/domain.js';
 export default function Dashboard({
   t, lang, activeBooking, peopleAhead, estWaitMin, previousBookings,
   setPage, setDetailBookingId, bookingCropLabel, totalValue, paidValue, pendingValue,
+  crops = [], farmer,
 }) {
+  const activeCrops = crops.filter((c) => c.status !== 'INACTIVE');
+
   return (
     <>
       <div className="grid-3">
@@ -92,6 +95,7 @@ export default function Dashboard({
         </div>
 
         <div>
+          {/* Payment Summary */}
           <div className="section-title">
             <h2>{t.paymentSummary}</h2>
           </div>
@@ -118,6 +122,52 @@ export default function Dashboard({
             </div>
             <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setPage('payments')}>
               {t.viewTx}
+            </button>
+          </div>
+
+          {/* PART 27: Registered Crops Summary on Dashboard */}
+          <div className="section-title" style={{ marginTop: 20 }}>
+            <h2>{lang === 'en' ? 'Registered Crops' : 'నమోదైన పంటలు'}</h2>
+            <span className="badge" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: 11, fontWeight: 700 }}>
+              {activeCrops.length} {lang === 'en' ? 'Registered' : 'నమోదు'}
+            </span>
+          </div>
+          <div className="card">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {activeCrops.length === 0 ? (
+                <div className="empty-note" style={{ padding: '10px 0', textAlign: 'center' }}>
+                  No crops registered yet.
+                </div>
+              ) : (
+                activeCrops.slice(0, 5).map((c) => (
+                  <div
+                    key={c.cropRecordId}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 10px',
+                      background: 'var(--surface-2)',
+                      borderRadius: 6,
+                      fontSize: 13,
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>{c.cropSource === 'CUSTOM' ? '🌿' : '🌾'}</span> {c.cropName}
+                    </span>
+                    <span className="mono" style={{ color: 'var(--ink-muted)', fontSize: 12 }}>
+                      Rem: {c.remainingQuantity != null ? c.remainingQuantity : c.eligibleQty} Qtl
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            <button
+              className="btn btn-ghost"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 14, fontSize: 12.5 }}
+              onClick={() => setPage('myCrops')}
+            >
+              {lang === 'en' ? 'View My Crops →' : 'నా పంటలను చూడండి →'}
             </button>
           </div>
         </div>

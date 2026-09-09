@@ -1,94 +1,126 @@
-import { centreById, SLOT_TIMES } from '../data/domain.js';
-import QR from '../components/QR.jsx';
+import { useState } from 'react';
+import BookingTicketCard from '../components/BookingTicketCard.jsx';
+import GateScannerModal from '../components/GateScannerModal.jsx';
+import QueueStatusCard from '../components/QueueStatusCard.jsx';
+import MandiOperatorPanel from '../components/MandiOperatorPanel.jsx';
+import ProcurementReceiptCard from '../components/ProcurementReceiptCard.jsx';
 
 export default function Queue({
-  t, lang, activeBooking, peopleAhead, estWaitMin, queueTick,
-  bookingCropLabel, openReschedule, cancelActiveBooking,
+  t, lang, farmer, bookings, activeBooking,
+  bookingCropLabel, openReschedule, cancelActiveBooking, onCheckInSuccess, onUpdateBookingStatus, onResetQueueData, onNavigateToMandiStaff,
 }) {
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
   return (
-    <div style={{ maxWidth: 520 }}>
+    <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {!activeBooking ? (
         <div className="card empty-note">{t.noBookings}</div>
       ) : (
-        <div className="queue-panel">
-          <div style={{ fontSize: 12, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '.06em' }}>{t.liveQueueStatus}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 600, marginTop: 6 }}>{activeBooking.token}</div>
-          <div className="queue-row">
-            <div>
-              <div className="queue-label">{t.currentlyServing}</div>
-              <div className="queue-num">PDC-A{String(100 + queueTick).slice(-3)}</div>
-            </div>
-            <div>
-              <div className="queue-label">{t.peopleAhead}</div>
-              <div className="queue-num">{peopleAhead}</div>
-            </div>
-            <div>
-              <div className="queue-label">{t.estWaitTime}</div>
-              <div className="queue-num">
-                ~{estWaitMin} {t.mins}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {activeBooking && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="qr-box">
-            <QR value={activeBooking.token} />
-            <button className="btn btn-ghost">{t.downloadGate}</button>
-          </div>
-          <div className="divider"></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', fontSize: 13 }}>
-            <div>
-              <div className="label" style={{ marginBottom: 2 }}>
-                {t.crop}
-              </div>
-              {bookingCropLabel(activeBooking)} ({activeBooking.qty} Qtl)
-            </div>
-            <div>
-              <div className="label" style={{ marginBottom: 2 }}>
-                {t.centre}
-              </div>
-              {centreById(activeBooking.centreId)[lang]}
-            </div>
-            <div>
-              <div className="label" style={{ marginBottom: 2 }}>
-                {t.date}
-              </div>
-              {activeBooking.date}
-            </div>
-            <div>
-              <div className="label" style={{ marginBottom: 2 }}>
-                {t.timeSlot}
-              </div>
-              {SLOT_TIMES[activeBooking.slotIdx]}
-            </div>
-          </div>
-          <div className="divider"></div>
-          <div className="label">
-            {t.estPrice}
-            {activeBooking.cropCustom && (
-              <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> · {lang === 'en' ? 'provisional estimate' : 'తాత్కాలిక అంచనా'}</span>
-            )}
-          </div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: 'var(--success)' }}>
-            ₹{activeBooking.price.toLocaleString('en-IN')}
-          </div>
-          {activeBooking.cropCustom && (
-            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
-              {lang === 'en' ? 'Not on the MSP list — centre officer confirms the final rate on arrival.' : 'MSP జాబితాలో లేదు — కేంద్ర అధికారి చేరుకున్నప్పుడు తుది ధరను నిర్ధారిస్తారు.'}
+        <div>
+          {/* Phase 6 Real-Time Queue Status Card */}
+          <QueueStatusCard
+            t={t}
+            lang={lang}
+            activeBooking={activeBooking}
+            queueList={bookings}
+          />
+
+          {/* Phase 7 Certified Procurement & Weighing Slip */}
+          {activeBooking.status === 'completed' && (
+            <div style={{ marginTop: 16 }}>
+              <ProcurementReceiptCard
+                t={t}
+                lang={lang}
+                booking={activeBooking}
+                farmer={farmer}
+              />
             </div>
           )}
-          <div className="btn-row">
-            <button className="btn btn-danger" onClick={cancelActiveBooking}>
-              {t.cancelBooking}
-            </button>
-            <button className="btn btn-ghost" onClick={() => openReschedule(activeBooking)}>
-              {t.reschedule}
-            </button>
+
+          <div style={{ marginTop: 16 }}>
+            {/* Phase 5 Secure Booking Ticket */}
+            <BookingTicketCard
+              t={t}
+              lang={lang}
+              booking={activeBooking}
+              farmer={farmer}
+              cropLabel={bookingCropLabel(activeBooking)}
+              onSimulateCheckIn={() => setIsScannerOpen(true)}
+            />
+
+            <div className="card" style={{ marginTop: 14 }}>
+              <div className="label">
+                {t.estPrice}
+                {activeBooking.cropCustom && (
+                  <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> · provisional estimate</span>
+                )}
+              </div>
+              <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: 'var(--success)' }}>
+                ₹{activeBooking.price.toLocaleString('en-IN')}
+              </div>
+
+              <div className="btn-row" style={{ marginTop: 12 }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                  onClick={() => setIsScannerOpen(true)}
+                >
+                  📷 Open Mandi Officer Gate Scanner
+                </button>
+                <button className="btn btn-ghost" onClick={() => openReschedule(activeBooking)}>
+                  {t.reschedule}
+                </button>
+                <button className="btn btn-danger" onClick={cancelActiveBooking}>
+                  {t.cancelBooking}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Link to Dedicated Full-Page Mandi Staff Console */}
+      <div
+        className="card"
+        style={{
+          marginTop: 22,
+          border: '1px solid var(--border-focus)',
+          background: 'var(--surface-elevated)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+          padding: 16,
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
+            🏢 Authorized Mandi Staff Control Console
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3 }}>
+            Weighbridge operators & gate officers: Call tokens to counters, conduct digital moisture & scale weighing, and finalize procurement.
+          </div>
+        </div>
+        <button
+          className="btn btn-primary"
+          style={{ padding: '8px 16px', fontWeight: 700, fontSize: 12.5 }}
+          onClick={() => onNavigateToMandiStaff && onNavigateToMandiStaff()}
+        >
+          Open Mandi Staff Console →
+        </button>
+      </div>
+
+      {/* Gate Scanner Simulator Modal */}
+      <GateScannerModal
+        t={t}
+        lang={lang}
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        bookings={bookings}
+        farmer={farmer}
+        onCheckInSuccess={onCheckInSuccess}
+      />
     </div>
   );
 }
