@@ -30,7 +30,7 @@ export const STR = {
     fullName: 'Full Name', mobile: 'Mobile Number', location: 'Location', landArea: 'Land Area (Acres)', primaryCrop: 'Primary Crop',
     notProvided: 'Not provided',
     landRequired: 'Land area is required — this sets the quantity you are eligible to sell.',
-    notifTitle: 'Notifications', notifSub: 'Every update also reaches you by SMS and voice call, in your chosen language — not only in this app.',
+    notifTitle: 'Notifications', notifSub: 'In-app notifications (SMS and voice call notifications are simulated for demo purposes).',
     channels: { sms: 'SMS', push: 'App', ivr: 'IVR Call' },
     payStage1: 'Purchase Recorded', payStage2: 'Payment Initiated', payStage3: 'Bank Account Verified', payStage4: 'Bank Processing', payStage5: 'Payment Credited',
     disbursalMethod: 'Disbursal Method', autoUpdateNote: 'This status updates automatically as your payment moves through the bank — there is nothing for you to do here.',

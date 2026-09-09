@@ -150,7 +150,7 @@ export const HOURLY_TODAY = [
 
 // ─── CONGESTION & TREND DATA (Rule-based / Illustrative baseline data) ───
 export const FORECAST = {
-  tomorrowArrivals: { predicted: 1380, low: 1220, high: 1540, confidence: 0.82 },
+  tomorrowArrivals: { estimated: 1380, low: 1220, high: 1540, thresholdRate: 0.82 },
   peakWindow: '9:00 AM – 12:00 PM',
   modelBasis: 'Based on last 3 harvest-week baseline data, current seasonal arrival patterns, and weather reports (clear skies, 32°C)',
   atRiskCenters: [

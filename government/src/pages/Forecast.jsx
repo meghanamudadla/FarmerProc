@@ -5,7 +5,7 @@ import { FORECAST } from '../data/mockData';
 
 export default function Forecast() {
   const { canControl } = useAuth();
-  const { tomorrowArrivals, peakWindow, modelBasis, atRiskCenters, redirections } = FORECAST;
+  const { tomorrowArrivals, peakWindow, trendBasis, atRiskCenters, redirections } = FORECAST;
 
   return (
     <div className="space-y-6">
@@ -14,14 +14,14 @@ export default function Forecast() {
         <p className="text-xs text-text-muted mt-0.5">Arrival trends and peak window estimations based on historical baseline data and weather reports</p>
       </div>
 
-      {/* Prediction cards */}
+      {/* Trend summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Tomorrow's Expected Arrivals</div>
-          <div className="font-tabular text-3xl font-bold text-accent-blue">{tomorrowArrivals.predicted}</div>
+          <div className="text-xs text-text-muted uppercase tracking-wider mb-2">Tomorrow's Estimated Arrivals</div>
+          <div className="font-tabular text-3xl font-bold text-accent-blue">{tomorrowArrivals.estimated || tomorrowArrivals.predicted}</div>
           <div className="flex items-center gap-2 mt-2">
             <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-accent-blue to-accent-cyan rounded-full" style={{width:`${tomorrowArrivals.confidence*100}%`}} />
+              <div className="h-full bg-gradient-to-r from-accent-blue to-accent-cyan rounded-full" style={{width:`${(tomorrowArrivals.thresholdRate || 0.82)*100}%`}} />
             </div>
             <span className="text-xs text-text-muted font-tabular">{Math.round(tomorrowArrivals.confidence*100)}% est. accuracy</span>
           </div>

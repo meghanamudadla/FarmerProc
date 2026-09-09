@@ -148,7 +148,7 @@ export default function FarmerProcessing() {
           {/* Quantity & Weight Model Breakdown */}
           <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} className="hub-card">
             <div className="hub-card-header">
-              <h2><Scale size={18} /> Quantity & Weight Model</h2>
+              <h2><Scale size={18} /> Quantity & Weight Breakdown</h2>
               <Link to={`/tokens/${token.token_number}/weighing`} className="btn-card-action">
                 <span>{netKg > 0 ? 'Edit Weight' : 'Start Weighing'}</span>
                 <ArrowRight size={14} />

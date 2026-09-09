@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rythu Mandi Telephony Subsystem (Group 1)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 10% 20%, rgba(18, 38, 30, 0.95) 0%, rgba(10, 15, 20, 0.98) 90.2%);
+      --card-bg: rgba(23, 37, 30, 0.65);
+      --card-border: rgba(46, 125, 50, 0.35);
+      --accent-green: #00e676;
+      --accent-gold: #ffd600;
+      --accent-blue: #00b0ff;
+      --text-main: #f0fdf4;
+      --text-muted: #94a3b8;
+      --phone-border: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans Telugu', sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      font-size: 38px;
+      background: rgba(0, 230, 118, 0.15);
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      border: 1px solid var(--accent-green);
+      box-shadow: 0 0 24px rgba(0, 230, 118, 0.25);
+    }
+
+    .brand h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(0, 230, 118, 0.1);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: var(--accent-green);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr 360px;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    /* Phone Simulator UI */
+    .phone-container {
+      background: #0f1712;
+      border: 2px solid var(--phone-border);
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .phone-screen {
+      background: #060907;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+    }
+
+    .call-status {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-green);
+      margin-bottom: 8px;
+    }
+
+    .phone-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 2px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .phone-input:focus {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 12px rgba(0, 230, 118, 0.2);
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .key-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px 0;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.15s ease;
+    }
+
+    .key-btn span {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .key-btn:hover {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: var(--accent-green);
+      transform: translateY(-2px);
+    }
+
+    .key-btn:active {
+      transform: scale(0.95);
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: none;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+    }
+
+    .btn-opt1 {
+      background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.3);
+    }
+
+    .btn-opt1:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 200, 83, 0.4);
+    }
+
+    .btn-opt2 {
+      background: linear-gradient(135deg, #0091ea 0%, #01579b 100%);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0, 145, 234, 0.3);
+    }
+
+    .btn-opt2:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 145, 234, 0.4);
+    }
+
+    /* Live Audio Player & Speech Panel */
+    .audio-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 230, 118, 0.25);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .audio-box h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-green);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    audio {
+      width: 100%;
+      height: 38px;
+      margin: 8px 0;
+      border-radius: 8px;
+    }
+
+    .transcript-box {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Noto Sans Telugu', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      border-left: 3px solid var(--accent-green);
+      margin-top: 10px;
+    }
+
+    /* Smartphone SMS Mockup */
+    .phone-sms-mockup {
+      background: #111813;
+      border: 3px solid #334155;
+      border-radius: 28px;
+      padding: 16px;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    .sms-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .sms-messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sms-bubble {
+      background: linear-gradient(135deg, #1e3a29 0%, #15291d 100%);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      border-radius: 16px 16px 16px 4px;
+      padding: 14px;
+      max-width: 90%;
+      font-family: 'Noto Sans Telugu', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #f1f5f9;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .sms-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .token-highlight {
+      display: inline-block;
+      background: rgba(255, 214, 0, 0.2);
+      color: var(--accent-gold);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Queue & Bookings Inspector */
+    .queue-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .queue-item:hover {
+      background: rgba(0, 230, 118, 0.06);
+      border-color: rgba(0, 230, 118, 0.2);
+    }
+
+    .queue-token {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    .queue-phone {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .queue-time {
+      font-size: 12px;
+      background: rgba(0, 176, 255, 0.15);
+      color: var(--accent-blue);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Endpoints & Architecture Cheat Sheet */
+    .endpoints-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .endpoint-card {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .endpoint-card .method {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .method-post { background: #0284c7; color: #fff; }
+    .method-get { background: #16a34a; color: #fff; }
+
+    .endpoint-card .url {
+      font-family: monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+
+    .endpoint-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🌾</div>
+        <div>
+          <h1>Rythu Mandi Telephony Console</h1>
+          <p>Group 1 Subsystem — Exotel IVR Webhooks, Telugu Voice Menu, & Fast2SMS Integration</p>
+        </div>
+      </div>
+      <div class="badge-status">
+        <span class="dot"></span>
+        <span id="server-status-text">Telephony Backend Online</span>
+      </div>
+    </header>
+
+    <!-- 3-Column Core Workspace -->
+    <div class="grid">
+      
+      <!-- Col 1: Phone Simulator (Farmer Handset) -->
+      <div class="card">
+        <h2>📞 Farmer Phone Simulator</h2>
+        <div class="phone-container">
+          <div class="phone-screen">
+            <div class="call-status" id="call-status">Ready to Call</div>
+            <input type="text" id="farmer-phone-input" class="phone-input" value="9876543210" placeholder="10-digit Phone" maxlength="10">
+          </div>
+
+          <div class="keypad-grid">
+            <button class="key-btn" onclick="pressKey('1')">1<span>స్లాట్</span></button>
+            <button class="key-btn" onclick="pressKey('2')">2<span>క్యూ</span></button>
+            <button class="key-btn" onclick="pressKey('3')">3<span>DEF</span></button>
+            <button class="key-btn" onclick="pressKey('4')">4<span>GHI</span></button>
+            <button class="key-btn" onclick="pressKey('5')">5<span>JKL</span></button>
+            <button class="key-btn" onclick="pressKey('6')">6<span>MNO</span></button>
+            <button class="key-btn" onclick="pressKey('7')">7<span>PQRS</span></button>
+            <button class="key-btn" onclick="pressKey('8')">8<span>TUV</span></button>
+            <button class="key-btn" onclick="pressKey('9')">9<span>WXYZ</span></button>
+            <button class="key-btn" onclick="pressKey('*')">*</button>
+            <button class="key-btn" onclick="pressKey('0')">0<span>+</span></button>
+            <button class="key-btn" onclick="pressKey('#')">#</button>
+          </div>
+
+          <!-- Direct Architecture Action Triggers -->
+          <button id="btn-book-slot" class="action-btn btn-opt1" onclick="triggerIvrOption('1')">
+            <span>🎟️</span> Press 1: Book Slot (స్లాట్ బుకింగ్)
+          </button>
+          <button id="btn-check-queue" class="action-btn btn-opt2" onclick="triggerIvrOption('2')">
+            <span>⏳</span> Press 2: Check Queue Status (క్యూ స్టేటస్)
+          </button>
+        </div>
+
+        <!-- Initial Menu Audio Trigger -->
+        <div style="margin-top: 14px;">
+          <button class="action-btn" style="background: rgba(255,255,255,0.08); color: #fff;" onclick="playMenuGreeting()">
+            🔊 Play Initial IVR Greeting in Telugu
+          </button>
+        </div>
+      </div>
+
+      <!-- Col 2: Telephony Audio Player & Spoken Response -->
+      <div class="card">
+        <h2>🗣️ Telugu Voice Output (Exotel Play/Say Applet)</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Dynamic Telugu speech generated for the Exotel call stream.
+        </p>
+
+        <div class="audio-box">
+          <h4><span>🔊</span> Live Call Audio Playback</h4>
+          <audio id="audio-player" controls autoplay style="display: block;"></audio>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;" id="audio-url-label">
+            Audio URL: Waiting for call action...
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <h4 style="font-size: 13px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+            Spoken Transcript (Telugu TTS)
+          </h4>
+          <div id="transcript-display" class="transcript-box">
+            "రైతు బంధు మార్కెట్ యార్డ్ కు స్వాగతం. స్లాట్ బుకింగ్ కోసం 1 నొక్కండి. మీ క్యూ స్టేటస్ తెలుసుకోవడానికి 2 నొక్కండి."
+          </div>
+        </div>
+
+        <!-- Exotel Webhook Response Debug View -->
+        <div style="margin-top: 20px;">
+          <h4 style="font-size: 13px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+            Exotel Passthru JSON Response
+          </h4>
+          <pre id="json-debug" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 10px; font-size: 12px; color: #a5f3fc; overflow-x: auto; max-height: 180px;">{}</pre>
+        </div>
+      </div>
+
+      <!-- Col 3: Fast2SMS Telugu Message Receiver (Farmer Phone Screen) -->
+      <div class="card">
+        <h2>📱 Fast2SMS Farmer Inbox</h2>
+        <div class="phone-sms-mockup">
+          <div class="sms-header">
+            <span>RYTHU-MANDI</span>
+            <span>Just Now</span>
+          </div>
+
+          <div id="sms-inbox" class="sms-messages-container">
+            <div class="sms-bubble">
+              నమస్కారం రైతు సోదరా, మీ మండి స్లాట్ బుకింగ్ విజయవంతమైంది.<br>
+              టోకెన్ నంబర్: <span class="token-highlight">MND-104</span><br>
+              సమయం: 11:00 AM<br>
+              మార్కెట్: ఖమ్మం మార్కెట్ యార్డ్.
+              <div class="sms-meta">Delivered via Fast2SMS (Unicode)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Active Tokens & Telephony Endpoints -->
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      
+      <!-- Group 2 Queue State -->
+      <div class="card">
+        <h2>📊 Group 2 Token Queue Monitor</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Tokens generated and managed by the Group 2 backend subsystem.
+        </p>
+        <div id="queue-list" style="max-height: 250px; overflow-y: auto;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Exotel Setup Cheat-sheet -->
+      <div class="card">
+        <h2>⚡ Exotel Flow Builder Configuration</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+          Copy these URLs into your Exotel Call Applets:
+        </p>
+
+        <div class="endpoints-grid">
+          <div class="endpoint-card">
+            <span class="method method-post">POST / GET</span>
+            <div class="url" id="passthru-url">http://localhost:3000/api/ivr/handle-input</div>
+            <p><strong>Passthru Applet:</strong> Set this URL in Exotel. Pass <code>Digits</code> from Gather applet.</p>
+          </div>
+
+          <div class="endpoint-card">
+            <span class="method method-get">GET</span>
+            <div class="url" id="menu-url">http://localhost:3000/api/ivr/menu</div>
+            <p><strong>Greeting Applet:</strong> Fetches standard initial Telugu greeting audio.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const serverOrigin = window.location.origin;
+    document.getElementById('passthru-url').innerText = `${serverOrigin}/api/ivr/handle-input`;
+    document.getElementById('menu-url').innerText = `${serverOrigin}/api/ivr/menu`;
+
+    function pressKey(key) {
+      if (key === '1' || key === '2') {
+        triggerIvrOption(key);
+      } else {
+        alert(`You pressed '${key}'. The IVR menu only listens for '1' (Book Slot) or '2' (Check Queue Status).`);
+      }
+    }
+
+    async function triggerIvrOption(digit) {
+      const phone = document.getElementById('farmer-phone-input').value.trim() || '9876543210';
+      const callStatus = document.getElementById('call-status');
+      callStatus.innerText = `Processing Option ${digit}...`;
+
+      try {
+        const response = await fetch('/api/test/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber: phone, digit })
+        });
+
+        const data = await response.json();
+        document.getElementById('json-debug').innerText = JSON.stringify(data, null, 2);
+
+        if (data.spoken_text) {
+          document.getElementById('transcript-display').innerText = data.spoken_text;
+        }
+
+        if (data.audio_url) {
+          const audioPlayer = document.getElementById('audio-player');
+          audioPlayer.src = data.audio_url;
+          audioPlayer.play().catch(e => console.log('Autoplay prevented by browser:', e));
+          document.getElementById('audio-url-label').innerText = `Audio URL: ${data.audio_url}`;
+        }
+
+        callStatus.innerText = digit === '1' ? 'Slot Booked! (MND Token)' : 'Queue Status Played';
+
+        // Refresh SMS and Queue view
+        fetchStatus();
+      } catch (err) {
+        console.error('Error triggering IVR option:', err);
+        callStatus.innerText = 'Call Error';
+      }
+    }
+
+    async function playMenuGreeting() {
+      try {
+        const res = await fetch('/api/ivr/menu');
+        const data = await res.json();
+        if (data.audio_url) {
+          const audioPlayer = document.getElementById('audio-player');
+          audioPlayer.src = data.audio_url;
+          audioPlayer.play().catch(e => console.log(e));
+          document.getElementById('transcript-display').innerText = data.prompt_telugu;
+          document.getElementById('audio-url-label').innerText = `Audio URL: ${data.audio_url}`;
+        }
+      } catch (err) {
+        console.error('Failed to load menu audio', err);
+      }
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        // Update SMS list
+        const smsContainer = document.getElementById('sms-inbox');
+        if (data.smsHistory && data.smsHistory.length > 0) {
+          smsContainer.innerHTML = data.smsHistory.map(sms => `
+            <div class="sms-bubble">
+              ${sms.message.replace(/\n/g, '<br>')}
+              <div class="sms-meta">To: +91 ${sms.to} • ${new Date(sms.timestamp).toLocaleTimeString()} (${sms.status})</div>
+            </div>
+          `).join('');
+        }
+
+        // Update Queue list
+        const queueContainer = document.getElementById('queue-list');
+        if (data.activeBookings && data.activeBookings.length > 0) {
+          queueContainer.innerHTML = data.activeBookings.map(b => `
+            <div class="queue-item">
+              <div>
+                <div class="queue-token">${b.tokenId}</div>
+                <div class="queue-phone">Farmer: +91 ${b.phoneNumber}</div>
+              </div>
+              <div class="queue-time">${b.slotTime}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Status fetch error', err);
+      }
+    }
+
+    // Initial load
+    fetchStatus();
+    setInterval(fetchStatus, 5000);
+  </script>
+</body>
+</html>

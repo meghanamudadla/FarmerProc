@@ -36,7 +36,8 @@ function AppRoutes() {
       <Route path="/centers/:id" element={<ProtectedRoute><CenterDetail /></ProtectedRoute>} />
       <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-      <Route path="/forecast" element={<ProtectedRoute><Forecast /></ProtectedRoute>} />
+      <Route path="/congestion-trends" element={<ProtectedRoute><Forecast /></ProtectedRoute>} />
+      <Route path="/forecast" element={<Navigate to="/congestion-trends" replace />} />
       <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
       <Route path="/farmers" element={<ProtectedRoute><FarmerManagement /></ProtectedRoute>} />
       <Route path="/center-management" element={<ProtectedRoute><CenterManagement /></ProtectedRoute>} />

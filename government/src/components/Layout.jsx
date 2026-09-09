@@ -54,7 +54,7 @@ export default function Layout({ children }) {
           </div>
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-              <div className="text-sm font-semibold text-text-primary whitespace-nowrap">AgroProcure</div>
+              <div className="text-sm font-semibold text-text-primary whitespace-nowrap">FarmerProc</div>
               <div className="text-[10px] text-text-muted whitespace-nowrap">Government Command Center</div>
             </motion.div>
           )}
