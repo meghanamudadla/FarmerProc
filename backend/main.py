@@ -5,7 +5,11 @@ from database import engine
 from database import Base
 from farmers.routes import router as farmer_router
 from centers.routes import router as center_router
-
+from slots.routes import router as slot_router
+from bookings.routes import router as booking_router
+from task_queue.routes import router as queue_router
+from procurement.routes import router as procurement_router
+from payments.routes import router as payment_router
 import models
 
 
@@ -21,6 +25,11 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
 app.include_router(farmer_router)
 app.include_router(center_router)
+app.include_router(slot_router)
+app.include_router(booking_router)
+app.include_router(queue_router)
+app.include_router(procurement_router)
+app.include_router(payment_router)
 
 
 @app.get("/")

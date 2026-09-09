@@ -65,7 +65,7 @@ class SlotCreate(BaseModel):
     date: date
     start_time: time
     end_time: time
-    capacity: int = 20
+    capacity: int = Field(default=20, gt=0, le=500)
 
 
 class SlotResponse(BaseModel):
@@ -138,3 +138,20 @@ class PaymentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QueueBookingResponse(BaseModel):
+    id: int
+    token_number: int
+    farmer_id: int
+    farmer_name: str
+    slot_id: int
+    status: str
+    slot_date: date
+    start_time: time
+    end_time: time
+
+
+class QueueResponse(BaseModel):
+    center_id: int
+    currently_serving: Optional[QueueBookingResponse] = None
+    waiting: list[QueueBookingResponse]
