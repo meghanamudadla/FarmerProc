@@ -122,9 +122,9 @@ class BookingResponse(BaseModel):
 class ProcurementCreate(BaseModel):
     booking_id: int
     crop: str
-    quantity: float
+    quantity: float = Field(gt=0)
     quality: Optional[str] = None
-    price_per_kg: Optional[float] = None
+    price_per_kg: Optional[float] = Field(default=None, ge=0)
 
 
 class ProcurementResponse(BaseModel):
@@ -234,6 +234,40 @@ class WeighmentResponse(BaseModel):
     accepted_weight_kg: float
     accepted_quintals: float
 
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
+class QualityCheckCreate(BaseModel):
+    moisture_percent: float = Field(ge=0)
+    foreign_matter_percent: float = Field(ge=0)
+    damaged_grains_percent: float = Field(ge=0)
+    slightly_damaged_percent: float = Field(ge=0)
+    shrivelled_broken_percent: float = Field(ge=0)
+    other_grains_percent: float = Field(ge=0)
+    weevilled_grains_percent: float = Field(ge=0)
+
+
+class QualityCheckResponse(BaseModel):
+    id: int
+    booking_id: int
+
+    moisture_percent: float
+    foreign_matter_percent: float
+    damaged_grains_percent: float
+    slightly_damaged_percent: float
+    shrivelled_broken_percent: float
+    other_grains_percent: float
+    weevilled_grains_percent: float
+
+    grade: Optional[str] = None
+    result: str
+    rejection_reason: Optional[str] = None
+    recommendation: Optional[str] = None
+    quality_deduction: float
     created_at: datetime
 
     class Config:

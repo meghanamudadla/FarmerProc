@@ -19,6 +19,9 @@ from notifications.routes import router as notification_router
 from crops.routes import router as crop_router
 from checkin.routes import router as checkin_router
 from weighing.routes import router as weighing_router
+from quality.routes import router as quality_router 
+from msp.routes import router as msp_router
+
 
 app = FastAPI(
     title="FarmerProc API",
@@ -66,7 +69,8 @@ app.include_router(notification_router)
 app.include_router(crop_router)
 app.include_router(checkin_router)
 app.include_router(weighing_router)
-
+app.include_router(quality_router)
+app.include_router(msp_router)
 # =========================================================
 # ROOT
 # =========================================================
