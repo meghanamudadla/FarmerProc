@@ -9,15 +9,45 @@ const DEMO_USERS = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('farmerproc_gov_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
-  const login = useCallback((roleKey) => {
-    const u = DEMO_USERS[roleKey];
-    if (u) setUser(u);
+  const login = useCallback((roleKey, customCredentials = null) => {
+    let u = DEMO_USERS[roleKey];
+    if (!u && customCredentials) {
+      u = {
+        id: 'u_' + Date.now(),
+        name: customCredentials.name || customCredentials.officerId || 'Government Official',
+        role: customCredentials.role || 'District Admin',
+        email: customCredentials.email || 'official@gov.in',
+        district: customCredentials.district || null,
+      };
+    }
+    if (u) {
+      setUser(u);
+      try {
+        localStorage.setItem('farmerproc_gov_user', JSON.stringify(u));
+      } catch (e) {
+        console.error('Failed to save auth state to localStorage:', e);
+      }
+    }
     return !!u;
   }, []);
 
-  const logout = useCallback(() => setUser(null), []);
+  const logout = useCallback(() => {
+    setUser(null);
+    try {
+      localStorage.removeItem('farmerproc_gov_user');
+    } catch (e) {
+      console.error('Failed to clear auth state from localStorage:', e);
+    }
+  }, []);
 
   const isStateAdmin = user?.role === 'State Admin';
   const isDistrictAdmin = user?.role === 'District Admin';
@@ -37,3 +67,4 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
+
