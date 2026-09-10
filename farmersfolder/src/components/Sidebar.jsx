@@ -25,7 +25,6 @@ export default function Sidebar({ t, lang, setLang, page, setPage, setBookStep, 
         />
         <NavItem icon="bookings" label={t.nav.bookings} active={page === 'bookings'} onClick={() => setPage('bookings')} />
         <NavItem icon="queue" label={t.nav.queue} active={page === 'queue'} onClick={() => setPage('queue')} />
-
         <NavItem icon="payments" label={t.nav.payments} active={page === 'payments'} onClick={() => setPage('payments')} />
         <NavItem icon="grievances" label={t.nav.grievances || 'Grievances'} active={page === 'grievances'} onClick={() => setPage('grievances')} />
         <NavItem icon="notifications" label={t.nav.notifications} active={page === 'notifications'} onClick={() => setPage('notifications')} />

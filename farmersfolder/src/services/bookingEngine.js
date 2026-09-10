@@ -1,5 +1,5 @@
 /**
- * Rule-Based Slot Booking Engine
+ * Smart Slot Booking Engine (Phase 4)
  *
  * Implements the 14-step backend validation pipeline, simulated atomic slot locking
  * (race condition prevention), double-booking protection, quantity quota verification,

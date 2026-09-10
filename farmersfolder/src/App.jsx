@@ -25,12 +25,9 @@ import MyCrops from './pages/MyCrops.jsx';
 import FindCentres from './pages/FindCentres.jsx';
 import Grievances from './pages/Grievances.jsx';
 import Receipt from './pages/Receipt.jsx';
-import MandiStaffPage from './pages/MandiStaffPage.jsx';
 import { complaintService } from './services/complaintService.js';
 import { offlineSyncService } from './services/offlineSyncService.js';
 import SecurityTestModal from './components/SecurityTestModal.jsx';
-
-const RECENT_NUMBER = '8125421544';
 
 function formatMobile(v) {
   const digits = v.replace(/\D/g, '').slice(0, 10);
@@ -66,9 +63,12 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }
 
+  // Auth uses sessionStorage (not localStorage): a refresh or in-tab navigation keeps
+  // you logged in on the same page, but opening the app fresh (new tab, new browser
+  // session, or the next day) always lands on the Login page, as a real login should.
   const [authed, setAuthed] = useState(() => {
     try {
-      const stored = localStorage.getItem('kisanseva_authed');
+      const stored = sessionStorage.getItem('kisanseva_authed');
       return stored !== null ? JSON.parse(stored) : false;
     } catch {
       return false;
@@ -77,7 +77,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kisanseva_authed', JSON.stringify(authed));
+      sessionStorage.setItem('kisanseva_authed', JSON.stringify(authed));
     } catch (e) {
       console.warn('Could not persist authed', e);
     }
@@ -126,7 +126,7 @@ export default function App() {
     setAuthed(false);
     setPage('dashboard');
     try {
-      localStorage.setItem('kisanseva_authed', JSON.stringify(false));
+      sessionStorage.setItem('kisanseva_authed', JSON.stringify(false));
       localStorage.setItem('kisanseva_active_page', 'dashboard');
       window.location.hash = '';
     } catch (e) {}
@@ -505,7 +505,7 @@ export default function App() {
     }
     setAuthed(true);
     try {
-      localStorage.setItem('kisanseva_authed', JSON.stringify(true));
+      sessionStorage.setItem('kisanseva_authed', JSON.stringify(true));
     } catch (e) {}
     const first = (authMode === 'signup' && signupData.name.trim() ? signupData.name.trim() : farmer.fullName).split(' ')[0];
     addNotif('sms', lang === 'en' ? `Welcome${authMode === 'signup' ? '' : ' back'}, ${first}.` : `${authMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${first}.`);
@@ -947,24 +947,10 @@ export default function App() {
             cancelActiveBooking={cancelActiveBooking}
             onUpdateBookingStatus={handleUpdateBookingStatus}
             onResetQueueData={handleResetQueueData}
-            onNavigateToMandiStaff={() => setPage('mandiStaff')}
             onCheckInSuccess={(bId, arrivalTime) => {
               setBookings((bs) => bs.map((b) => (b.id === bId ? { ...b, checkedIn: true, arrivalTime: arrivalTime || '09:30 AM', status: 'checked_in' } : b)));
               addNotif('sms', lang === 'en' ? 'Gate check-in verified. Queue entry created.' : 'గేట్ చెక్-ఇన్ ధృవీకరించబడింది. క్యూ నమోదు సృష్టించబడింది.');
             }}
-          />
-        )}
-
-        {page === 'mandiStaff' && (
-          <MandiStaffPage
-            t={t}
-            lang={lang}
-            farmer={farmer}
-            bookings={bookings}
-            onUpdateBookingStatus={handleUpdateBookingStatus}
-            onResetQueueData={handleResetQueueData}
-            onOpenReceipt={handleOpenReceipt}
-            onBackToQueue={() => setPage('queue')}
           />
         )}
 

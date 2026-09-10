@@ -74,6 +74,12 @@ export default function Icon({ name }) {
         <path d="M9 21V9" />
       </>
     ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
+      </>
+    ),
   };
   return <svg {...p}>{paths[name]}</svg>;
 }
