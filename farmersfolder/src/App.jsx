@@ -7,7 +7,7 @@ import {
 import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
-import { testBackend } from './services/testApi.js';
+
 
 import Sidebar from './components/Sidebar.jsx';
 import TopBar from './components/TopBar.jsx';
@@ -42,15 +42,7 @@ export default function App() {
   const [lang, setLang] = useState('en');
   const t = STR[lang];
   const nt = NOTIF_TEMPLATES[lang];
-    useEffect(() => {
-    testBackend()
-      .then((data) => {
-        console.log("Farmer site backend connected:", data);
-      })
-      .catch((error) => {
-        console.error("Farmer site backend connection failed:", error);
-      });
-  }, []);
+    
 
   const [theme, setTheme] = useState(() => {
     try {
