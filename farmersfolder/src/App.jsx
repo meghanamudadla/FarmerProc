@@ -8,7 +8,6 @@ import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
 
-
 import Sidebar from './components/Sidebar.jsx';
 import TopBar from './components/TopBar.jsx';
 import BookingDetailModal from './components/BookingDetailModal.jsx';
@@ -28,14 +27,7 @@ import Grievances from './pages/Grievances.jsx';
 import Receipt from './pages/Receipt.jsx';
 import { complaintService } from './services/complaintService.js';
 import { offlineSyncService } from './services/offlineSyncService.js';
-import {
-  loginFarmer,
-  logoutFarmer,
-} from './services/authService.js';
 import SecurityTestModal from './components/SecurityTestModal.jsx';
-
-
-
 
 function formatMobile(v) {
   const digits = v.replace(/\D/g, '').slice(0, 10);
@@ -46,7 +38,6 @@ export default function App() {
   const [lang, setLang] = useState('en');
   const t = STR[lang];
   const nt = NOTIF_TEMPLATES[lang];
-    
 
   const [theme, setTheme] = useState(() => {
     try {
@@ -93,15 +84,7 @@ export default function App() {
   }, [authed]);
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-const [role, setRole] = useState('farmer');
-
-/*
- * Password used by the real FastAPI authentication system.
- * Login.jsx collects this value and passes it to login().
- */
-const [authPassword, setAuthPassword] = useState('');
-const [authLoading, setAuthLoading] = useState(false);
-const [authError, setAuthError] = useState('');
+  const [role, setRole] = useState('farmer');
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
@@ -139,7 +122,15 @@ const [authError, setAuthError] = useState('');
     }
   }, [page]);
 
- 
+  function logout() {
+    setAuthed(false);
+    setPage('dashboard');
+    try {
+      sessionStorage.setItem('kisanseva_authed', JSON.stringify(false));
+      localStorage.setItem('kisanseva_active_page', 'dashboard');
+      window.location.hash = '';
+    } catch (e) {}
+  }
 
   const [farmer, setFarmer] = useState({
     farmerId: 'FRM-10245',
@@ -498,244 +489,30 @@ const [authError, setAuthError] = useState('');
     if (el) el.focus();
   }
 
-async function login(loginData = {}) {
-  const {
-    phone,
-    password,
-    mode,
-    signupData: submittedSignupData,
-  } = loginData;
-
-  const loginPhone =
-    phone ||
-    mobile.replace(/\D/g, '');
-
-  const loginPassword =
-    password ||
-    authPassword;
-
-  const currentAuthMode =
-    mode || authMode;
-
-  const currentSignupData =
-    submittedSignupData || signupData;
-
-  if (!loginPhone || loginPhone.length !== 10) {
-    setAuthError(
-      lang === 'en'
-        ? 'Please enter a valid 10-digit mobile number.'
-        : 'చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి.'
-    );
-    return;
-  }
-
-  if (!loginPassword || loginPassword.length < 6) {
-    setAuthError(
-      lang === 'en'
-        ? 'Password must contain at least 6 characters.'
-        : 'పాస్‌వర్డ్ కనీసం 6 అక్షరాలు ఉండాలి.'
-    );
-    return;
-  }
-
-  setAuthLoading(true);
-  setAuthError('');
-
-  try {
-
-    /* =====================================================
-       SIGN UP
-       ===================================================== */
-
-    if (currentAuthMode === 'signup') {
-
-      if (!currentSignupData?.name?.trim()) {
-        throw new Error('Full name is required.');
-      }
-
-      if (!currentSignupData?.village?.trim()) {
-        throw new Error('Village is required.');
-      }
-
-      if (!currentSignupData?.district?.trim()) {
-        throw new Error('District is required.');
-      }
-
-      if (!currentSignupData?.landAcres) {
-        throw new Error('Land area is required.');
-      }
-
-      /*
-       * Create farmer account in FastAPI.
-       *
-       * Backend:
-       * POST /auth/register
-       */
-      await fetch('http://127.0.0.1:8000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: currentSignupData.name.trim(),
-          phone: loginPhone,
-          password: loginPassword,
-          village: currentSignupData.village.trim(),
-          district: currentSignupData.district.trim(),
-          land_area: Number(
-            currentSignupData.landAcres
-          ),
-        }),
-      }).then(async (response) => {
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.detail ||
-            'Registration failed.'
-          );
-        }
-
-        return data;
-      });
+  function login() {
+    if (authMode === 'signup' && signupData.name.trim()) {
+      setFarmer((f) => ({
+        ...f,
+        fullName: signupData.name.trim(),
+        mobile: '+91 ' + mobile,
+        village: signupData.village,
+        district: signupData.district,
+        landAcres: signupData.landAcres,
+        primaryCrop: signupData.primaryCrop,
+        aadhaarLast4: signupData.aadhaarLast4,
+        farmerId: signupData.farmerId,
+      }));
     }
-
-
-    /* =====================================================
-       LOGIN
-       ===================================================== */
-
-    /*
-     * Authenticate against FastAPI.
-     *
-     * Backend:
-     * POST /auth/login
-     */
-    const authResult = await loginFarmer(
-      loginPhone,
-      loginPassword
-    );
-
-
-    /*
-     * Backend authentication succeeded.
-     */
-
-    setAuthPassword(loginPassword);
-
     setAuthed(true);
-
     try {
-      sessionStorage.setItem(
-        'kisanseva_authed',
-        JSON.stringify(true)
-      );
-    } catch (e) {
-      console.warn(
-        'Could not persist authentication state',
-        e
-      );
+      sessionStorage.setItem('kisanseva_authed', JSON.stringify(true));
+    } catch (e) {}
+    const first = (authMode === 'signup' && signupData.name.trim() ? signupData.name.trim() : farmer.fullName).split(' ')[0];
+    addNotif('sms', lang === 'en' ? `Welcome${authMode === 'signup' ? '' : ' back'}, ${first}.` : `${authMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${first}.`);
+    if (authMode === 'signup') {
+      addNotif('push', lang === 'en' ? 'Registration complete. Your eligible quantity has been calculated from your land details.' : 'నమోదు పూర్తయింది. మీ భూమి వివరాల ఆధారంగా అర్హత పరిమాణం లెక్కించబడింది.');
     }
-
-
-    /*
-     * Update the local farmer display information.
-     *
-     * The authoritative farmer profile will be loaded
-     * from the backend in the next integration step.
-     */
-    if (
-      currentAuthMode === 'signup' &&
-      currentSignupData?.name?.trim()
-    ) {
-
-      setFarmer((f) => ({
-        ...f,
-
-        fullName:
-          currentSignupData.name.trim(),
-
-        mobile:
-          '+91 ' + loginPhone,
-
-        village:
-          currentSignupData.village,
-
-        district:
-          currentSignupData.district,
-
-        landAcres:
-          currentSignupData.landAcres,
-
-        primaryCrop:
-          currentSignupData.primaryCrop,
-
-        aadhaarLast4:
-          currentSignupData.aadhaarLast4,
-      }));
-
-    } else {
-
-      setFarmer((f) => ({
-        ...f,
-        mobile:
-          '+91 ' +
-          loginPhone.slice(0, 5) +
-          ' ' +
-          loginPhone.slice(5),
-      }));
-
-    }
-
-
-    const firstName =
-      (
-        currentAuthMode === 'signup' &&
-        currentSignupData?.name?.trim()
-          ? currentSignupData.name.trim()
-          : farmer.fullName
-      ).split(' ')[0];
-
-
-    addNotif(
-      'sms',
-      lang === 'en'
-        ? `Welcome${currentAuthMode === 'signup' ? '' : ' back'}, ${firstName}.`
-        : `${currentAuthMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${firstName}.`
-    );
-
-
-    if (currentAuthMode === 'signup') {
-      addNotif(
-        'push',
-        lang === 'en'
-          ? 'Registration complete. Your FarmerProc account is now connected to the government backend.'
-          : 'నమోదు పూర్తయింది. మీ FarmerProc ఖాతా ప్రభుత్వ బ్యాక్‌ఎండ్‌కు కనెక్ట్ చేయబడింది.'
-      );
-    }
-
-  } catch (error) {
-
-    console.error(
-      'Farmer authentication failed:',
-      error
-    );
-
-    setAuthError(
-      error?.message ||
-      (
-        lang === 'en'
-          ? 'Authentication failed. Please try again.'
-          : 'ప్రామాణీకరణ విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.'
-      )
-    );
-
-  } finally {
-
-    setAuthLoading(false);
   }
-}
 
   function simulateArrival(bookingId) {
     const now = new Date().toLocaleTimeString(lang === 'en' ? 'en-IN' : 'te-IN', { hour: '2-digit', minute: '2-digit' });
@@ -752,38 +529,15 @@ async function login(loginData = {}) {
     addNotif('sms', lang === 'en' ? 'Your registered mobile number has been updated.' : 'మీ నమోదిత మొబైల్ నంబర్ నవీకరించబడింది.');
   }
 
- function logout() {
-  logoutFarmer();
-
-  setAuthed(false);
-  setOtpSent(false);
-  setOtp(['', '', '', '', '', '']);
-  setMobile('');
-  setAuthPassword('');
-  setAuthError('');
-  setAuthMode('signin');
-  setSignupStep(1);
-  setPage('dashboard');
-
-  try {
-    sessionStorage.setItem(
-      'kisanseva_authed',
-      JSON.stringify(false)
-    );
-
-    localStorage.setItem(
-      'kisanseva_active_page',
-      'dashboard'
-    );
-
-    window.location.hash = '';
-  } catch (e) {
-    console.warn(
-      'Could not clear local authentication state',
-      e
-    );
+  function logout() {
+    setAuthed(false);
+    setOtpSent(false);
+    setOtp(['', '', '', '', '', '']);
+    setMobile('');
+    setAuthMode('signin');
+    setSignupStep(1);
+    setPage('dashboard');
   }
-}
 
   const qtyNum = parseFloat(form.qty);
   const overLimit = eligibleQty != null && qtyNum > eligibleQty;
@@ -990,10 +744,6 @@ async function login(loginData = {}) {
         handleOtpChange={handleOtpChange}
         handleOtpKeyDown={handleOtpKeyDown}
         handleOtpPaste={handleOtpPaste}
-        authLoading={authLoading}
-        authError={authError}
-        setAuthError={setAuthError}
-        setAuthPassword={setAuthPassword}
         login={login}
         addNotif={addNotif}
       />
