@@ -40,7 +40,7 @@ def create_crop(
         season=crop_data.season,
         quantity=crop_data.quantity,
         remaining_quantity=crop_data.quantity,
-        status="REGISTERED"
+        status="ACTIVE"
     )
 
     db.add(crop)

@@ -769,3 +769,104 @@ class QualityCheck(Base):
         "Booking",
         back_populates="quality_check"
     )
+
+# ============================================================
+# GRIEVANCE
+# ============================================================
+
+class Grievance(Base):
+    __tablename__ = "grievances"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    complaint_id = Column(
+        String(30),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    farmer_id = Column(
+        Integer,
+        ForeignKey("farmers.id"),
+        nullable=False,
+        index=True
+    )
+
+    transaction_id = Column(
+        String(50),
+        nullable=True
+    )
+
+    category = Column(
+        String(50),
+        nullable=False
+    )
+
+    description = Column(
+        String(2000),
+        nullable=False
+    )
+
+    urgency = Column(
+        String(20),
+        default="MEDIUM",
+        nullable=False
+    )
+
+    attachment_name = Column(
+        String(255),
+        nullable=True
+    )
+
+    status = Column(
+        String(30),
+        default="SUBMITTED",
+        nullable=False
+    )
+
+    assigned_department = Column(
+        String(255),
+        nullable=True
+    )
+
+    assigned_officer = Column(
+        String(255),
+        nullable=True
+    )
+
+    official_response = Column(
+        String(2000),
+        nullable=True
+    )
+
+    resolution_details = Column(
+        String(2000),
+        nullable=True
+    )
+
+    audit_trail = Column(
+        String(5000),
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    farmer = relationship(
+        "Farmer"
+    )

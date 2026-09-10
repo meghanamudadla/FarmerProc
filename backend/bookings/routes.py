@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from task_queue.manager import manager
 from database import get_db
-from models import Booking, Slot, User, Farmer
+from models import Booking, Slot, User, Farmer,Crop
 from schemas import BookingCreate, BookingResponse
 from auth.dependencies import get_current_user
 from notifications.service import create_notification
@@ -99,9 +99,7 @@ async def create_booking(
     center_id=booking_data.center_id,
     token_number=generate_token()
 )
-    db.add(booking)
-    db.commit()
-    db.refresh(booking)
+    
 
     # Create a notification for the farmer
     create_notification(
@@ -110,7 +108,22 @@ async def create_booking(
         title="Booking Created",
         message=f"Your booking is confirmed. Your token number is {booking.token_number}."
     )
+    if booking.crop_id:
+    crop = db.query(Crop).filter(
+        Crop.id == booking.crop_id
+    ).first()
 
+    if crop:
+        crop.remaining_quantity -= booking.quantity
+
+        if crop.remaining_quantity <= 0:
+            crop.remaining_quantity = 0
+            crop.status = "COMPLETED"
+
+
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
     await manager.broadcast(
         slot.center_id,
         {

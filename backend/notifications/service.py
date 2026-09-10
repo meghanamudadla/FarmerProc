@@ -9,7 +9,6 @@ def create_notification(
     title: str,
     message: str
 ):
-
     notification = Notification(
         user_id=user_id,
         title=title,
@@ -18,5 +17,6 @@ def create_notification(
     )
 
     db.add(notification)
+    db.flush()
 
     return notification
