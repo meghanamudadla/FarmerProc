@@ -21,9 +21,8 @@ class UserLogin(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str =Field(minlength=2, maxlength=8)
+    access_token: str = Field(min_length=20)
     token_type: str
-
 
 
 
