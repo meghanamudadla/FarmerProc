@@ -1,6 +1,7 @@
 /**
- * Fast2SMS Service for Group 1 Telephony
- * Sends Telugu Unicode SMS receipts & queue updates to the farmer's mobile phone.
+ * Fast2SMS Multi-Language Service for Group 1 Telephony
+ * Sends Unicode SMS receipts, queue updates, payment delay alerts & slot re-allocation notices
+ * Supports Telugu ('te'), Hindi ('hi'), and English ('en')
  */
 
 const axios = require('axios');
@@ -26,18 +27,21 @@ class SmsService {
   }
 
   /**
-   * Send Telugu Unicode SMS via Fast2SMS
+   * Send Unicode SMS via Fast2SMS in specified language
    * @param {string} phoneNumber - Farmer's mobile number
-   * @param {string} message - Telugu text message
+   * @param {string} message - Text message (Telugu, Hindi, or English)
+   * @param {string} [language='te'] - Language code ('te', 'hi', 'en')
    * @returns {Promise<{success: boolean, message: string, data?: any}>}
    */
-  async sendTeluguSms(phoneNumber, message) {
+  async sendSms(phoneNumber, message, language = 'te') {
     const cleanPhone = this.sanitizePhoneNumber(phoneNumber);
+    const validLang = ['te', 'hi', 'en'].includes(language) ? language : 'te';
 
     const logEntry = {
       id: Date.now(),
       timestamp: new Date().toISOString(),
       to: cleanPhone,
+      language: validLang,
       message,
       status: 'PENDING',
       details: null
@@ -53,7 +57,7 @@ class SmsService {
     // Dry-run mode if no API key is provided
     if (!this.apiKey || this.apiKey === 'your_fast2sms_api_key_here') {
       console.log('\n=============================================================');
-      console.log(`[Fast2SMS DRY-RUN] (No API key provided - simulating SMS send)`);
+      console.log(`[Fast2SMS DRY-RUN] (${validLang.toUpperCase()} - Simulating SMS send)`);
       console.log(`To: +91 ${cleanPhone}`);
       console.log(`Message:\n${message}`);
       console.log('=============================================================\n');
@@ -66,12 +70,13 @@ class SmsService {
         success: true,
         dryRun: true,
         message: 'SMS simulated successfully in dry-run mode',
-        recipient: cleanPhone
+        recipient: cleanPhone,
+        language: validLang
       };
     }
 
     try {
-      console.log(`[Fast2SMS] Sending Telugu SMS to ${cleanPhone}...`);
+      console.log(`[Fast2SMS] Sending ${validLang.toUpperCase()} SMS to ${cleanPhone}...`);
 
       const payload = {
         route: this.route,
@@ -98,7 +103,8 @@ class SmsService {
       return {
         success: !!response.data?.return,
         data: response.data,
-        recipient: cleanPhone
+        recipient: cleanPhone,
+        language: validLang
       };
     } catch (err) {
       const errMsg = err.response?.data?.message || err.message;
@@ -111,9 +117,17 @@ class SmsService {
       return {
         success: false,
         error: errMsg,
-        recipient: cleanPhone
+        recipient: cleanPhone,
+        language: validLang
       };
     }
+  }
+
+  /**
+   * Backwards-compatible Telugu SMS sender
+   */
+  async sendTeluguSms(phoneNumber, message) {
+    return this.sendSms(phoneNumber, message, 'te');
   }
 
   /**

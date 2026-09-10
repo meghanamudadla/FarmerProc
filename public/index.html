@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html lang="te">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rythu Mandi Telephony Subsystem (Group 1)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-gradient: radial-gradient(circle at 10% 20%, rgba(18, 38, 30, 0.95) 0%, rgba(10, 15, 20, 0.98) 90.2%);
-      --card-bg: rgba(23, 37, 30, 0.65);
+      --card-bg: rgba(23, 37, 30, 0.7);
       --card-border: rgba(46, 125, 50, 0.35);
       --accent-green: #00e676;
       --accent-gold: #ffd600;
       --accent-blue: #00b0ff;
+      --accent-red: #ff5252;
+      --accent-purple: #b388ff;
       --text-main: #f0fdf4;
       --text-muted: #94a3b8;
-      --phone-border: rgba(255, 255, 255, 0.12);
     }
 
     * {
@@ -27,7 +28,7 @@
     }
 
     body {
-      font-family: 'Outfit', 'Noto Sans Telugu', sans-serif;
+      font-family: 'Outfit', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
       background: var(--bg-gradient);
       background-attachment: fixed;
       color: var(--text-main);
@@ -37,7 +38,7 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1440px;
       margin: 0 auto;
     }
 
@@ -45,9 +46,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 28px;
-      padding-bottom: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .brand {
@@ -57,10 +60,10 @@
     }
 
     .brand-icon {
-      font-size: 38px;
+      font-size: 36px;
       background: rgba(0, 230, 118, 0.15);
-      width: 60px;
-      height: 60px;
+      width: 58px;
+      height: 58px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -70,7 +73,7 @@
     }
 
     .brand h1 {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%);
@@ -79,276 +82,463 @@
     }
 
     .brand p {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
     }
 
-    .badge-status {
+    .badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 6px 12px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
+      border: 1px solid;
+    }
+
+    .badge-green {
       background: rgba(0, 230, 118, 0.1);
-      border: 1px solid rgba(0, 230, 118, 0.4);
+      border-color: rgba(0, 230, 118, 0.4);
       color: var(--accent-green);
+    }
+
+    .badge-blue {
+      background: rgba(0, 176, 255, 0.1);
+      border-color: rgba(0, 176, 255, 0.4);
+      color: var(--accent-blue);
+    }
+
+    .badge-gold {
+      background: rgba(255, 214, 0, 0.1);
+      border-color: rgba(255, 214, 0, 0.4);
+      color: var(--accent-gold);
     }
 
     .dot {
       width: 8px;
       height: 8px;
-      background-color: var(--accent-green);
       border-radius: 50%;
+      background: currentColor;
       animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
-      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
 
+    /* Grid Layout */
     .grid {
       display: grid;
-      grid-template-columns: 380px 1fr 360px;
-      gap: 24px;
+      gap: 20px;
       margin-bottom: 24px;
     }
 
-    @media (max-width: 1200px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    .grid-3col {
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    }
+
+    .grid-2col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2col { grid-template-columns: 1fr; }
     }
 
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 24px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       position: relative;
-      overflow: hidden;
     }
 
     .card h2 {
       font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: #fff;
+      gap: 8px;
     }
 
-    /* Phone Simulator UI */
-    .phone-container {
-      background: #0f1712;
-      border: 2px solid var(--phone-border);
-      border-radius: 28px;
-      padding: 20px;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
-    }
-
-    .phone-screen {
-      background: #060907;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      text-align: center;
-    }
-
-    .call-status {
+    .sub-text {
       font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent-green);
-      margin-bottom: 8px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.4;
     }
 
-    .phone-input {
+    /* Form & Input controls */
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .input-field, select.input-field {
       width: 100%;
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 10px;
-      padding: 12px;
+      padding: 10px 14px;
       color: #fff;
-      font-size: 18px;
-      font-weight: 600;
-      text-align: center;
-      letter-spacing: 2px;
+      font-family: inherit;
+      font-size: 14px;
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
-    .phone-input:focus {
+    .input-field:focus {
       border-color: var(--accent-green);
-      box-shadow: 0 0 12px rgba(0, 230, 118, 0.2);
+      box-shadow: 0 0 12px rgba(0, 230, 118, 0.25);
     }
 
+    /* Interactive Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #00e676 0%, #00a854 100%);
+      color: #0b1a10;
+      box-shadow: 0 4px 16px rgba(0, 230, 118, 0.3);
+    }
+
+    .btn-blue {
+      background: linear-gradient(135deg, #00b0ff 0%, #0077b6 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0, 176, 255, 0.3);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #ffd600 0%, #f59e0b 100%);
+      color: #1a1500;
+      box-shadow: 0 4px 16px rgba(255, 214, 0, 0.3);
+    }
+
+    .btn-red {
+      background: linear-gradient(135deg, #ff5252 0%, #b71c1c 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255, 82, 82, 0.3);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Keypad */
     .keypad-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .key-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 14px 0;
+      border-radius: 12px;
+      padding: 12px 6px;
+      font-size: 18px;
+      font-weight: 700;
       color: #fff;
-      font-size: 20px;
-      font-weight: 600;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      transition: all 0.15s ease;
-    }
-
-    .key-btn span {
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      margin-top: 2px;
+      transition: all 0.15s;
     }
 
     .key-btn:hover {
       background: rgba(0, 230, 118, 0.15);
       border-color: var(--accent-green);
-      transform: translateY(-2px);
+      transform: scale(1.03);
     }
 
-    .key-btn:active {
-      transform: scale(0.95);
+    .key-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 2px;
     }
 
-    .action-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
+    .key-btn-active {
+      background: rgba(0, 230, 118, 0.4) !important;
+      border-color: var(--accent-green) !important;
+      transform: scale(0.95) !important;
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.5) !important;
+    }
+
+    /* Voice Guided Flow Screen & Cards */
+    .flow-badge {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      border: none;
-      transition: all 0.2s ease;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .flow-badge-green {
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: var(--accent-green);
+    }
+
+    .flow-badge-gold {
+      background: rgba(255, 214, 0, 0.15);
+      border: 1px solid rgba(255, 214, 0, 0.4);
+      color: var(--accent-gold);
+    }
+
+    .flow-badge-blue {
+      background: rgba(0, 176, 255, 0.15);
+      border: 1px solid rgba(0, 176, 255, 0.4);
+      color: var(--accent-blue);
+    }
+
+    .crop-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
       margin-bottom: 10px;
     }
 
-    .btn-opt1 {
-      background: linear-gradient(135deg, #00c853 0%, #009624 100%);
-      color: #fff;
-      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.3);
+    .crop-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 10px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
     }
 
-    .btn-opt1:hover {
+    .crop-card:hover {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: var(--accent-green);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 200, 83, 0.4);
+      box-shadow: 0 4px 14px rgba(0, 230, 118, 0.25);
     }
 
-    .btn-opt2 {
-      background: linear-gradient(135deg, #0091ea 0%, #01579b 100%);
+    .crop-card-wide {
+      grid-column: span 2;
+    }
+
+    .crop-num-pill {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(0, 230, 118, 0.2);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: var(--accent-green);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .crop-icon-large {
+      font-size: 28px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .crop-title {
+      font-size: 13px;
+      font-weight: 700;
       color: #fff;
-      box-shadow: 0 6px 20px rgba(0, 145, 234, 0.3);
     }
 
-    .btn-opt2:hover {
+    .crop-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .weight-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .weight-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .weight-card:hover {
+      background: rgba(255, 214, 0, 0.15);
+      border-color: var(--accent-gold);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 145, 234, 0.4);
+      box-shadow: 0 4px 14px rgba(255, 214, 0, 0.25);
     }
 
-    /* Live Audio Player & Speech Panel */
-    .audio-box {
+    .weight-num-pill {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 214, 0, 0.2);
+      border: 1px solid rgba(255, 214, 0, 0.4);
+      color: var(--accent-gold);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .confirm-panel {
+      background: linear-gradient(135deg, rgba(0, 230, 118, 0.18) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 1.5px solid rgba(0, 230, 118, 0.5);
+      border-radius: 16px;
+      padding: 18px 16px;
+      text-align: center;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0, 230, 118, 0.2);
+      animation: fadeInScale 0.3s ease;
+    }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .token-hero-display {
+      font-size: 38px;
+      font-weight: 800;
+      color: #00e676;
+      letter-spacing: 2px;
+      margin: 10px 0;
+      text-shadow: 0 0 24px rgba(0, 230, 118, 0.5);
+    }
+
+    .confirm-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 12px;
+      border-radius: 10px;
+      margin: 12px 0;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    /* Audio Player */
+    .audio-player-box {
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(0, 230, 118, 0.25);
       border-radius: 14px;
-      padding: 16px;
-      margin-top: 16px;
-    }
-
-    .audio-box h4 {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent-green);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      padding: 14px;
+      margin-top: 12px;
     }
 
     audio {
       width: 100%;
       height: 38px;
-      margin: 8px 0;
+      margin: 6px 0;
       border-radius: 8px;
     }
 
     .transcript-box {
       background: rgba(255, 255, 255, 0.04);
       border-radius: 10px;
-      padding: 14px;
-      font-family: 'Noto Sans Telugu', sans-serif;
-      font-size: 15px;
+      padding: 12px;
+      font-size: 14px;
       line-height: 1.6;
       color: #e2e8f0;
       border-left: 3px solid var(--accent-green);
-      margin-top: 10px;
+      margin-top: 8px;
+      min-height: 60px;
     }
 
-    /* Smartphone SMS Mockup */
-    .phone-sms-mockup {
-      background: #111813;
-      border: 3px solid #334155;
-      border-radius: 28px;
-      padding: 16px;
-      height: 520px;
+    /* SMS Simulator Mockup */
+    .sms-mockup {
+      background: #0f1712;
+      border: 2px solid #334155;
+      border-radius: 20px;
+      padding: 14px;
+      height: 480px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
 
-    .sms-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .sms-messages-container {
+    .sms-inbox {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 4px;
+      padding: 8px 0;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
 
     .sms-bubble {
-      background: linear-gradient(135deg, #1e3a29 0%, #15291d 100%);
-      border: 1px solid rgba(0, 230, 118, 0.3);
-      border-radius: 16px 16px 16px 4px;
-      padding: 14px;
-      max-width: 90%;
-      font-family: 'Noto Sans Telugu', sans-serif;
-      font-size: 14px;
+      background: linear-gradient(135deg, #183324 0%, #102419 100%);
+      border: 1px solid rgba(0, 230, 118, 0.25);
+      border-radius: 14px 14px 14px 4px;
+      padding: 12px;
+      font-size: 13px;
       line-height: 1.5;
       color: #f1f5f9;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      position: relative;
     }
 
     .sms-meta {
@@ -358,204 +548,165 @@
       text-align: right;
     }
 
-    .token-highlight {
-      display: inline-block;
+    .token-pill {
       background: rgba(255, 214, 0, 0.2);
       color: var(--accent-gold);
-      padding: 2px 8px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
       font-weight: 700;
-      font-family: 'Outfit', sans-serif;
     }
 
-    /* Queue & Bookings Inspector */
-    .queue-item {
+    /* List item tables */
+    .item-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 14px;
+      padding: 10px 12px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      margin-bottom: 10px;
-      transition: all 0.2s ease;
-    }
-
-    .queue-item:hover {
-      background: rgba(0, 230, 118, 0.06);
-      border-color: rgba(0, 230, 118, 0.2);
-    }
-
-    .queue-token {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--accent-green);
-    }
-
-    .queue-phone {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .queue-time {
-      font-size: 12px;
-      background: rgba(0, 176, 255, 0.15);
-      color: var(--accent-blue);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
-    /* Endpoints & Architecture Cheat Sheet */
-    .endpoints-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .endpoint-card {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 16px;
-    }
-
-    .endpoint-card .method {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 4px;
+      border-radius: 10px;
       margin-bottom: 8px;
-    }
-
-    .method-post { background: #0284c7; color: #fff; }
-    .method-get { background: #16a34a; color: #fff; }
-
-    .endpoint-card .url {
-      font-family: monospace;
       font-size: 13px;
-      color: #38bdf8;
-      word-break: break-all;
     }
 
-    .endpoint-card p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 6px;
+    .pill {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
     }
+
+    .pill-green { background: rgba(0, 230, 118, 0.2); color: var(--accent-green); }
+    .pill-blue { background: rgba(0, 176, 255, 0.2); color: var(--accent-blue); }
+    .pill-gold { background: rgba(255, 214, 0, 0.2); color: var(--accent-gold); }
+    .pill-red { background: rgba(255, 82, 82, 0.2); color: var(--accent-red); }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Top Header -->
+    
+    <!-- HEADER -->
     <header>
       <div class="brand">
         <div class="brand-icon">🌾</div>
         <div>
           <h1>Rythu Mandi Telephony Console</h1>
-          <p>Group 1 Subsystem — Exotel IVR Webhooks, Telugu Voice Menu, & Fast2SMS Integration</p>
+          <p>Group 1 Telephony Subsystem • Multi-Language IVR, Payment Delay Alerts & Slot Re-allocation</p>
         </div>
       </div>
-      <div class="badge-status">
-        <span class="dot"></span>
-        <span id="server-status-text">Telephony Backend Online</span>
+      <div class="badges">
+        <span class="badge badge-green"><span class="dot"></span> Telephony Server: ONLINE</span>
+        <span class="badge badge-blue">🌐 Telugu • Hindi • English</span>
+        <span class="badge badge-gold">⚡ Exotel + Fast2SMS</span>
       </div>
     </header>
 
-    <!-- 3-Column Core Workspace -->
-    <div class="grid">
+    <!-- TOP ROW: IVR PHONE SIMULATOR, AUDIO PLAYER, SMS INBOX -->
+    <div class="grid grid-3col">
       
-      <!-- Col 1: Phone Simulator (Farmer Handset) -->
+      <!-- COL 1: INTERACTIVE IVR SIMULATOR -->
       <div class="card">
-        <h2>📞 Farmer Phone Simulator</h2>
-        <div class="phone-container">
-          <div class="phone-screen">
-            <div class="call-status" id="call-status">Ready to Call</div>
-            <input type="text" id="farmer-phone-input" class="phone-input" value="9876543210" placeholder="10-digit Phone" maxlength="10">
-          </div>
+        <h2>📞 IVR Call Simulator</h2>
+        <p class="sub-text">Simulate farmer dialing into Rythu Mandi IVR. Test Language selection, Booking, and Status.</p>
 
-          <div class="keypad-grid">
-            <button class="key-btn" onclick="pressKey('1')">1<span>స్లాట్</span></button>
-            <button class="key-btn" onclick="pressKey('2')">2<span>క్యూ</span></button>
-            <button class="key-btn" onclick="pressKey('3')">3<span>DEF</span></button>
-            <button class="key-btn" onclick="pressKey('4')">4<span>GHI</span></button>
-            <button class="key-btn" onclick="pressKey('5')">5<span>JKL</span></button>
-            <button class="key-btn" onclick="pressKey('6')">6<span>MNO</span></button>
-            <button class="key-btn" onclick="pressKey('7')">7<span>PQRS</span></button>
-            <button class="key-btn" onclick="pressKey('8')">8<span>TUV</span></button>
-            <button class="key-btn" onclick="pressKey('9')">9<span>WXYZ</span></button>
-            <button class="key-btn" onclick="pressKey('*')">*</button>
-            <button class="key-btn" onclick="pressKey('0')">0<span>+</span></button>
-            <button class="key-btn" onclick="pressKey('#')">#</button>
-          </div>
+        <div class="input-group">
+          <label>Farmer Mobile Number</label>
+          <input type="text" id="farmer-phone" class="input-field" value="9876543210" placeholder="10-digit mobile number">
+        </div>
 
-          <!-- Direct Architecture Action Triggers -->
-          <button id="btn-book-slot" class="action-btn btn-opt1" onclick="triggerIvrOption('1')">
-            <span>🎟️</span> Press 1: Book Slot (స్లాట్ బుకింగ్)
+        <div class="input-group">
+          <label>Preferred Language</label>
+          <select id="language-select" class="input-field" onchange="updateLanguageSelection()">
+            <option value="te" selected>Telugu (తెలుగు)</option>
+            <option value="hi">Hindi (हिंदी)</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+          <button class="btn btn-outline" style="font-size: 12px; padding: 8px;" onclick="playInitialGreeting()">
+            🌐 Language Menu (1-te, 2-hi, 3-en)
           </button>
-          <button id="btn-check-queue" class="action-btn btn-opt2" onclick="triggerIvrOption('2')">
-            <span>⏳</span> Press 2: Check Queue Status (క్యూ స్టేటస్)
+          <button class="btn btn-outline" style="font-size: 12px; padding: 8px;" onclick="playMenuForCurrentLang()">
+            🔊 Main Menu
           </button>
         </div>
 
-        <!-- Initial Menu Audio Trigger -->
-        <div style="margin-top: 14px;">
-          <button class="action-btn" style="background: rgba(255,255,255,0.08); color: #fff;" onclick="playMenuGreeting()">
-            🔊 Play Initial IVR Greeting in Telugu
-          </button>
+        <!-- DYNAMIC IVR SCREEN / FLOW PANEL -->
+        <div id="ivr-screen-panel" style="margin-bottom: 14px;">
+          <!-- Populated dynamically by renderIvrScreen() -->
+        </div>
+
+        <!-- DTMF KEYPAD -->
+        <div class="keypad-grid">
+          <button id="key-btn-1" class="key-btn" onclick="pressKey('1')">1<span id="key-sub-1" class="key-sub">Book Slot</span></button>
+          <button id="key-btn-2" class="key-btn" onclick="pressKey('2')">2<span id="key-sub-2" class="key-sub">Queue Status</span></button>
+          <button id="key-btn-3" class="key-btn" onclick="pressKey('3')">3<span id="key-sub-3" class="key-sub">English</span></button>
+          <button id="key-btn-4" class="key-btn" onclick="pressKey('4')">4<span id="key-sub-4" class="key-sub">GHI</span></button>
+          <button id="key-btn-5" class="key-btn" onclick="pressKey('5')">5<span id="key-sub-5" class="key-sub">JKL</span></button>
+          <button id="key-btn-6" class="key-btn" onclick="pressKey('6')">6<span id="key-sub-6" class="key-sub">MNO</span></button>
+          <button id="key-btn-7" class="key-btn" onclick="pressKey('7')">7<span id="key-sub-7" class="key-sub">PQRS</span></button>
+          <button id="key-btn-8" class="key-btn" onclick="pressKey('8')">8<span id="key-sub-8" class="key-sub">TUV</span></button>
+          <button id="key-btn-9" class="key-btn" onclick="pressKey('9')">9<span id="key-sub-9" class="key-sub">WXYZ</span></button>
+          <button id="key-btn-star" class="key-btn" onclick="pressKey('*')">*<span id="key-sub-star" class="key-sub">Menu</span></button>
+          <button id="key-btn-0" class="key-btn" onclick="pressKey('0')">0<span id="key-sub-0" class="key-sub">Repeat</span></button>
+          <button id="key-btn-hash" class="key-btn" onclick="pressKey('#')">#<span id="key-sub-hash" class="key-sub">Help</span></button>
+        </div>
+
+        <div id="quick-actions-container" style="display: flex; gap: 10px;">
+          <button class="btn btn-green" onclick="pressKey('1')">📝 Option 1: Book Slot</button>
+          <button class="btn btn-blue" onclick="pressKey('2')">📊 Option 2: Check Status</button>
         </div>
       </div>
 
-      <!-- Col 2: Telephony Audio Player & Spoken Response -->
+      <!-- COL 2: LIVE VOICE OUTPUT (EXOTEL PLAY/SAY APPLET) -->
       <div class="card">
-        <h2>🗣️ Telugu Voice Output (Exotel Play/Say Applet)</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Dynamic Telugu speech generated for the Exotel call stream.
-        </p>
+        <h2>🗣️ Dynamic Voice Output (TTS)</h2>
+        <p class="sub-text">Pre-rendered or dynamically synthesized MP3 audio for Exotel Play/Say applets.</p>
 
-        <div class="audio-box">
-          <h4><span>🔊</span> Live Call Audio Playback</h4>
-          <audio id="audio-player" controls autoplay style="display: block;"></audio>
-          <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;" id="audio-url-label">
-            Audio URL: Waiting for call action...
+        <div class="audio-player-box">
+          <div style="font-size: 12px; font-weight: 700; color: var(--accent-green); margin-bottom: 4px;">
+            🔊 Live Call Audio Stream
+          </div>
+          <audio id="audio-player" controls autoplay></audio>
+          <div id="audio-url-label" style="font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 4px;">
+            Audio URL: Ready
           </div>
         </div>
 
-        <div style="margin-top: 16px;">
-          <h4 style="font-size: 13px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
-            Spoken Transcript (Telugu TTS)
-          </h4>
+        <div style="margin-top: 14px;">
+          <label style="font-size: 12px; font-weight: 600; color: var(--accent-green); text-transform: uppercase;">
+            Spoken Transcript (Multi-Language)
+          </label>
           <div id="transcript-display" class="transcript-box">
             "రైతు బంధు మార్కెట్ యార్డ్ కు స్వాగతం. స్లాట్ బుకింగ్ కోసం 1 నొక్కండి. మీ క్యూ స్టేటస్ తెలుసుకోవడానికి 2 నొక్కండి."
           </div>
         </div>
 
-        <!-- Exotel Webhook Response Debug View -->
-        <div style="margin-top: 20px;">
-          <h4 style="font-size: 13px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+        <div style="margin-top: 14px;">
+          <label style="font-size: 12px; font-weight: 600; color: var(--accent-blue); text-transform: uppercase;">
             Exotel Passthru JSON Response
-          </h4>
-          <pre id="json-debug" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 10px; font-size: 12px; color: #a5f3fc; overflow-x: auto; max-height: 180px;">{}</pre>
+          </label>
+          <pre id="json-debug" style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; font-size: 11px; color: #a5f3fc; max-height: 120px; overflow-y: auto; margin-top: 4px;">{}</pre>
         </div>
       </div>
 
-      <!-- Col 3: Fast2SMS Telugu Message Receiver (Farmer Phone Screen) -->
+      <!-- COL 3: FAST2SMS FARMER MOBILE INBOX -->
       <div class="card">
         <h2>📱 Fast2SMS Farmer Inbox</h2>
-        <div class="phone-sms-mockup">
-          <div class="sms-header">
-            <span>RYTHU-MANDI</span>
-            <span>Just Now</span>
-          </div>
+        <p class="sub-text">Simulated Unicode SMS receipts, queue updates, payment alerts, and slot offers.</p>
 
-          <div id="sms-inbox" class="sms-messages-container">
+        <div class="sms-mockup">
+          <div style="font-size: 12px; color: var(--text-muted); padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between;">
+            <span>RYTHU-MANDI (Fast2SMS)</span>
+            <span>Live Inbox</span>
+          </div>
+          <div id="sms-inbox" class="sms-inbox">
             <div class="sms-bubble">
               నమస్కారం రైతు సోదరా, మీ మండి స్లాట్ బుకింగ్ విజయవంతమైంది.<br>
-              టోకెన్ నంబర్: <span class="token-highlight">MND-104</span><br>
+              టోకెన్ నంబర్: <span class="token-pill">MND-104</span><br>
               సమయం: 11:00 AM<br>
-              మార్కెట్: ఖమ్మం మార్కెట్ యార్డ్.
+              మార్కెట్: వరంగల్ మార్కెట్ యార్డ్.
               <div class="sms-meta">Delivered via Fast2SMS (Unicode)</div>
             </div>
           </div>
@@ -564,68 +715,893 @@
 
     </div>
 
-    <!-- Active Tokens & Telephony Endpoints -->
-    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+    <!-- BOTTOM ROW 1: FEATURE 1 (PAYMENT DELAY) & FEATURE 2 (SLOT RE-ALLOCATION) -->
+    <div class="grid grid-2col">
       
-      <!-- Group 2 Queue State -->
+      <!-- FEATURE 1: PAYMENT DELAY ALERTS -->
       <div class="card">
-        <h2>📊 Group 2 Token Queue Monitor</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Tokens generated and managed by the Group 2 backend subsystem.
+        <h2>🚨 Feature 1: Payment Delay Alerts</h2>
+        <p class="sub-text">
+          Trigger automated Fast2SMS updates & outbound Exotel voice calls for delayed farmer payouts.
         </p>
-        <div id="queue-list" style="max-height: 250px; overflow-y: auto;">
-          <!-- Populated dynamically -->
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="input-group">
+            <label>Farmer Name</label>
+            <input type="text" id="delay-farmer-name" class="input-field" value="రామయ్య (Ramayya)">
+          </div>
+          <div class="input-group">
+            <label>Mobile Number</label>
+            <input type="text" id="delay-farmer-phone" class="input-field" value="9876543210">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="input-group">
+            <label>Token / Procurement ID</label>
+            <input type="text" id="delay-token-id" class="input-field" value="MND-104">
+          </div>
+          <div class="input-group">
+            <label>Payout Amount (₹)</label>
+            <input type="text" id="delay-amount" class="input-field" value="32,500">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Delay Reason</label>
+          <input type="text" id="delay-reason" class="input-field" value="ట్రెజరీ సర్వర్ సాంకేతిక నిర్వహణ (Treasury clearance delay)">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="input-group">
+            <label>Expected Payout Date</label>
+            <input type="text" id="delay-payout-date" class="input-field" value="15 సెప్టెంబర్ 2026">
+          </div>
+          <div class="input-group">
+            <label>Alert Language</label>
+            <select id="delay-language" class="input-field">
+              <option value="te" selected>Telugu (తెలుగు)</option>
+              <option value="hi">Hindi (हिंदी)</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 6px;">
+          <button class="btn btn-red" onclick="triggerPaymentDelayAlert()">
+            🚨 Trigger Automated Alert Pipeline (SMS + Voice Call)
+          </button>
+          <button class="btn btn-outline" style="width: auto;" onclick="scanDelayedPayments()" title="Scan for un-notified delayed payments">
+            🔍 Scan All
+          </button>
+        </div>
+
+        <!-- Outbound Call Status Log -->
+        <div style="margin-top: 14px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase;">
+            📞 Outbound Exotel Call Dispatch Log
+          </label>
+          <div id="outbound-call-log" style="max-height: 110px; overflow-y: auto; margin-top: 6px;">
+            <!-- Populated dynamically -->
+          </div>
         </div>
       </div>
 
-      <!-- Exotel Setup Cheat-sheet -->
+      <!-- FEATURE 2: SMART SLOT RE-ALLOCATION -->
       <div class="card">
-        <h2>⚡ Exotel Flow Builder Configuration</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
-          Copy these URLs into your Exotel Call Applets:
+        <h2>♻️ Feature 2: Smart Slot Re-allocation Flow</h2>
+        <p class="sub-text">
+          When a farmer cancels, the system automatically finds the next farmer in line and triggers an interactive offer (1=Accept, 2=Decline). If declined, it automatically cascades to the next!
         </p>
 
-        <div class="endpoints-grid">
-          <div class="endpoint-card">
-            <span class="method method-post">POST / GET</span>
-            <div class="url" id="passthru-url">http://localhost:3000/api/ivr/handle-input</div>
-            <p><strong>Passthru Applet:</strong> Set this URL in Exotel. Pass <code>Digits</code> from Gather applet.</p>
+        <!-- Current Active Cancellation Trigger -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 600;">Active Slot: <span class="token-pill">MND-104</span> (Ramayya - 11:00 AM)</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-red" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="cancelSlotAndReallocate()">
+                ❌ Cancel Slot & Re-allocate
+              </button>
+              <button class="btn" style="width: auto; padding: 6px 12px; font-size: 12px; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--accent-purple); color: #e9d5ff;" onclick="resetDemoQueue()">
+                🔄 Reset Queue
+              </button>
+            </div>
           </div>
+          <div style="font-size: 12px; color: var(--text-muted);">
+            Cancelling this slot will automatically identify the next farmer from the waitlist and dispatch an outbound call/SMS offer.
+          </div>
+        </div>
 
-          <div class="endpoint-card">
-            <span class="method method-get">GET</span>
-            <div class="url" id="menu-url">http://localhost:3000/api/ivr/menu</div>
-            <p><strong>Greeting Applet:</strong> Fetches standard initial Telugu greeting audio.</p>
+        <!-- Interactive Offer Response Controls -->
+        <div id="active-offer-panel" style="background: rgba(0, 176, 255, 0.1); border: 1px solid rgba(0, 176, 255, 0.35); border-radius: 12px; padding: 12px; margin-bottom: 14px; display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--accent-blue);" id="offer-target-label">
+              📢 Active Offer to Farmer #2: Ramesh
+            </span>
+            <span class="pill pill-gold" id="offer-status-badge">OFFERED</span>
+          </div>
+          <p style="font-size: 12px; color: #e2e8f0; margin-bottom: 10px;" id="offer-desc">
+            "Slot at Warangal Mandi for 11:00 AM is available. Press 1 to Accept, 2 to Decline."
+          </p>
+          <div id="realloc-buttons-container" style="display: flex; gap: 10px;">
+            <button id="btn-accept-offer" class="btn btn-green" onclick="respondToReallocation('1')">
+              ✅ Press 1: Accept Slot (Assigns Token)
+            </button>
+            <button id="btn-decline-offer" class="btn btn-red" onclick="respondToReallocation('2')">
+              ❌ Press 2: Decline (Cascades to Farmer #3)
+            </button>
+          </div>
+        </div>
+
+        <!-- Waitlist Queue Table -->
+        <div>
+          <label style="font-size: 11px; font-weight: 700; color: var(--accent-green); text-transform: uppercase;">
+            📋 Waitlist Queue (Next in line for re-allocation)
+          </label>
+          <div id="waitlist-container" style="max-height: 130px; overflow-y: auto; margin-top: 6px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Re-allocation History -->
+        <div style="margin-top: 10px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--accent-purple); text-transform: uppercase;">
+            📜 Re-allocation Event Log
+          </label>
+          <div id="reallocation-log" style="max-height: 90px; overflow-y: auto; margin-top: 4px; font-size: 12px; color: var(--text-muted);">
+            <!-- Populated dynamically -->
           </div>
         </div>
       </div>
 
     </div>
+
+    <!-- BOTTOM ROW 2: ACTIVE TOKENS & API REFERENCE -->
+    <div class="grid grid-2col">
+      <div class="card">
+        <h2>📊 Active Bookings (Group 2 Engine)</h2>
+        <div id="queue-list" style="max-height: 200px; overflow-y: auto;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚡ Exotel Webhook Endpoints</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+          <div class="item-row">
+            <div><strong>Inbound Language Menu:</strong> <span style="color: var(--accent-green);" id="lang-url"></span></div>
+            <span class="pill pill-green">GET/POST</span>
+          </div>
+          <div class="item-row">
+            <div><strong>Language Selector:</strong> <span style="color: var(--accent-green);" id="lang-select-url"></span></div>
+            <span class="pill pill-green">POST</span>
+          </div>
+          <div class="item-row">
+            <div><strong>Main Passthru Webhook:</strong> <span style="color: var(--accent-green);" id="passthru-url"></span></div>
+            <span class="pill pill-green">POST</span>
+          </div>
+          <div class="item-row">
+            <div><strong>Payment Delay Alert Trigger:</strong> <span style="color: var(--accent-gold);">/api/alerts/payment-delay</span></div>
+            <span class="pill pill-gold">POST</span>
+          </div>
+          <div class="item-row">
+            <div><strong>Slot Cancellation & Re-allocate:</strong> <span style="color: var(--accent-blue);">/api/slots/cancel</span></div>
+            <span class="pill pill-blue">POST</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
     const serverOrigin = window.location.origin;
+    document.getElementById('lang-url').innerText = `${serverOrigin}/api/ivr/language-menu`;
+    document.getElementById('lang-select-url').innerText = `${serverOrigin}/api/ivr/select-language`;
     document.getElementById('passthru-url').innerText = `${serverOrigin}/api/ivr/handle-input`;
-    document.getElementById('menu-url').innerText = `${serverOrigin}/api/ivr/menu`;
 
-    function pressKey(key) {
-      if (key === '1' || key === '2') {
-        triggerIvrOption(key);
-      } else {
-        alert(`You pressed '${key}'. The IVR menu only listens for '1' (Book Slot) or '2' (Check Queue Status).`);
+    let activeReallocationId = null;
+
+    function updateLanguageSelection() {
+      const lang = document.getElementById('language-select').value;
+      console.log('Selected language:', lang);
+      updateKeypadLabels();
+      renderIvrScreen();
+      if (ivrState !== 'MAIN_MENU') {
+        replayCurrentPrompt();
       }
     }
 
+    // Helper to get active language from dropdown
+    function getSelectedLanguage() {
+      const select = document.getElementById('language-select');
+      return select ? (select.value || 'te') : 'te';
+    }
+
+    // Pre-heat speech synthesis voices listener
+    if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    // Play Initial Multi-language Greeting
+    async function playInitialGreeting() {
+      setIvrState('MAIN_MENU');
+      try {
+        const res = await fetch('/api/ivr/language-menu');
+        const data = await res.json();
+        playAudio(data.audio_url, data.prompt);
+      } catch (err) {
+        console.error('Error playing language greeting:', err);
+      }
+    }
+
+    // Play Main Menu in current language
+    async function playMenuForCurrentLang() {
+      setIvrState('MAIN_MENU');
+      const lang = getSelectedLanguage();
+      try {
+        const res = await fetch(`/api/ivr/menu?lang=${lang}`);
+        const data = await res.json();
+        playAudio(data.audio_url, data.prompt_telugu || data.prompt);
+      } catch (err) {
+        console.error('Error playing menu:', err);
+      }
+    }
+
+    // =========================================================================
+    // MULTI-LANGUAGE VOICE & TEMPLATES DICTIONARY (Telugu, Hindi, English)
+    // =========================================================================
+    const IVR_I18N = {
+      te: {
+        locale: 'te-IN',
+        cropPrompt: "స్లాట్ బుకింగ్ ఎంచుకోబడింది. దయచేసి మీ పంటను ఎంచుకోండి: వరి కొరకు 1, గోధుమ కొరకు 2, పత్తి కొరకు 3, మొక్కజొన్న కొరకు 4, పప్పుధాన్యాల కొరకు 5 నొక్కండి. ఈ జాబితాను మళ్లీ వినడానికి 0 నొక్కండి.",
+        weightPrompt: (cropName) => `మీరు ${cropName} ఎంచుకున్నారు. ఇప్పుడు మీ పంట బరువును ఎంచుకోండి: 50 కేజీల లోపు అయితే 1, 150 కేజీల లోపు అయితే 2, 150 కేజీల కంటే ఎక్కువ అయితే 3 నొక్కండి. వెనుకకు వెళ్ళడానికి 8, మళ్లీ వినడానికి 0 నొక్కండి.`,
+        confirmPrompt: (cropName, weightName, token) => `మీ స్లాట్ బుకింగ్ విజయవంతమైంది! పంట: ${cropName}, బరువు: ${weightName}. మీ టోకెన్ నంబర్: ${token}. ధన్యవాదాలు.`,
+        cropNames: {
+          '1': 'వరి',
+          '2': 'గోధుమ',
+          '3': 'పత్తి',
+          '4': 'మొక్కజొన్న',
+          '5': 'పప్పుధాన్యాలు'
+        },
+        weightNames: {
+          '1': '50 కేజీల లోపు',
+          '2': '150 కేజీల లోపు',
+          '3': '150 కేజీల కంటే ఎక్కువ'
+        },
+        ui: {
+          step1Title: '🌾 దశ 1/3: పంట ఎంపిక',
+          step1Hint: 'కీప్యాడ్ ద్వారా లేదా క్రింద నొక్కి ఎంచుకోండి (రైతుల కొరకు)',
+          step2Title: '⚖️ దశ 2/3: పంట బరువు ఎంపిక',
+          step2Hint: 'మీ పంట బరువును ఎంచుకోండి:',
+          repeatBtn: '🔁 0 నొక్కండి: మళ్లీ వినండి',
+          backCropBtn: '↩️ 8 నొక్కండి: పంట ఎంపికకు వెళ్ళండి',
+          menuBtn: '↩️ మెయిన్ మెనూ',
+          successTitle: 'స్లాట్ బుకింగ్ విజయవంతమైంది!',
+          tokenLabel: 'మీ రైతు మండి ప్రొక్యూర్మెంట్ టోకెన్ ఐడీ:',
+          smsNotice: '✉️ మీ మొబైల్‌కు ఎస్ఎంఎస్ రసీదు పంపబడింది.',
+          hearAgainBtn: '🔊 మళ్లీ వినండి (లేదా 0 నొక్కండి)',
+          returnMenuBtn: '🔙 మెయిన్ మెనూకి వెళ్ళండి (లేదా 1 నొక్కండి)'
+        }
+      },
+      hi: {
+        locale: 'hi-IN',
+        cropPrompt: "स्लॉट बुकिंग चुना गया है। कृपया कीपैड का उपयोग करके अपनी फसल चुनें: धान के लिए 1, गेहूं के लिए 2, कपास के लिए 3, मक्का के लिए 4, दालों के लिए 5 दबाएं। इस सूची को दोबारा सुनने के लिए 0 दबाएं।",
+        weightPrompt: (cropName) => `आपने ${cropName} चुना है। अब अपनी फसल का वजन चुनें: यदि वजन 50 किलोग्राम के भीतर है तो 1 दबाएं, यदि 150 किलोग्राम के भीतर है तो 2 दबाएं, यदि 150 किलोग्राम से अधिक है तो 3 दबाएं। फसल चयन पर वापस जाने के लिए 8 दबाएं, दोबारा सुनने के लिए 0 दबाएं।`,
+        confirmPrompt: (cropName, weightName, token) => `आपकी स्लॉट बुकिंग सफल रही! फसल: ${cropName}, वजन: ${weightName}। आपका टोकन नंबर है: ${token}। धन्यवाद।`,
+        cropNames: {
+          '1': 'धान',
+          '2': 'गेहूं',
+          '3': 'कपास',
+          '4': 'मक्का',
+          '5': 'दालें'
+        },
+        weightNames: {
+          '1': '50 किलोग्राम के भीतर',
+          '2': '150 किलोग्राम के भीतर',
+          '3': '150 किलोग्राम से अधिक'
+        },
+        ui: {
+          step1Title: '🌾 चरण 1/3: फसल चयन',
+          step1Hint: 'कीपैड या कार्ड पर क्लिक करके फसल चुनें',
+          step2Title: '⚖️ चरण 2/3: फसल वजन चयन',
+          step2Hint: 'अपनी उपज का वजन चुनें:',
+          repeatBtn: '🔁 0 दबाएं: दोबारा सुनें',
+          backCropBtn: '↩️ 8 दबाएं: फसल चयन पर लौटें',
+          menuBtn: '↩️ मुख्य मेनू',
+          successTitle: 'स्लॉट बुकिंग सफल रही!',
+          tokenLabel: 'आपकी मंडी खरीद टोकन आईडी:',
+          smsNotice: '✉️ आपके मोबाइल पर एसएमएस रसीद भेज दी गई है।',
+          hearAgainBtn: '🔊 दोबारा सुनें (या 0 दबाएं)',
+          returnMenuBtn: '🔙 मुख्य मेनू पर लौटें (या 1 दबाएं)'
+        }
+      },
+      en: {
+        locale: 'en-IN',
+        cropPrompt: "Slot booking selected. Please choose your crop using the keypad: Press 1 for Paddy, Press 2 for Wheat, Press 3 for Cotton, Press 4 for Maize, Press 5 for Pulses. To repeat this list, press 0.",
+        weightPrompt: (cropName) => `You selected ${cropName}. Now choose the weight of your produce: If your crop weighs within 50 kg, press 1. If it weighs within 150 kg, press 2. If it weighs above 150 kg, press 3. To go back to crop selection, press 8. To repeat, press 0.`,
+        confirmPrompt: (cropName, weightName, token) => `Your slot booking is successful! Selected crop: ${cropName}, Quantity: ${weightName}. Your token number is ${token}. You will receive an SMS reminder. Press 1 to return to the main menu.`,
+        cropNames: {
+          '1': 'Paddy',
+          '2': 'Wheat',
+          '3': 'Cotton',
+          '4': 'Maize',
+          '5': 'Pulses'
+        },
+        weightNames: {
+          '1': 'Within 50 kg',
+          '2': 'Within 150 kg',
+          '3': 'Above 150 kg'
+        },
+        ui: {
+          step1Title: '🌾 Step 1/3: Crop Selection',
+          step1Hint: 'Choose your crop using keypad or click below. (Illiterate Farmer Friendly)',
+          step2Title: '⚖️ Step 2/3: Produce Weight',
+          step2Hint: 'Choose the weight of your produce:',
+          repeatBtn: '🔁 Press 0: Repeat Voice Prompt',
+          backCropBtn: '↩️ Press 8: Back to Crop Selection',
+          menuBtn: '↩️ Main Menu',
+          successTitle: 'Slot Booking Successful!',
+          tokenLabel: 'Your Rythu Mandi Procurement Token ID:',
+          smsNotice: '✉️ SMS reminder has been dispatched to your mobile.',
+          hearAgainBtn: '🔊 Hear Confirmation Again (or Press 0)',
+          returnMenuBtn: '🔙 Return to Main Menu (or Press 1)'
+        }
+      }
+    };
+
+    const CROP_OPTIONS = [
+      { id: '1', name: 'Paddy', icon: '🌾', regional: 'వరి / धान' },
+      { id: '2', name: 'Wheat', icon: '🌿', regional: 'గోధుమ / गेहूं' },
+      { id: '3', name: 'Cotton', icon: '☁️', regional: 'ప్రత్తి / कपास' },
+      { id: '4', name: 'Maize', icon: '🌽', regional: 'మొక్కజొన్న / मक्का' },
+      { id: '5', name: 'Pulses', icon: '🫘', regional: 'పప్పుదినుసులు / दालें' }
+    ];
+
+    const WEIGHT_OPTIONS = [
+      { id: '1', name: 'Within 50 kg', range: '≤ 50 kg', icon: '⚖️', regional: '50 కిలోల లోపు' },
+      { id: '2', name: 'Within 150 kg', range: '≤ 150 kg', icon: '⚖️', regional: '150 కిలోల లోపు' },
+      { id: '3', name: 'Above 150 kg', range: '> 150 kg', icon: '⚖️', regional: '150 కిలోల కంటే ఎక్కువ' }
+    ];
+
+    // States: 'MAIN_MENU' | 'SLOT_BOOKING_CROP' | 'SLOT_BOOKING_WEIGHT' | 'SLOT_BOOKING_CONFIRM'
+    let ivrState = 'MAIN_MENU';
+    let currentBookingData = {
+      crop: null,
+      weight: null,
+      tokenNumber: null,
+      backendToken: null,
+      date: null
+    };
+
+    function getCropPrompt() {
+      const lang = getSelectedLanguage();
+      const config = IVR_I18N[lang] || IVR_I18N.en;
+      return config.cropPrompt;
+    }
+
+    function getWeightPrompt() {
+      const lang = getSelectedLanguage();
+      const config = IVR_I18N[lang] || IVR_I18N.en;
+      const cropId = currentBookingData.crop ? currentBookingData.crop.id : '1';
+      const localizedCropName = (config.cropNames && config.cropNames[cropId]) || (currentBookingData.crop ? currentBookingData.crop.name : 'Paddy');
+      return config.weightPrompt(localizedCropName);
+    }
+
+    function getConfirmPrompt() {
+      const lang = getSelectedLanguage();
+      const config = IVR_I18N[lang] || IVR_I18N.en;
+      const cropId = currentBookingData.crop ? currentBookingData.crop.id : '1';
+      const weightId = currentBookingData.weight ? currentBookingData.weight.id : '1';
+      const localizedCropName = (config.cropNames && config.cropNames[cropId]) || (currentBookingData.crop ? currentBookingData.crop.name : 'Paddy');
+      const localizedWeightName = (config.weightNames && config.weightNames[weightId]) || (currentBookingData.weight ? currentBookingData.weight.name : 'Within 50 kg');
+      const token = currentBookingData.tokenNumber || 'T-102';
+      return config.confirmPrompt(localizedCropName, localizedWeightName, token);
+    }
+
+    const SLOT_AUDIO_PROMPTS = {
+      crop: {
+        te: '/audio/slot_crop_te_427668f82c83.mp3',
+        hi: '/audio/slot_crop_hi_3ce665bb0263.mp3',
+        en: '/audio/slot_crop_en_8b043dee4601.mp3'
+      },
+      weight: {
+        '1': {
+          te: '/audio/slot_weight_1_te_7b19f3e8c277.mp3',
+          hi: '/audio/slot_weight_1_hi_8ed0cf405d71.mp3',
+          en: '/audio/slot_weight_1_en_990c92eda2c2.mp3'
+        },
+        '2': {
+          te: '/audio/slot_weight_2_te_1c391c0d7149.mp3',
+          hi: '/audio/slot_weight_2_hi_864818b6cb66.mp3',
+          en: '/audio/slot_weight_2_en_b0a0b94037c5.mp3'
+        },
+        '3': {
+          te: '/audio/slot_weight_3_te_23471ce73692.mp3',
+          hi: '/audio/slot_weight_3_hi_672e582aa2db.mp3',
+          en: '/audio/slot_weight_3_en_5214c78ed628.mp3'
+        },
+        '4': {
+          te: '/audio/slot_weight_4_te_a754a7e7b557.mp3',
+          hi: '/audio/slot_weight_4_hi_4340f26c5808.mp3',
+          en: '/audio/slot_weight_4_en_e95711e8e2b7.mp3'
+        },
+        '5': {
+          te: '/audio/slot_weight_5_te_6f95bfc07cf9.mp3',
+          hi: '/audio/slot_weight_5_hi_7b758be42131.mp3',
+          en: '/audio/slot_weight_5_en_f403d99fd058.mp3'
+        }
+      },
+      confirm: {
+        te: '/audio/slot_confirm_te_93f7bd853740.mp3',
+        hi: '/audio/slot_confirm_hi_bb704c34a86d.mp3',
+        en: '/audio/slot_confirm_en_87e64ac6776e.mp3'
+      }
+    };
+
+    function getCropAudio(lang) {
+      const l = lang || getSelectedLanguage();
+      return (SLOT_AUDIO_PROMPTS.crop && SLOT_AUDIO_PROMPTS.crop[l]) || SLOT_AUDIO_PROMPTS.crop.en;
+    }
+
+    function getWeightAudio(cropId, lang) {
+      const l = lang || getSelectedLanguage();
+      const id = String(cropId || '1');
+      return (SLOT_AUDIO_PROMPTS.weight[id] && SLOT_AUDIO_PROMPTS.weight[id][l]) || SLOT_AUDIO_PROMPTS.weight['1'][l];
+    }
+
+    function getConfirmAudio(lang) {
+      const l = lang || getSelectedLanguage();
+      return (SLOT_AUDIO_PROMPTS.confirm && SLOT_AUDIO_PROMPTS.confirm[l]) || SLOT_AUDIO_PROMPTS.confirm.en;
+    }
+
+    // Speech Synthesis & Audio Management
+    function speakVoice(text, lang, audioUrl) {
+      const selectedLang = lang || getSelectedLanguage();
+
+      // Update transcript display immediately
+      const transcriptEl = document.getElementById('transcript-display');
+      if (transcriptEl) {
+        transcriptEl.innerText = text;
+      }
+
+      // 1. If an audio file URL is provided, prioritize playback through <audio id="audio-player">
+      // This ensures 100% native, authentic regional voice (Google TTS) and avoids browser TTS synthesis fallbacks.
+      if (audioUrl) {
+        playAudio(audioUrl, text);
+        return;
+      }
+
+      // 2. Otherwise, if Web Speech API is available, check for native regional voice
+      const i18nConfig = IVR_I18N[selectedLang] || IVR_I18N.en;
+      const targetLocale = i18nConfig.locale || (selectedLang === 'te' ? 'te-IN' : (selectedLang === 'hi' ? 'hi-IN' : 'en-IN'));
+
+      const audioPlayer = document.getElementById('audio-player');
+      if (audioPlayer && !audioPlayer.paused) {
+        audioPlayer.pause();
+      }
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+
+        const voices = window.speechSynthesis.getVoices();
+        let matchedVoice = null;
+
+        if (selectedLang === 'te') {
+          matchedVoice = voices.find(v => v.lang === 'te-IN' || v.lang === 'te' || v.lang.startsWith('te'));
+        } else if (selectedLang === 'hi') {
+          matchedVoice = voices.find(v => v.lang === 'hi-IN' || v.lang === 'hi' || v.lang.startsWith('hi'));
+        } else {
+          matchedVoice = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
+        }
+
+        // STRICT GUARD: If user selected Telugu or Hindi and no native voice is installed on client OS,
+        // NEVER let the browser fall back to an English voice (e.g. Microsoft David)!
+        if (selectedLang !== 'en' && !matchedVoice) {
+          console.warn(`[IVR Voice] No native voice found for ${selectedLang}. Suppressed fallback to avoid speaking English.`);
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = targetLocale;
+        utterance.rate = selectedLang === 'te' ? 0.9 : (selectedLang === 'hi' ? 0.9 : 0.95);
+        utterance.pitch = 1.0;
+
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function setIvrState(newState) {
+      ivrState = newState;
+      renderIvrScreen();
+      updateKeypadLabels();
+    }
+
+    function renderIvrScreen() {
+      const panel = document.getElementById('ivr-screen-panel');
+      if (!panel) return;
+
+      const lang = getSelectedLanguage();
+      const config = IVR_I18N[lang] || IVR_I18N.en;
+      const ui = config.ui;
+
+      if (ivrState === 'MAIN_MENU') {
+        panel.innerHTML = `
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: left;">
+            <div class="flow-badge flow-badge-green"><span class="dot"></span> Call Connected • Main Menu</div>
+            <div style="font-size: 13px; color: #e2e8f0; margin-top: 4px;">
+              Press <strong>1</strong> for Voice-Guided Slot Booking or <strong>2</strong> to Check Queue Status.
+            </div>
+          </div>
+        `;
+        const quickActions = document.getElementById('quick-actions-container');
+        if (quickActions) quickActions.style.display = 'flex';
+      } else if (ivrState === 'SLOT_BOOKING_CROP') {
+        const quickActions = document.getElementById('quick-actions-container');
+        if (quickActions) quickActions.style.display = 'none';
+
+        panel.innerHTML = `
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,230,118,0.3); border-radius: 14px; padding: 14px; text-align: left; animation: fadeInScale 0.25s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="flow-badge flow-badge-green">${ui.step1Title}</span>
+              <span style="font-size: 11px; color: var(--accent-gold);">Press 1–5 or Tap Card</span>
+            </div>
+            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 10px;">
+              ${ui.step1Hint}
+            </p>
+
+            <div class="crop-cards-grid">
+              ${CROP_OPTIONS.map((c, i) => `
+                <div class="crop-card ${i === 4 ? 'crop-card-wide' : ''}" onclick="selectCrop('${c.id}')">
+                  <div class="crop-num-pill">${c.id}</div>
+                  <div class="crop-icon-large">${c.icon}</div>
+                  <div>
+                    <div class="crop-title">${config.cropNames[c.id] || c.name} (${c.name})</div>
+                    <div class="crop-sub">${c.regional}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="replayCurrentPrompt()">
+                ${ui.repeatBtn}
+              </button>
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="returnToMainMenu()">
+                ${ui.menuBtn}
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (ivrState === 'SLOT_BOOKING_WEIGHT') {
+        const quickActions = document.getElementById('quick-actions-container');
+        if (quickActions) quickActions.style.display = 'none';
+
+        const cropId = currentBookingData.crop ? currentBookingData.crop.id : '1';
+        const localizedCrop = (config.cropNames && config.cropNames[cropId]) || (currentBookingData.crop ? currentBookingData.crop.name : 'Crop');
+        const cropIcon = currentBookingData.crop ? currentBookingData.crop.icon : '🌾';
+
+        panel.innerHTML = `
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,214,0,0.35); border-radius: 14px; padding: 14px; text-align: left; animation: fadeInScale 0.25s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="flow-badge flow-badge-gold">${ui.step2Title}</span>
+              <span class="pill pill-green">${cropIcon} ${localizedCrop}</span>
+            </div>
+            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 10px;">
+              ${ui.step2Hint}
+            </p>
+
+            <div class="weight-cards-grid">
+              ${WEIGHT_OPTIONS.map(w => `
+                <div class="weight-card" onclick="selectWeight('${w.id}')">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="weight-num-pill">${w.id}</div>
+                    <div>
+                      <div style="font-size: 13px; font-weight: 700; color: #fff;">${config.weightNames[w.id] || w.name} (${w.range})</div>
+                      <div style="font-size: 10px; color: var(--text-muted);">${w.name} • ${w.regional}</div>
+                    </div>
+                  </div>
+                  <div style="font-size: 24px;">${w.icon}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="returnToCropSelection()">
+                ${ui.backCropBtn}
+              </button>
+              <button class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="replayCurrentPrompt()">
+                ${ui.repeatBtn}
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (ivrState === 'SLOT_BOOKING_CONFIRM') {
+        const quickActions = document.getElementById('quick-actions-container');
+        if (quickActions) quickActions.style.display = 'none';
+
+        const cropId = currentBookingData.crop ? currentBookingData.crop.id : '1';
+        const weightId = currentBookingData.weight ? currentBookingData.weight.id : '1';
+        const localizedCrop = (config.cropNames && config.cropNames[cropId]) || (currentBookingData.crop ? currentBookingData.crop.name : 'Crop');
+        const localizedWeight = (config.weightNames && config.weightNames[weightId]) || (currentBookingData.weight ? currentBookingData.weight.name : 'Produce');
+        const cropIcon = currentBookingData.crop ? currentBookingData.crop.icon : '🌾';
+        const weightRange = currentBookingData.weight ? currentBookingData.weight.range : '';
+        const tokenDisplay = currentBookingData.tokenNumber || 'T-102';
+        const bookingDate = currentBookingData.date || new Date().toLocaleDateString();
+
+        panel.innerHTML = `
+          <div class="confirm-panel">
+            <div style="font-size: 30px; margin-bottom: 4px;">🎉</div>
+            <div style="font-size: 16px; font-weight: 800; color: #a7f3d0; text-transform: uppercase; letter-spacing: 0.5px;">
+              ${ui.successTitle}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              ${ui.tokenLabel}
+            </div>
+
+            <div class="token-hero-display">${tokenDisplay}</div>
+
+            <div class="confirm-meta-grid">
+              <div><strong>🌾 Crop:</strong> ${cropIcon} ${currentBookingData.crop.name} (${localizedCrop})</div>
+              <div><strong>⚖️ Quantity:</strong> ${weightRange} (${localizedWeight})</div>
+              <div><strong>📅 Date:</strong> ${bookingDate}</div>
+              <div><strong>🏛️ Yard:</strong> Rythu Mandi</div>
+            </div>
+
+            <div style="font-size: 11px; color: #86efac; margin-bottom: 12px;">
+              ${ui.smsNotice}
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn btn-gold" style="font-size: 13px;" onclick="hearConfirmationAgain()">
+                ${ui.hearAgainBtn}
+              </button>
+              <button class="btn btn-green" style="font-size: 13px;" onclick="returnToMainMenu()">
+                ${ui.returnMenuBtn}
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function updateKeypadLabels() {
+      const lang = getSelectedLanguage();
+      const config = IVR_I18N[lang] || IVR_I18N.en;
+
+      const labels = {
+        '1': 'Book Slot',
+        '2': 'Queue Status',
+        '3': 'English',
+        '4': 'GHI',
+        '5': 'JKL',
+        '6': 'MNO',
+        '7': 'PQRS',
+        '8': 'TUV',
+        '9': 'WXYZ',
+        'star': 'Menu',
+        '0': 'Repeat',
+        'hash': 'Help'
+      };
+
+      if (ivrState === 'SLOT_BOOKING_CROP') {
+        labels['1'] = `🌾 ${config.cropNames['1']}`;
+        labels['2'] = `🌿 ${config.cropNames['2']}`;
+        labels['3'] = `☁️ ${config.cropNames['3']}`;
+        labels['4'] = `🌽 ${config.cropNames['4']}`;
+        labels['5'] = `🫘 ${config.cropNames['5']}`;
+        labels['6'] = '-';
+        labels['7'] = '-';
+        labels['8'] = lang === 'te' ? '↩️ మెనూ' : (lang === 'hi' ? '↩️ मेनू' : '↩️ Menu');
+        labels['9'] = '-';
+        labels['star'] = lang === 'te' ? '↩️ మెనూ' : (lang === 'hi' ? '↩️ मेनू' : '↩️ Menu');
+        labels['0'] = lang === 'te' ? '🔁 మళ్లీ' : (lang === 'hi' ? '🔁 दोहराएं' : '🔁 Repeat');
+        labels['hash'] = '-';
+      } else if (ivrState === 'SLOT_BOOKING_WEIGHT') {
+        labels['1'] = '⚖️ ≤ 50kg';
+        labels['2'] = '⚖️ ≤ 150kg';
+        labels['3'] = '⚖️ > 150kg';
+        labels['4'] = '-';
+        labels['5'] = '-';
+        labels['6'] = '-';
+        labels['7'] = '-';
+        labels['8'] = lang === 'te' ? '↩️ వెనుకకు' : (lang === 'hi' ? '↩️ वापस' : '↩️ Back');
+        labels['9'] = '-';
+        labels['star'] = lang === 'te' ? '↩️ మెనూ' : (lang === 'hi' ? '↩️ मेनू' : '↩️ Menu');
+        labels['0'] = lang === 'te' ? '🔁 మళ్లీ' : (lang === 'hi' ? '🔁 दोहराएं' : '🔁 Repeat');
+        labels['hash'] = '-';
+      } else if (ivrState === 'SLOT_BOOKING_CONFIRM') {
+        labels['1'] = lang === 'te' ? '↩️ మెయిన్ మెనూ' : (lang === 'hi' ? '↩️ मुख्य मेनू' : '↩️ Main Menu');
+        labels['2'] = '-';
+        labels['3'] = '-';
+        labels['4'] = '-';
+        labels['5'] = '-';
+        labels['6'] = '-';
+        labels['7'] = '-';
+        labels['8'] = '-';
+        labels['9'] = '-';
+        labels['star'] = lang === 'te' ? '↩️ మెనూ' : (lang === 'hi' ? '↩️ मेनू' : '↩️ Menu');
+        labels['0'] = lang === 'te' ? '🔊 మళ్లీ వినండి' : (lang === 'hi' ? '🔊 दोबारा सुनें' : '🔊 Hear Again');
+        labels['hash'] = '-';
+      }
+
+      for (const [key, text] of Object.entries(labels)) {
+        const el = document.getElementById(`key-sub-${key}`);
+        if (el) el.innerText = text;
+      }
+    }
+
+    function flashKeyButton(key) {
+      const map = { '*': 'star', '#': 'hash' };
+      const idKey = map[key] || key;
+      const btn = document.getElementById(`key-btn-${idKey}`);
+      if (btn) {
+        btn.classList.add('key-btn-active');
+        setTimeout(() => btn.classList.remove('key-btn-active'), 200);
+      }
+    }
+
+    function startSlotBookingFlow() {
+      currentBookingData = { crop: null, weight: null, tokenNumber: null, backendToken: null, date: null };
+      setIvrState('SLOT_BOOKING_CROP');
+      const lang = getSelectedLanguage();
+      speakVoice(getCropPrompt(), lang, getCropAudio(lang));
+    }
+
+    function selectCrop(cropId) {
+      const crop = CROP_OPTIONS.find(c => c.id === String(cropId));
+      if (!crop) return;
+      currentBookingData.crop = crop;
+      setIvrState('SLOT_BOOKING_WEIGHT');
+      const lang = getSelectedLanguage();
+      speakVoice(getWeightPrompt(), lang, getWeightAudio(crop.id, lang));
+    }
+
+    async function selectWeight(weightId) {
+      const weight = WEIGHT_OPTIONS.find(w => w.id === String(weightId));
+      if (!weight) return;
+      currentBookingData.weight = weight;
+
+      // Register slot booking with backend & generate token
+      const phone = document.getElementById('farmer-phone').value.trim() || '9876543210';
+      const language = getSelectedLanguage();
+
+      let tokenNum = 'T-102';
+      try {
+        const response = await fetch('/api/test/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber: phone, digit: '1', language })
+        });
+        const data = await response.json();
+        document.getElementById('json-debug').innerText = JSON.stringify(data, null, 2);
+
+        if (data.token_id) {
+          currentBookingData.backendToken = data.token_id;
+          const numMatch = data.token_id.match(/\d+/);
+          tokenNum = numMatch ? `T-${numMatch[0]}` : 'T-102';
+        }
+      } catch (err) {
+        console.warn('Backend booking simulation note:', err);
+        tokenNum = `T-${Math.floor(100 + Math.random() * 900)}`;
+      }
+
+      currentBookingData.tokenNumber = tokenNum;
+      currentBookingData.date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      setIvrState('SLOT_BOOKING_CONFIRM');
+      speakVoice(getConfirmPrompt(), language, getConfirmAudio(language));
+
+      fetchStatus();
+    }
+
+    function returnToCropSelection() {
+      setIvrState('SLOT_BOOKING_CROP');
+      const lang = getSelectedLanguage();
+      speakVoice(getCropPrompt(), lang, getCropAudio(lang));
+    }
+
+    function returnToMainMenu() {
+      setIvrState('MAIN_MENU');
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      const audioPlayer = document.getElementById('audio-player');
+      if (audioPlayer && !audioPlayer.paused) {
+        audioPlayer.pause();
+      }
+      const lang = getSelectedLanguage();
+      const readyMsg = lang === 'te'
+        ? "మెయిన్ మెనూ సిద్ధంగా ఉంది. స్లాట్ బుకింగ్ కొరకు 1, క్యూ స్టేటస్ కొరకు 2 నొక్కండి."
+        : (lang === 'hi'
+            ? "मुख्य मेनू तैयार है। स्लॉट बुकिंग के लिए 1, कतार स्थिति के लिए 2 दबाएं।"
+            : "Main menu ready. Press 1 for Slot Booking or 2 for Queue Status.");
+      document.getElementById('transcript-display').innerText = readyMsg;
+    }
+
+    function replayCurrentPrompt() {
+      const lang = getSelectedLanguage();
+      if (ivrState === 'SLOT_BOOKING_CROP') {
+        speakVoice(getCropPrompt(), lang, getCropAudio(lang));
+      } else if (ivrState === 'SLOT_BOOKING_WEIGHT') {
+        const cropId = currentBookingData.crop ? currentBookingData.crop.id : '1';
+        speakVoice(getWeightPrompt(), lang, getWeightAudio(cropId, lang));
+      } else if (ivrState === 'SLOT_BOOKING_CONFIRM') {
+        speakVoice(getConfirmPrompt(), lang, getConfirmAudio(lang));
+      }
+    }
+
+    function hearConfirmationAgain() {
+      const lang = getSelectedLanguage();
+      speakVoice(getConfirmPrompt(), lang, getConfirmAudio(lang));
+    }
+
+    function pressKey(key) {
+      flashKeyButton(key);
+
+      if (ivrState === 'MAIN_MENU') {
+        if (key === '1') {
+          startSlotBookingFlow();
+        } else if (key === '2') {
+          // Keep Key 2 (Queue Status) logic EXACTLY as it was
+          triggerIvrOption('2');
+        } else {
+          triggerIvrOption(key);
+        }
+      } else if (ivrState === 'SLOT_BOOKING_CROP') {
+        if (['1', '2', '3', '4', '5'].includes(key)) {
+          selectCrop(key);
+        } else if (key === '0') {
+          replayCurrentPrompt();
+        } else if (key === '8' || key === '*') {
+          returnToMainMenu();
+        }
+      } else if (ivrState === 'SLOT_BOOKING_WEIGHT') {
+        if (['1', '2', '3'].includes(key)) {
+          selectWeight(key);
+        } else if (key === '8') {
+          returnToCropSelection();
+        } else if (key === '0') {
+          replayCurrentPrompt();
+        } else if (key === '*') {
+          returnToMainMenu();
+        }
+      } else if (ivrState === 'SLOT_BOOKING_CONFIRM') {
+        if (key === '1') {
+          returnToMainMenu();
+        } else if (key === '0') {
+          hearConfirmationAgain();
+        }
+      }
+    }
+
+    // Physical keyboard & numpad support
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        return;
+      }
+      const key = e.key;
+      if (/^[0-9]$/.test(key) || key === '*' || key === '#') {
+        e.preventDefault();
+        pressKey(key);
+      }
+    });
+
     async function triggerIvrOption(digit) {
-      const phone = document.getElementById('farmer-phone-input').value.trim() || '9876543210';
-      const callStatus = document.getElementById('call-status');
-      callStatus.innerText = `Processing Option ${digit}...`;
+      const phone = document.getElementById('farmer-phone').value.trim() || '9876543210';
+      const language = document.getElementById('language-select').value;
 
       try {
         const response = await fetch('/api/test/simulate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phoneNumber: phone, digit })
+          body: JSON.stringify({ phoneNumber: phone, digit, language })
         });
 
         const data = await response.json();
@@ -636,35 +1612,214 @@
         }
 
         if (data.audio_url) {
-          const audioPlayer = document.getElementById('audio-player');
-          audioPlayer.src = data.audio_url;
-          audioPlayer.play().catch(e => console.log('Autoplay prevented by browser:', e));
-          document.getElementById('audio-url-label').innerText = `Audio URL: ${data.audio_url}`;
+          playAudio(data.audio_url, data.spoken_text);
         }
 
-        callStatus.innerText = digit === '1' ? 'Slot Booked! (MND Token)' : 'Queue Status Played';
-
-        // Refresh SMS and Queue view
         fetchStatus();
       } catch (err) {
         console.error('Error triggering IVR option:', err);
-        callStatus.innerText = 'Call Error';
       }
     }
 
-    async function playMenuGreeting() {
+    function playAudio(url, transcript) {
+      // Cancel Web Speech API to prevent overlapping audio
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (!url) return;
+      const audioPlayer = document.getElementById('audio-player');
+      
+      // Normalize URL to pathname (/audio/...) so it always plays regardless of port/host
+      let playUrl = url;
       try {
-        const res = await fetch('/api/ivr/menu');
-        const data = await res.json();
-        if (data.audio_url) {
-          const audioPlayer = document.getElementById('audio-player');
-          audioPlayer.src = data.audio_url;
-          audioPlayer.play().catch(e => console.log(e));
-          document.getElementById('transcript-display').innerText = data.prompt_telugu;
-          document.getElementById('audio-url-label').innerText = `Audio URL: ${data.audio_url}`;
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.pathname.startsWith('/audio/')) {
+          playUrl = parsed.pathname;
         }
+      } catch (_) {}
+
+      audioPlayer.src = playUrl;
+      audioPlayer.currentTime = 0;
+      audioPlayer.play().catch(e => console.log('Autoplay handled / user interaction needed:', e));
+      document.getElementById('audio-url-label').innerText = `Audio URL: ${playUrl}`;
+      if (transcript) {
+        document.getElementById('transcript-display').innerText = transcript;
+      }
+    }
+
+    // FEATURE 1: Trigger Payment Delay Alert
+    async function triggerPaymentDelayAlert() {
+      const payload = {
+        farmerName: document.getElementById('delay-farmer-name').value.trim(),
+        phoneNumber: document.getElementById('delay-farmer-phone').value.trim(),
+        tokenId: document.getElementById('delay-token-id').value.trim(),
+        amount: document.getElementById('delay-amount').value.trim(),
+        delayReason: document.getElementById('delay-reason').value.trim(),
+        expectedPayoutDate: document.getElementById('delay-payout-date').value.trim(),
+        language: document.getElementById('delay-language').value
+      };
+
+      try {
+        const res = await fetch('/api/alerts/payment-delay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        alert(`🚨 Payment Delay Alert Sent!\nSMS Status: ${data.sms?.status}\nOutbound CallSid: ${data.outboundCall?.callSid}`);
+
+        if (data.outboundCall?.audioUrl) {
+          playAudio(data.outboundCall.audioUrl, data.outboundCall.spokenText);
+        }
+
+        fetchStatus();
       } catch (err) {
-        console.error('Failed to load menu audio', err);
+        console.error('Payment delay alert error:', err);
+      }
+    }
+
+    async function scanDelayedPayments() {
+      try {
+        const res = await fetch('/api/alerts/check-delayed-payments', { method: 'POST' });
+        const data = await res.json();
+        alert(`Scanned ${data.scannedCount} payments. Triggered ${data.alertsTriggered} alerts!`);
+        fetchStatus();
+      } catch (err) {
+        console.error('Scan error:', err);
+      }
+    }
+
+    // FEATURE 2: Slot Cancellation & Re-allocation
+    async function cancelSlotAndReallocate() {
+      try {
+        const res = await fetch('/api/slots/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: '9876543210',
+            tokenId: 'MND-104',
+            reason: 'Tractor breakdown'
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.action === 'NO_WAITLIST_FARMERS' || !data.offeredFarmer) {
+          alert('Waitlist is empty. Click "Reset Queue" to replenish demo farmers.');
+          return;
+        }
+
+        activeReallocationId = data.reallocationId;
+
+        const offerPanel = document.getElementById('active-offer-panel');
+        offerPanel.style.display = 'block';
+
+        const farmerName = data.offeredFarmer?.farmerName || 'Farmer #2';
+        const farmerPhone = data.offeredFarmer?.phoneNumber ? `(+91 ${data.offeredFarmer.phoneNumber})` : '';
+        const freedToken = data.cancelledSlot?.freedTokenId || 'MND-104';
+        const slotTime = data.cancelledSlot?.slotTime || '11:00 AM';
+
+        document.getElementById('offer-target-label').innerText = `📢 Offer Sent to ${farmerName} ${farmerPhone}`;
+        document.getElementById('offer-status-badge').innerText = 'OFFERED';
+        document.getElementById('offer-status-badge').className = 'pill pill-gold';
+        document.getElementById('offer-desc').innerText = `Slot ${freedToken} (${slotTime}) freed. Automated Outbound Call dispatched with offer.`;
+
+        // Show interactive action buttons with dynamic labels
+        const btnContainer = document.getElementById('realloc-buttons-container');
+        if (btnContainer) btnContainer.style.display = 'flex';
+        const btnAccept = document.getElementById('btn-accept-offer');
+        if (btnAccept) btnAccept.innerText = `✅ Press 1: Accept Slot (Assigns to ${farmerName})`;
+        const btnDecline = document.getElementById('btn-decline-offer');
+        if (btnDecline) btnDecline.innerText = `❌ Press 2: Decline (Cascades to next farmer)`;
+
+        const audioUrl = data.audioUrl || data.audio_url || data.outboundCall?.audioUrl || data.outboundCall?.audio_url;
+        const spokenText = data.spokenText || data.spoken_text || data.outboundCall?.spokenText || data.outboundCall?.spoken_text || 'Slot re-allocation offer prompt';
+
+        if (audioUrl) {
+          playAudio(audioUrl, spokenText);
+        }
+
+        fetchStatus();
+      } catch (err) {
+        console.error('Cancellation error:', err);
+      }
+    }
+
+    async function respondToReallocation(digit) {
+      if (!activeReallocationId) {
+        alert('Please cancel a slot first to create an active re-allocation cycle.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/test/slot-reallocate/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reallocationId: activeReallocationId,
+            digit
+          })
+        });
+
+        const data = await res.json();
+        const audioUrl = data.audioUrl || data.audio_url;
+        const spokenText = data.spokenText || data.spoken_text;
+
+        if (data.action === 'reallocation_accepted') {
+          const farmerName = data.farmerName || data.farmer?.farmerName || 'Farmer';
+          const tokenId = data.token_id || data.tokenId || 'MND';
+          document.getElementById('offer-status-badge').innerText = 'ACCEPTED';
+          document.getElementById('offer-status-badge').className = 'pill pill-green';
+          document.getElementById('offer-desc').innerText = `🎉 Slot successfully assigned to ${farmerName}! New Token: ${tokenId}. Confirmation voice & SMS dispatched.`;
+          
+          const btnContainer = document.getElementById('realloc-buttons-container');
+          if (btnContainer) btnContainer.style.display = 'none';
+
+          if (audioUrl) playAudio(audioUrl, spokenText);
+        } else if (data.action === 'reallocation_declined_and_cascaded') {
+          document.getElementById('offer-status-badge').innerText = 'CASCADED';
+          document.getElementById('offer-status-badge').className = 'pill pill-gold';
+          document.getElementById('offer-target-label').innerText = `📢 Cascaded Offer to: ${data.cascadedTo}`;
+          document.getElementById('offer-desc').innerText = `${data.declinedFarmer} declined. Offer automatically cascaded to ${data.cascadedTo}!`;
+
+          // Update buttons to let user accept or decline for the cascaded farmer
+          const btnAccept = document.getElementById('btn-accept-offer');
+          if (btnAccept) btnAccept.innerText = `✅ Press 1: Accept Slot (Assigns to ${data.cascadedTo})`;
+          const btnDecline = document.getElementById('btn-decline-offer');
+          if (btnDecline) btnDecline.innerText = `❌ Press 2: Decline (Cascades to next farmer)`;
+
+          if (audioUrl) playAudio(audioUrl, spokenText);
+        } else if (data.action === 'queue_exhausted') {
+          document.getElementById('offer-status-badge').innerText = 'QUEUE EXHAUSTED';
+          document.getElementById('offer-status-badge').className = 'pill pill-red';
+          document.getElementById('offer-desc').innerText = `All waitlist farmers have declined or were offered the slot. Slot remains unassigned.`;
+          
+          const btnContainer = document.getElementById('realloc-buttons-container');
+          if (btnContainer) btnContainer.style.display = 'none';
+
+          if (audioUrl) playAudio(audioUrl, spokenText);
+        }
+
+        fetchStatus();
+      } catch (err) {
+        console.error('Reallocation response error:', err);
+      }
+    }
+
+    async function resetDemoQueue() {
+      try {
+        const res = await fetch('/api/slots/reset-waitlist', { method: 'POST' });
+        const data = await res.json();
+        activeReallocationId = null;
+
+        const offerPanel = document.getElementById('active-offer-panel');
+        if (offerPanel) offerPanel.style.display = 'none';
+
+        alert('🔄 Waitlist queue and demo bookings have been reset!');
+        fetchStatus();
+      } catch (err) {
+        console.error('Reset queue error:', err);
       }
     }
 
@@ -673,27 +1828,63 @@
         const res = await fetch('/api/status');
         const data = await res.json();
 
-        // Update SMS list
+        // Update SMS inbox
         const smsContainer = document.getElementById('sms-inbox');
         if (data.smsHistory && data.smsHistory.length > 0) {
           smsContainer.innerHTML = data.smsHistory.map(sms => `
             <div class="sms-bubble">
+              <span class="pill pill-${sms.language === 'te' ? 'green' : (sms.language === 'hi' ? 'gold' : 'blue')}" style="margin-bottom: 4px; display: inline-block;">
+                ${(sms.language || 'te').toUpperCase()}
+              </span><br>
               ${sms.message.replace(/\n/g, '<br>')}
               <div class="sms-meta">To: +91 ${sms.to} • ${new Date(sms.timestamp).toLocaleTimeString()} (${sms.status})</div>
             </div>
           `).join('');
         }
 
-        // Update Queue list
+        // Update Outbound Call Log
+        const callLogContainer = document.getElementById('outbound-call-log');
+        if (data.callHistory && data.callHistory.length > 0) {
+          callLogContainer.innerHTML = data.callHistory.map(c => `
+            <div class="item-row">
+              <div>
+                <strong style="color: var(--accent-gold);">${c.callType}</strong> → +91 ${c.to}
+                <div style="font-size: 10px; color: var(--text-muted);">${c.callSid} • ${new Date(c.timestamp).toLocaleTimeString()}</div>
+              </div>
+              <span class="pill pill-green">${c.status}</span>
+            </div>
+          `).join('');
+        } else {
+          callLogContainer.innerHTML = '<div style="font-size: 11px; color: var(--text-muted);">No outbound calls recorded yet.</div>';
+        }
+
+        // Update Waitlist
+        const waitlistContainer = document.getElementById('waitlist-container');
+        if (data.waitlist && data.waitlist.length > 0) {
+          waitlistContainer.innerHTML = data.waitlist.map((w, idx) => `
+            <div class="item-row">
+              <div>
+                <strong>#${idx + 1} ${w.farmerName}</strong> (+91 ${w.phoneNumber})
+                <div style="font-size: 11px; color: var(--text-muted);">${w.crop} • ${w.quantityQtl} Quintals</div>
+              </div>
+              <span class="pill pill-blue">${(w.language || 'te').toUpperCase()}</span>
+            </div>
+          `).join('');
+        } else {
+          waitlistContainer.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 8px 0;">Waitlist is empty. Click "Reset Queue" to replenish demo farmers.</div>';
+        }
+
+        // Update Active Bookings
         const queueContainer = document.getElementById('queue-list');
         if (data.activeBookings && data.activeBookings.length > 0) {
           queueContainer.innerHTML = data.activeBookings.map(b => `
-            <div class="queue-item">
+            <div class="item-row">
               <div>
-                <div class="queue-token">${b.tokenId}</div>
-                <div class="queue-phone">Farmer: +91 ${b.phoneNumber}</div>
+                <span class="token-pill">${b.tokenId}</span>
+                <span style="font-weight: 600; margin-left: 6px;">${b.farmerName || 'Farmer'}</span>
+                <div style="font-size: 11px; color: var(--text-muted);">+91 ${b.phoneNumber} • ${b.status}</div>
               </div>
-              <div class="queue-time">${b.slotTime}</div>
+              <div style="font-weight: 700; color: var(--accent-green);">${b.slotTime}</div>
             </div>
           `).join('');
         }
@@ -702,7 +1893,8 @@
       }
     }
 
-    // Initial load
+    renderIvrScreen();
+    updateKeypadLabels();
     fetchStatus();
     setInterval(fetchStatus, 5000);
   </script>
