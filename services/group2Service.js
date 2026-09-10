@@ -16,11 +16,12 @@ class Group2Service {
   /**
    * Request Group 2 to generate a slot booking & Token ID
    * @param {string} phoneNumber - Farmer's phone number
+   * @param {object} [extraData={}] - Optional metadata
    * @returns {Promise<{tokenId: string, slotTime: string, mandiName: string}>}
    */
-  async bookSlot(phoneNumber) {
+  async bookSlot(phoneNumber, extraData = {}) {
     if (this.useMock) {
-      return await group2Mock.bookSlot(phoneNumber);
+      return await group2Mock.bookSlot(phoneNumber, extraData);
     }
 
     try {
@@ -30,7 +31,8 @@ class Group2Service {
         {
           phoneNumber,
           source: 'IVR_TELEPHONY',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          ...extraData
         },
         { timeout: this.timeout }
       );
@@ -38,7 +40,7 @@ class Group2Service {
       return response.data;
     } catch (err) {
       console.error(`[Group 2 Client] Error connecting to Group 2 backend: ${err.message}. Falling back to mock.`);
-      return await group2Mock.bookSlot(phoneNumber);
+      return await group2Mock.bookSlot(phoneNumber, extraData);
     }
   }
 
@@ -70,10 +72,63 @@ class Group2Service {
   }
 
   /**
+   * Cancel a slot booking to free it for smart re-allocation
+   * @param {string} identifier - Phone number or Token ID
+   * @param {string} [reason] - Reason for cancellation
+   */
+  async cancelSlot(identifier, reason) {
+    return await group2Mock.cancelSlot(identifier, reason);
+  }
+
+  /**
+   * Process re-allocation decision (1=Accept, 2=Decline)
+   * @param {string} reallocationId 
+   * @param {'1' | '2' | 'ACCEPT' | 'DECLINE'} decision 
+   */
+  async handleReallocationResponse(reallocationId, decision) {
+    return await group2Mock.handleReallocationResponse(reallocationId, decision);
+  }
+
+  /**
+   * Get waitlist of farmers waiting for slots
+   */
+  getWaitlist() {
+    return group2Mock.getWaitlist();
+  }
+
+  /**
+   * Get active and historical re-allocations
+   */
+  getReallocations() {
+    return group2Mock.getReallocations();
+  }
+
+  /**
+   * Get delayed payments audit list
+   */
+  getDelayedPayments() {
+    return group2Mock.getDelayedPayments();
+  }
+
+  /**
+   * Mark a delayed payment as alerted
+   */
+  markPaymentNotified(paymentId) {
+    return group2Mock.markPaymentNotified(paymentId);
+  }
+
+  /**
    * Get all mock bookings (helpful for dashboard/debugging)
    */
   getMockBookings() {
     return group2Mock.getAllBookings();
+  }
+
+  /**
+   * Reset waitlist and mock demo bookings
+   */
+  resetWaitlistAndBookings() {
+    return group2Mock.resetWaitlistAndBookings();
   }
 }
 
