@@ -21,7 +21,7 @@ class UserLogin(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str
+    access_token: str =Field(minlength=2, maxlength=8)
     token_type: str
 
 
@@ -83,15 +83,35 @@ class SlotResponse(BaseModel):
 
 
 class BookingCreate(BaseModel):
+    center_id: int
+    crop_id: int
+    quantity: float = Field(gt=0)
+    booking_date: date
     slot_id: int
 
 
 class BookingResponse(BaseModel):
     id: int
     farmer_id: int
-    slot_id: int
-    token_number: int
+    center_id: int
+    crop_id: Optional[int] = None
+
+    token_number: str
+
+    quantity: float
+    booking_date: date
+    slot_id: Optional[int] = None
+
     status: str
+
+    price: Optional[float] = None
+
+    payment_status: str
+    payment_method: Optional[str] = None
+
+    checked_in: bool
+    arrival_time: Optional[datetime] = None
+
     created_at: datetime
 
     class Config:
@@ -102,9 +122,9 @@ class BookingResponse(BaseModel):
 class ProcurementCreate(BaseModel):
     booking_id: int
     crop: str
-    quantity: float
+    quantity: float = Field(gt=0)
     quality: Optional[str] = None
-    price_per_kg: Optional[float] = None
+    price_per_kg: Optional[float] = Field(default=None, ge=0)
 
 
 class ProcurementResponse(BaseModel):
@@ -141,7 +161,7 @@ class PaymentResponse(BaseModel):
 
 class QueueBookingResponse(BaseModel):
     id: int
-    token_number: int
+    token_number: str
     farmer_id: int
     farmer_name: str
     slot_id: int
@@ -166,3 +186,139 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CropCreate(BaseModel):
+    crop_name: str
+    variety: Optional[str] = None
+    season: Optional[str] = None
+    quantity: float = Field(gt=0)
+
+
+class CropResponse(BaseModel):
+    id: int
+    farmer_id: int
+    crop_name: str
+    variety: Optional[str] = None
+    season: Optional[str] = None
+    quantity: float
+    remaining_quantity: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WeighmentCreate(BaseModel):
+    declared_bags: Optional[int] = None
+    bag_weight_kg: Optional[float] = None
+    declared_weight_kg: Optional[float] = None
+
+    weighed_bags: int = Field(gt=0)
+    gross_weight_kg: float = Field(gt=0)
+    tare_weight_kg: float = Field(ge=0)
+
+class WeighmentResponse(BaseModel):
+    id: int
+    booking_id: int
+
+    declared_bags: Optional[int] = None
+    bag_weight_kg: Optional[float] = None
+    declared_weight_kg: Optional[float] = None
+
+    weighed_bags: int
+    gross_weight_kg: float
+    tare_weight_kg: float
+    net_weight_kg: float
+
+    accepted_weight_kg: float
+    accepted_quintals: float
+
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
+class QualityCheckCreate(BaseModel):
+    moisture_percent: float = Field(ge=0)
+    foreign_matter_percent: float = Field(ge=0)
+    damaged_grains_percent: float = Field(ge=0)
+    slightly_damaged_percent: float = Field(ge=0)
+    shrivelled_broken_percent: float = Field(ge=0)
+    other_grains_percent: float = Field(ge=0)
+    weevilled_grains_percent: float = Field(ge=0)
+
+
+class QualityCheckResponse(BaseModel):
+    id: int
+    booking_id: int
+
+    moisture_percent: float
+    foreign_matter_percent: float
+    damaged_grains_percent: float
+    slightly_damaged_percent: float
+    shrivelled_broken_percent: float
+    other_grains_percent: float
+    weevilled_grains_percent: float
+
+    grade: Optional[str] = None
+    result: str
+    rejection_reason: Optional[str] = None
+    recommendation: Optional[str] = None
+    quality_deduction: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================
+# GRIEVANCE SCHEMAS
+# ============================================================
+
+class GrievanceCreate(BaseModel):
+    transaction_id: Optional[str] = None
+    category: str
+    description: str
+    urgency: str = "MEDIUM"
+    attachment_name: Optional[str] = None
+
+
+class GrievanceUpdate(BaseModel):
+    status: str
+    assigned_department: Optional[str] = None
+    assigned_officer: Optional[str] = None
+    official_response: Optional[str] = None
+    resolution_details: Optional[str] = None
+
+
+class GrievanceResponse(BaseModel):
+    id: int
+    complaint_id: str
+    farmer_id: int
+
+    transaction_id: Optional[str] = None
+    category: str
+    description: str
+    urgency: str
+    attachment_name: Optional[str] = None
+
+    status: str
+
+    assigned_department: Optional[str] = None
+    assigned_officer: Optional[str] = None
+    official_response: Optional[str] = None
+    resolution_details: Optional[str] = None
+
+    audit_trail: Optional[str] = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PaymentStatusUpdate(BaseModel):
+    status: str

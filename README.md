@@ -1,69 +1,73 @@
-# FarmerProc — Agricultural Procurement & Mandi Management Platform
+# FarmerProc — Agricultural Procurement Platform
 
-`FarmerProc` is an end-to-end, rule-based agricultural procurement and queue management system designed for state governments, procurement centers (mandis), and farmers. It streamlines harvest intake, token allocation, queue processing, quality control, and payment tracking with full transparency.
-
-> [!NOTE]
-> **Scope & Technology Clarification**: `FarmerProc` uses deterministic rule-based algorithms, WebSocket real-time queues, and structured workflows. **No machine learning (ML) models or AI features are used in this application.**
+FarmerProc is a comprehensive, multi-portal agricultural procurement management platform designed to streamline harvest booking, queue coordination, quality testing, payment tracking, and state-level procurement monitoring.
 
 ---
 
-## 🏛 System Architecture & Scope
+## 🏛 System Architecture
 
-The platform consists of four primary modules:
+The platform consists of four core modules:
 
-### 1. Farmer Portal (`farmersfolder/`)
-- **Farmer Profile & Registration**: Land holding verification and crop registration.
-- **Rule-Based Slot Booking**: Schedule procurement center visits within eligible quota limits and operating hours.
-- **Real-Time Queue Tracking**: Monitor live token status and estimated waiting time.
-- **Multi-Channel Notifications**: In-app notifications with simulated SMS and IVR voice call previews for demo purposes.
-- **Procurement & Payout Receipts**: Digital gate passes, quality inspection certificates, and bank payment tracking.
+1. **`farmersfolder/` (Farmer Portal — React + Vite)**
+   - **Farmer Registration & Profiles**: Land area and crop eligibility calculation.
+   - **Slot Booking Engine**: Time-slot reservation with gate pass issuance and QR codes.
+   - **Live Queue Tracker**: Real-time queue status updates (WebSocket / local event engine).
+   - **Multi-Channel Notification Hub**: In-app notifications, mobile push alerts, IVR voice note simulation, and **simulated SMS notifications** (demo mode).
+   - **Grievance Redressal & Crop Management**: File issues and manage registered crops.
 
-### 2. Procurement Center Console (`center-app/`)
-- **Live Queue Management**: Real-time token caller, stage progression, and status updates (WebSocket-integrated).
-- **Weighbridge Intake**: Gross, tare, and net weight calculations.
-- **Rule-Based Quality Inspection**: Automated evaluation against crop parameters (moisture %, foreign matter %, damaged grains) with pass/fail grading.
-- **Disbursement Processing**: MSP payout calculation and transaction UTR logging.
+2. **`center-app/` (Mandi Center Console — React + Vite)**
+   - **Gate Check-in**: QR scanner for token verification and queue placement.
+   - **Weighbridge & Processing Hub**: Record gross/tare weights and calculate net quintals.
+   - **Rule-Based Quality Check**: Parameter inspection (moisture %, foreign matter, damaged grains) with deterministic rule-based grading.
+   - **MSP Payout & Disbursement**: Automated MSP calculations and bank transfer status.
 
-### 3. Government Operations Portal (`government/`)
-- **State-Wide Command Dashboard**: District and center procurement monitoring, active queue lengths, and throughput analytics.
-- **Congestion & Arrival Trends**: Historical harvest pattern and arrival volume trend visualization.
-- **Grievance Redressal & Alert System**: Issue tracking, center operational status monitoring, and audit logging.
+3. **`government/` (State Government Command Center — React + Vite)**
+   - **Procurement Dashboard**: State-wide procurement metrics, active center tracking, and daily arrival KPIs.
+   - **Congestion & Arrival Trends**: Historical trend baselines and arrival distribution patterns to guide center staffing and volume redirection.
+   - **Alert System**: Notifications for queue congestion, high rejection rates, and center downtime.
+   - **Audit Logs & Dispute Resolution**: Transparent tracking of administrative actions and grievance handling.
 
-### 4. Backend Service (`backend/`)
-- **FastAPI Framework**: Modular REST APIs for authentication, farmers, centers, slots, bookings, procurement, and payments.
-- **WebSocket Gateway**: Real-time queue and notification event broadcasting.
-- **Database Model**: SQLite storage managed via SQLAlchemy ORM.
+4. **`backend/` (FastAPI REST & WebSocket Backend)**
+   - Role-based authentication, booking engine APIs, real-time WebSocket queue manager, and SQLite/SQLAlchemy data persistence.
 
 ---
 
-## 🚀 Running the Services Locally
+## ⚙️ Key Feature Highlights (Honest Scope)
 
-### Backend Setup (FastAPI)
+- **Rule-Based Quality Assessment**: Transparent, threshold-based quality check system against standardized MSP grading limits (no machine learning or artificial intelligence models).
+- **Simulated SMS Service**: Demo SMS service adapter simulating carrier delivery callbacks and retry flows for development testing.
+- **Real-Time Queue Management**: Instant token updates and queue tracking powered by WebSockets.
+- **Unified Product Naming**: Standardized `FarmerProc` product identity across all frontends, backend, and documentation.
+
+---
+
+## 🚀 Running Locally
+
+### Backend Setup
 ```bash
 cd backend
 python -m venv venv
 # On Windows:
-.\venv\Scripts\activate
+venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### Farmer Portal Setup (React + Vite)
+### Frontend Applications Setup
+Each frontend can be run independently using Vite:
+
 ```bash
+# Farmer Portal
 cd farmersfolder
 npm install
 npm run dev
-```
 
-### Procurement Center Console Setup (React + Vite)
-```bash
+# Center Console
 cd center-app
 npm install
 npm run dev
-```
 
-### Government Operations Portal Setup (React + Vite)
-```bash
+# Government Command Center
 cd government
 npm install
 npm run dev
@@ -71,10 +75,5 @@ npm run dev
 
 ---
 
-## 📋 Summary of Capabilities
-- **Farmer Registration**: Quota and crop eligibility checks based on land area.
-- **Slot Booking**: Rule-based validation with double-booking prevention and mutex slot locking.
-- **Real-Time Queue**: Live status synchronization via WebSockets.
-- **Notifications**: In-app delivery with simulated SMS and voice call notifications for demo environments.
-- **Procurement & Payment**: Automated MSP calculation, weight breakdown, and UTR tracking.
-- **Rule-Based Quality Checks**: Parameter-based thresholds (no AI/ML claims).
+## 📄 License
+Internal / Government Procurement Demonstration Project.

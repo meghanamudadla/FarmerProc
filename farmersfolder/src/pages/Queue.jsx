@@ -7,7 +7,7 @@ import ProcurementReceiptCard from '../components/ProcurementReceiptCard.jsx';
 
 export default function Queue({
   t, lang, farmer, bookings, activeBooking,
-  bookingCropLabel, openReschedule, cancelActiveBooking, onCheckInSuccess, onUpdateBookingStatus, onResetQueueData, onNavigateToMandiStaff,
+  bookingCropLabel, openReschedule, cancelActiveBooking, onCheckInSuccess, onUpdateBookingStatus, onResetQueueData,
 }) {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
@@ -78,38 +78,6 @@ export default function Queue({
           </div>
         </div>
       )}
-
-      {/* Link to Dedicated Full-Page Mandi Staff Console */}
-      <div
-        className="card"
-        style={{
-          marginTop: 22,
-          border: '1px solid var(--border-focus)',
-          background: 'var(--surface-elevated)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          padding: 16,
-        }}
-      >
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
-            🏢 Authorized Mandi Staff Control Console
-          </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3 }}>
-            Weighbridge operators & gate officers: Call tokens to counters, conduct digital moisture & scale weighing, and finalize procurement.
-          </div>
-        </div>
-        <button
-          className="btn btn-primary"
-          style={{ padding: '8px 16px', fontWeight: 700, fontSize: 12.5 }}
-          onClick={() => onNavigateToMandiStaff && onNavigateToMandiStaff()}
-        >
-          Open Mandi Staff Console →
-        </button>
-      </div>
 
       {/* Gate Scanner Simulator Modal */}
       <GateScannerModal

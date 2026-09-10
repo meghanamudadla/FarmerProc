@@ -11,9 +11,9 @@ export default function Dashboard({
   return (
     <>
       <div className="grid-3">
-        <StatTile label={t.activeBooking} value={activeBooking ? activeBooking.token : '—'} />
-        <StatTile label={t.queuePosition} value={activeBooking ? `${peopleAhead} ${t.ahead}` : '—'} tone="accent" />
-        <StatTile label={t.estWait} value={activeBooking ? `~${estWaitMin} ${t.mins}` : '—'} />
+        <StatTile label={t.activeBooking} value={activeBooking ? activeBooking.token : '—'} icon="bookings" iconTone="violet" />
+        <StatTile label={t.queuePosition} value={activeBooking ? `${peopleAhead} ${t.ahead}` : '—'} tone="accent" icon="queue" iconTone="amber" />
+        <StatTile label={t.estWait} value={activeBooking ? `~${estWaitMin} ${t.mins}` : '—'} icon="clock" iconTone="teal" />
       </div>
 
       <div className="grid-2">

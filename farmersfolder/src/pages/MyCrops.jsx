@@ -248,13 +248,15 @@ export default function MyCrops({ t, lang, farmer, crops = [], setCrops, onBookS
 
       {/* Summary Tiles Row (Section 4) */}
       <div className="grid-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 20 }}>
-        <StatTile label="Registered Crops" value={String(totalRegisteredCount)} />
-        <StatTile label="Active Crops" value={String(activeCropsCount)} tone="accent" />
-        <StatTile label="Completed Crops" value={String(completedCropsCount)} />
+        <StatTile label="Registered Crops" value={String(totalRegisteredCount)} icon="myCrops" iconTone="violet" />
+        <StatTile label="Active Crops" value={String(activeCropsCount)} tone="accent" icon="dashboard" iconTone="teal" />
+        <StatTile label="Completed Crops" value={String(completedCropsCount)} icon="bookings" iconTone="amber" />
         <StatTile
           label="Total Remaining Quota"
           value={`${totalRemainingQty} Qtl`}
           tone={totalRemainingQty > 0 ? 'accent' : 'warn'}
+          icon="payments"
+          iconTone={totalRemainingQty > 0 ? 'teal' : 'critical'}
         />
       </div>
 

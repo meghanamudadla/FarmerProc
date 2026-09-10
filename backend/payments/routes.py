@@ -6,7 +6,11 @@ from auth.dependencies import require_role
 from models import User
 from database import get_db
 from models import Procurement, Payment
-from schemas import PaymentCreate, PaymentResponse
+from schemas import (
+    PaymentCreate,
+    PaymentResponse,
+    PaymentStatusUpdate
+)
 
 
 router = APIRouter(
@@ -66,13 +70,13 @@ def create_payment(
         procurement_id=payment_data.procurement_id,
         amount=payment_data.amount,
         transaction_id=transaction_id,
-        status="PAID"
+        status="PAYMENT_INITIATED"
     )
 
     db.add(payment)
 
     # Update procurement status
-    procurement.status = "PAID"
+    procurement.status = "PAYMENT_INITIATED"
 
     db.commit()
     db.refresh(payment)

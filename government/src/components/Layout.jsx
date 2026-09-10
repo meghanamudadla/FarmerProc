@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { path: '/centers', label: 'Centers', icon: '🏢' },
   { path: '/map', label: 'Map View', icon: '🗺️' },
   { path: '/analytics', label: 'Analytics', icon: '📈' },
-  { path: '/congestion-trends', label: 'Congestion Trends', icon: '📊' },
+  { path: '/forecast', label: 'Congestion Trends', icon: '📈' },
   { path: '/alerts', label: 'Alerts', icon: '🚨' },
   { path: '/farmers', label: 'Farmers', icon: '👨‍🌾' },
   { path: '/center-management', label: 'Center Mgmt', icon: '⚙️', controlOnly: true },

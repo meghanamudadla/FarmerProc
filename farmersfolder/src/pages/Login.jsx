@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 export default function Login({
   t, lang, setLang,
   role, setRole, authMode, setAuthMode, signupStep, setSignupStep,
@@ -5,6 +7,25 @@ export default function Login({
   otpSent, setOtpSent, otp, setOtp, otpRefs, handleOtpChange, handleOtpKeyDown, handleOtpPaste,
   login, addNotif,
 }) {
+  // The login screen is always rendered on a light glass card, regardless of
+  // the farmer's saved dashboard theme (dark mode persists across logout).
+  // `data-theme="light"` on .login-wrap below only affects descendants that
+  // key off an ANCESTOR attribute selector — it can't out-rank the global
+  // `:root[data-theme="dark"] input{...}` rules, which target the real root
+  // element and were winning the specificity fight, turning every signup
+  // input black-on-black. Forcing the attribute onto <html> itself while
+  // this page is mounted (and restoring whatever it was on unmount) fixes
+  // that at the source instead of patching more CSS specificity.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute('data-theme');
+    root.setAttribute('data-theme', 'light');
+    return () => {
+      if (prevTheme) root.setAttribute('data-theme', prevTheme);
+      else root.removeAttribute('data-theme');
+    };
+  }, []);
+
   const rawDigits = mobile.replace(/\D/g, '');
   const isFarmerSignup = authMode === 'signup' && role === 'farmer';
   const step1Valid = signupData.name.trim().length > 1 && signupData.village.trim().length > 1 && signupData.district.trim().length > 1;
@@ -34,52 +55,20 @@ export default function Login({
             <div className="tag">{t.loginTag}</div>
           </div>
 
-          <div className="role-label">{lang === 'en' ? 'Sign in as' : 'ఎలా సైన్ ఇన్ అవ్వాలి'}</div>
-          <div className="role-row">
-            {[
-              ['farmer', '🌾', t.roleFarmer],
-              ['operator', '👷', t.roleOperator],
-              ['admin', '📊', t.roleAdmin],
-            ].map(([r, ic, label]) => (
-              <button
-                key={r}
-                className={'role-btn' + (role === r ? ' active' : '')}
-                onClick={() => {
-                  setRole(r);
-                  if (r !== 'farmer') setAuthMode('signin');
-                }}
-              >
-                <span className="role-icon">{ic}</span>
-                {label}
-              </button>
-            ))}
+          <div className="signin-tabs">
+            <button className={authMode === 'signin' ? 'active' : ''} onClick={() => setAuthMode('signin')}>
+              🔑 {t.signIn}
+            </button>
+            <button
+              className={authMode === 'signup' ? 'active' : ''}
+              onClick={() => {
+                setAuthMode('signup');
+                setSignupStep(1);
+              }}
+            >
+              ✨ {lang === 'en' ? 'Sign Up / Register' : 'నమోదు చేయండి'}
+            </button>
           </div>
-
-          {role === 'farmer' && (
-            <div className="signin-tabs">
-              <button className={authMode === 'signin' ? 'active' : ''} onClick={() => setAuthMode('signin')}>
-                🔑 {t.signIn}
-              </button>
-              <button
-                className={authMode === 'signup' ? 'active' : ''}
-                onClick={() => {
-                  setAuthMode('signup');
-                  setSignupStep(1);
-                }}
-              >
-                ✨ {lang === 'en' ? 'Sign Up / Register' : 'నమోదు చేయండి'}
-              </button>
-            </div>
-          )}
-
-          {role !== 'farmer' && (
-            <div className="provisioned-note">
-              🔒{' '}
-              {lang === 'en'
-                ? `${role === 'operator' ? 'Operator' : 'Admin'} accounts are created by a department administrator, not self-registered. Contact your district office for access.`
-                : `${role === 'operator' ? 'ఆపరేటర్' : 'అడ్మిన్'} ఖాతాలు డిపార్ట్‌మెంట్ అడ్మినిస్ట్రేటర్ ద్వారానే సృష్టించబడతాయి, స్వీయ-నమోదు కాదు. యాక్సెస్ కోసం మీ జిల్లా కార్యాలయాన్ని సంప్రదించండి.`}
-            </div>
-          )}
 
           {!otpSent ? (
             <>

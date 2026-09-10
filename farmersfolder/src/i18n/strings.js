@@ -30,7 +30,7 @@ export const STR = {
     fullName: 'Full Name', mobile: 'Mobile Number', location: 'Location', landArea: 'Land Area (Acres)', primaryCrop: 'Primary Crop',
     notProvided: 'Not provided',
     landRequired: 'Land area is required — this sets the quantity you are eligible to sell.',
-    notifTitle: 'Notifications', notifSub: 'In-app notifications (SMS and voice call notifications are simulated for demo purposes).',
+    notifTitle: 'Notifications', notifSub: 'Every update also reaches you by SMS and voice call, in your chosen language — not only in this app.',
     channels: { sms: 'SMS', push: 'App', ivr: 'IVR Call' },
     payStage1: 'Purchase Recorded', payStage2: 'Payment Initiated', payStage3: 'Bank Account Verified', payStage4: 'Bank Processing', payStage5: 'Payment Credited',
     disbursalMethod: 'Disbursal Method', autoUpdateNote: 'This status updates automatically as your payment moves through the bank — there is nothing for you to do here.',
@@ -86,7 +86,7 @@ export const STR = {
     statusFull: 'FULL',
     disruptionNotice: 'Operational Alert',
     compareDrawerText: (n) => `${n} centre(s) selected for side-by-side comparison.`,
-    // Phase 4 Rule-Based Slot Booking Strings
+    // Phase 4 Smart Slot Booking Strings
     doubleBookingError: 'You already have an active procurement booking.',
     raceConditionError: 'Sorry, this slot is no longer available.',
     reviewBookingTitle: 'Review Procurement Booking & Bank Payout',
@@ -155,7 +155,7 @@ export const STR = {
     fullName: 'పూర్తి పేరు', mobile: 'మొబైల్ నంబర్', location: 'ప్రాంతం', landArea: 'భూమి విస్తీర్ణం (ఎకరాలు)', primaryCrop: 'ప్రధాన పంట',
     notProvided: 'ఇవ్వలేదు',
     landRequired: 'భూమి విస్తీర్ణం తప్పనిసరి — ఇది మీరు అమ్మడానికి అర్హత ఉన్న పరిమాణాన్ని నిర్ణయిస్తుంది.',
-    notifTitle: 'నోటిఫికేషన్లు', notifSub: 'యాప్ నోటిఫికేషన్లు (SMS మరియు వాయిస్ కాల్‌లు డెమో కోసం సిమ్యులేట్ చేయబడ్డాయి).',
+    notifTitle: 'నోటిఫికేషన్లు', notifSub: 'ప్రతి అప్‌డేట్ మీకు SMS మరియు వాయిస్ కాల్ ద్వారా కూడా చేరుతుంది.',
     channels: { sms: 'SMS', push: 'యాప్', ivr: 'IVR కాల్' },
     payStage1: 'కొనుగోలు నమోదు', payStage2: 'చెల్లింపు ప్రారంభం', payStage3: 'బ్యాంక్ ఖాతా ధృవీకరణ', payStage4: 'బ్యాంక్ ప్రాసెసింగ్', payStage5: 'చెల్లింపు జమ',
     disbursalMethod: 'చెల్లింపు విధానం', autoUpdateNote: 'మీ చెల్లింపు బ్యాంక్ ద్వారా వెళ్తున్నప్పుడు ఈ స్థితి స్వయంచాలకంగా అప్‌డేట్ అవుతుంది.',

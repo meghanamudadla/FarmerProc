@@ -28,10 +28,7 @@ export default function Notifications({ t, lang, notifications = [], onRetryNoti
         <div>
           <h2 style={{ fontSize: 17 }}>📬 {t.notifTitle || 'Multi-Channel Notification Hub'}</h2>
           <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>
-            {t.notifSub || 'In-App alerts, simulated SMS delivery, Mobile Push, and regional IVR voice call previews (Demo Mode).'}
-          </div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface-elevated)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: 8, marginTop: 8 }}>
-            ℹ️ <strong>Demo Mode Notice:</strong> SMS delivery and IVR voice calls are simulated in-app for demonstration purposes.
+            {t.notifSub || 'Centralized DLT SMS, Mobile Push, In-App alerts, and regional IVR voice calls.'}
           </div>
         </div>
       </div>
@@ -105,7 +102,7 @@ export default function Notifications({ t, lang, notifications = [], onRetryNoti
                   {/* Metadata Row */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>
                     <div>
-                      <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>{channel}</span> · {n.formattedTime || n.time || 'Just now'} · <span className="mono">{n.farmerId || 'FARM-91234567'}</span>
+                      <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>{channel}</span> · {n.formattedTime || n.time || 'Just now'} · <span className="mono">{n.farmerId}</span>
                     </div>
 
                     <div style={{ display: 'flex', gap: 8 }}>

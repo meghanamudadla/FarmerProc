@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from auth.dependencies import require_role
 from models import User
 from database import get_db
-from models import Booking, Procurement
+from models import (
+    Booking,
+    Procurement,
+    Weighment,
+    QualityCheck
+)
 from schemas import ProcurementCreate, ProcurementResponse
 
 
@@ -37,10 +42,11 @@ def create_procurement(
             detail="Booking not found"
         )
 
-    if booking.status != "PROCESSING":
+    # Procurement should happen only after quality acceptance
+    if booking.status not in ["ACCEPTED", "PAYMENT_PROCESSING"]:
         raise HTTPException(
-            status_code=400,
-            detail="Farmer must be in PROCESSING status"
+        status_code=400,
+        detail="Farmer must pass quality check before procurement"
         )
 
     # Check whether procurement already exists
@@ -54,31 +60,75 @@ def create_procurement(
             detail="Procurement already exists for this booking"
         )
 
-    total_amount = None
+    # Get weighing record
+    weighment = db.query(Weighment).filter(
+        Weighment.booking_id == booking.id
+    ).first()
 
-    if procurement_data.price_per_kg is not None:
-        total_amount = (
-            procurement_data.quantity
-            * procurement_data.price_per_kg
+    if not weighment:
+        raise HTTPException(
+            status_code=400,
+            detail="Weighment not found"
         )
 
+    # Get quality record
+    quality_check = db.query(QualityCheck).filter(
+        QualityCheck.booking_id == booking.id
+    ).first()
+
+    if not quality_check:
+        raise HTTPException(
+            status_code=400,
+            detail="Quality check not found"
+        )
+
+    if quality_check.result != "ACCEPTED":
+        raise HTTPException(
+            status_code=400,
+            detail="Rejected produce cannot be procured"
+        )
+
+    accepted_quintals = weighment.accepted_quintals
+
+    quality_deduction = quality_check.quality_deduction
+
+    # Use the MSP amount already calculated in booking.price
+    total_amount = booking.price
+
+    if total_amount is None:
+        raise HTTPException(
+            status_code=400,
+            detail="MSP calculation must be completed first"
+        )
+
+    # Convert MSP per quintal to price per kg
+    msp_rate_per_quintal = (
+        total_amount + quality_deduction
+    ) / accepted_quintals
+
+    price_per_kg = msp_rate_per_quintal / 100
+
     procurement = Procurement(
-        booking_id=procurement_data.booking_id,
+        booking_id=booking.id,
         crop=procurement_data.crop,
-        quantity=procurement_data.quantity,
-        quality=procurement_data.quality,
-        price_per_kg=procurement_data.price_per_kg,
+        quantity=weighment.net_weight_kg,
+        quality=quality_check.grade,
+        price_per_kg=price_per_kg,
         total_amount=total_amount,
-        status="COMPLETED"
+        status="COMPLETED",
+        accepted_quintals=accepted_quintals,
+        quality_deduction=quality_deduction,
+        msp_rate_per_quintal=msp_rate_per_quintal
     )
 
     db.add(procurement)
+
+    booking.status = "PAYMENT_PROCESSING"
+
     db.commit()
     db.refresh(procurement)
 
     return procurement
-
-
 # ---------------------------------------------------------
 # GET PROCUREMENT BY BOOKING
 # ---------------------------------------------------------
