@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DataTable from '../components/DataTable';
 import { useAuth } from '../context/AuthContext';
 import { FARMERS, getDistrictName, getCropName } from '../data/mockData';
+import { getAllFarmers } from '../api/api';
 
 export default function FarmerManagement() {
   const { canControl } = useAuth();
   const [farmers, setFarmers] = useState(FARMERS);
+
+  useEffect(() => {
+    getAllFarmers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFarmers(data);
+        }
+      })
+      .catch((err) => console.log('Using fallback farmer data'));
+  }, []);
 
   const toggleFlag = (id) => {
     setFarmers(prev => prev.map(f => f.id === id ? { ...f, flagged: !f.flagged } : f));

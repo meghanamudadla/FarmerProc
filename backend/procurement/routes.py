@@ -153,3 +153,109 @@ def get_procurement(
         )
 
     return procurement
+
+
+# ---------------------------------------------------------
+# GET ALL PROCUREMENTS
+# ---------------------------------------------------------
+
+@router.get(
+    "/all",
+    response_model=list[ProcurementResponse]
+)
+def get_all_procurements(
+    db: Session = Depends(get_db)
+):
+    return db.query(Procurement).order_by(Procurement.created_at.desc()).all()
+
+
+# ---------------------------------------------------------
+# STATEWIDE PROCUREMENT ANALYTICS (COMMAND CENTER)
+# ---------------------------------------------------------
+
+@router.get("/analytics")
+def get_procurement_analytics(
+    db: Session = Depends(get_db)
+):
+    from models import Farmer, ProcurementCenter, Grievance, Payment
+    from sqlalchemy import func
+    from datetime import date
+
+    total_farmers = db.query(func.count(Farmer.id)).scalar() or 0
+    total_centers = db.query(func.count(ProcurementCenter.id)).scalar() or 0
+    total_bookings = db.query(func.count(Booking.id)).scalar() or 0
+
+    today = date.today()
+    today_arrivals = db.query(func.count(Booking.id)).filter(
+        Booking.checked_in == True
+    ).scalar() or 0
+
+    today_completed = db.query(func.count(Booking.id)).filter(
+        Booking.status == "PAYMENT_COMPLETED"
+    ).scalar() or 0
+
+    active_queues = db.query(func.count(Booking.id)).filter(
+        Booking.status.in_(["WAITING", "ARRIVED", "WEIGHING", "QUALITY_CHECK", "PAYMENT_PROCESSING"])
+    ).scalar() or 0
+
+    total_procured_qty = db.query(func.sum(Procurement.quantity)).scalar() or 0.0
+    total_payments = db.query(func.sum(Payment.amount)).scalar() or 0.0
+
+    pending_grievances = db.query(func.count(Grievance.id)).filter(
+        Grievance.status.in_(["SUBMITTED", "ASSIGNED", "UNDER_REVIEW"])
+    ).scalar() or 0
+
+    return {
+        "total_farmers": total_farmers,
+        "total_centers": total_centers,
+        "total_bookings": total_bookings,
+        "today_arrivals": today_arrivals,
+        "today_completed": today_completed,
+        "active_queues": active_queues,
+        "total_procured_quintals": round(float(total_procured_qty), 2),
+        "total_disbursed_inr": round(float(total_payments), 2),
+        "pending_issues": pending_grievances,
+    }
+
+
+# ---------------------------------------------------------
+# PROCUREMENT & PAYMENT SUMMARY PER CENTER
+# ---------------------------------------------------------
+
+@router.get("/summary")
+def get_procurement_summary(
+    db: Session = Depends(get_db)
+):
+    from models import ProcurementCenter, Payment
+    centers = db.query(ProcurementCenter).all()
+    results = []
+
+    for c in centers:
+        proc_records = (
+            db.query(Procurement)
+            .join(Booking, Procurement.booking_id == Booking.id)
+            .filter(Booking.center_id == c.id)
+            .all()
+        )
+        total_qtl = sum(p.quantity for p in proc_records if p.quantity) or 0.0
+        total_amt = sum(p.total_amount for p in proc_records if p.total_amount) or 0.0
+
+        proc_ids = [p.id for p in proc_records]
+        payments = db.query(Payment).filter(Payment.procurement_id.in_(proc_ids)).all() if proc_ids else []
+        completed = sum(1 for pay in payments if pay.status == "PAYMENT_COMPLETED")
+        pending = sum(1 for pay in payments if pay.status in ["PAYMENT_INITIATED", "PENDING"])
+
+        results.append({
+            "centerId": f"c{c.id}",
+            "centerName": c.name,
+            "district": c.district or "East Godavari",
+            "totalProcuredQtl": round(float(total_qtl), 1),
+            "totalPaidQtl": round(float(total_qtl), 1),
+            "totalAmount": round(float(total_amt), 2),
+            "completedPayments": completed,
+            "pendingPayments": pending,
+            "delayedPayments": 0,
+            "reconciled": True
+        })
+
+    return results

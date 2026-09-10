@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { motion } from 'framer-motion';
@@ -7,21 +7,29 @@ import ChartBlock from '../components/ChartBlock';
 import StatusBadge from '../components/StatusBadge';
 import { useNotifications } from '../context/NotificationContext';
 import { computeKPIs, HOURLY_TODAY, CENTERS, ALERTS } from '../data/mockData';
+import { getProcurementAnalytics } from '../api/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { events } = useNotifications();
   const kpis = computeKPIs();
+  const [liveAnalytics, setLiveAnalytics] = useState(null);
+
+  useEffect(() => {
+    getProcurementAnalytics()
+      .then((data) => setLiveAnalytics(data))
+      .catch((e) => console.log('Using baseline KPI data'));
+  }, []);
 
   const kpiCards = [
-    { ...kpis.totalFarmers, icon: '👨‍🌾' },
-    { ...kpis.totalCenters, icon: '🏢' },
-    { ...kpis.todayArrivals, icon: '📥' },
-    { ...kpis.todayCompleted, icon: '✅' },
-    { ...kpis.totalQuantity, icon: '📦', suffix: ' qtl' },
-    { ...kpis.totalPayments, icon: '💰', prefix: '₹' },
-    { ...kpis.activeQueues, icon: '⏳' },
-    { ...kpis.pendingIssues, icon: '⚠️' },
+    { ...kpis.totalFarmers, value: liveAnalytics?.total_farmers ?? kpis.totalFarmers.value, icon: '👨‍🌾' },
+    { ...kpis.totalCenters, value: liveAnalytics?.total_centers ?? kpis.totalCenters.value, icon: '🏢' },
+    { ...kpis.todayArrivals, value: liveAnalytics?.today_arrivals ?? kpis.todayArrivals.value, icon: '📥' },
+    { ...kpis.todayCompleted, value: liveAnalytics?.today_completed ?? kpis.todayCompleted.value, icon: '✅' },
+    { ...kpis.totalQuantity, value: liveAnalytics?.total_procured_quintals ?? kpis.totalQuantity.value, icon: '📦', suffix: ' qtl' },
+    { ...kpis.totalPayments, value: liveAnalytics?.total_disbursed_inr ? liveAnalytics.total_disbursed_inr.toLocaleString('en-IN') : kpis.totalPayments.value, icon: '💰', prefix: '₹' },
+    { ...kpis.activeQueues, value: liveAnalytics?.active_queues ?? kpis.activeQueues.value, icon: '⏳' },
+    { ...kpis.pendingIssues, value: liveAnalytics?.pending_issues ?? kpis.pendingIssues.value, icon: '⚠️' },
   ];
 
   const statusSummary = [

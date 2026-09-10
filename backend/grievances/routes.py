@@ -201,3 +201,14 @@ def update_grievance(
     db.refresh(grievance)
 
     return grievance
+
+
+# ============================================================
+# GET ALL GRIEVANCES - GOVERNMENT / ADMIN
+# ============================================================
+
+@router.get("/all", response_model=list[GrievanceResponse])
+def get_all_grievances(
+    db: Session = Depends(get_db)
+):
+    return db.query(Grievance).order_by(Grievance.created_at.desc()).all()

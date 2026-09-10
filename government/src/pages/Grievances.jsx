@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { GRIEVANCES, CENTERS } from '../data/mockData';
+import { getAllGrievances } from '../api/api';
 
 const STATUS_FLOW = ['new', 'assigned', 'in_progress', 'resolved'];
 const STATUS_LABELS = { new: 'New', assigned: 'Assigned', in_progress: 'In Progress', resolved: 'Resolved' };
@@ -17,6 +18,36 @@ export default function Grievances() {
   const { canControl } = useAuth();
   const [grievances, setGrievances] = useState(GRIEVANCES);
   const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    getAllGrievances()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveGrievances = data.map((g) => {
+            const rawStatus = (g.status || 'new').toLowerCase();
+            let mappedStatus = 'new';
+            if (rawStatus === 'assigned') mappedStatus = 'assigned';
+            else if (rawStatus === 'under_review' || rawStatus === 'in_progress') mappedStatus = 'in_progress';
+            else if (rawStatus === 'resolved') mappedStatus = 'resolved';
+
+            return {
+              id: g.complaint_id || `CMP-${g.id}`,
+              farmerName: `Farmer #${g.farmer_id}`,
+              title: g.description ? `${g.category.replace('_', ' ').toUpperCase()}: ${g.description.slice(0, 45)}...` : `${g.category} Issue`,
+              description: g.description || 'No description provided.',
+              category: g.category.toLowerCase().includes('payment') ? 'payment_dispute' : g.category.toLowerCase().includes('reject') ? 'unfair_rejection' : 'long_wait',
+              priority: (g.urgency && ['critical', 'high', 'medium', 'low'].includes(g.urgency.toLowerCase())) ? g.urgency.toLowerCase() : 'medium',
+              status: mappedStatus,
+              slaDeadline: new Date(Date.now() + 2 * 86400000).toISOString(),
+              centerId: 'c1',
+              assignedTo: g.assigned_officer || (g.assigned_department ? `${g.assigned_department} Desk` : null),
+            };
+          });
+          setGrievances([...liveGrievances, ...GRIEVANCES]);
+        }
+      })
+      .catch((err) => console.log('Using baseline grievances data'));
+  }, []);
 
   const filtered = filter === 'all' ? grievances : grievances.filter(g => g.status === filter);
 

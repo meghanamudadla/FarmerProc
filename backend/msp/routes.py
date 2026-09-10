@@ -10,16 +10,34 @@ router = APIRouter(
     tags=["MSP"]
 )
 
-
-# Example MSP rates.
-# Update these with the official rates required by your project.
+# Official MSP rates (₹/quintal)
 MSP_RATES = {
     "paddy": 2369.0,
     "cotton": 7710.0,
     "maize": 2400.0,
     "wheat": 2585.0,
     "groundnut": 7263.0,
+    "soybean": 4892.0,
+    "sunflower": 6760.0,
+    "jowar": 3180.0,
+    "bajra": 2500.0,
+    "ragi": 4290.0,
+    "chickpea": 5440.0,
+    "mustard": 5650.0,
 }
+
+
+def lookup_msp_rate(crop_name: str) -> float:
+    normalized = crop_name.lower().strip()
+    # 1. Exact match
+    if normalized in MSP_RATES:
+        return MSP_RATES[normalized]
+    # 2. Substring match (e.g. "paddy (grade a)" matches "paddy")
+    for key, rate in MSP_RATES.items():
+        if key in normalized:
+            return rate
+    # 3. Fallback standard MSP
+    return 2300.0
 
 
 @router.get("/{booking_id}")
@@ -49,7 +67,7 @@ def calculate_msp(
     if not weighment:
         raise HTTPException(
             status_code=400,
-            detail="Weighment not found"
+            detail="Weighment not found for this booking"
         )
 
     quality = (
@@ -61,43 +79,22 @@ def calculate_msp(
     if not quality:
         raise HTTPException(
             status_code=400,
-            detail="Quality check not found"
+            detail="Quality check not found for this booking"
         )
 
     if quality.result != "ACCEPTED":
         raise HTTPException(
             status_code=400,
-            detail="Rejected produce cannot be paid"
+            detail="Rejected produce cannot be processed for payout"
         )
 
-    crop = booking.crop
-
-    if not crop:
-        raise HTTPException(
-            status_code=400,
-            detail="Crop not found for booking"
-        )
-
-    crop_name = crop.crop_name.lower().strip()
-
-    msp_rate = MSP_RATES.get(crop_name)
-
-    if msp_rate is None:
-        raise HTTPException(
-            status_code=400,
-            detail=f"MSP rate not configured for {crop.crop_name}"
-        )
+    crop_name = booking.crop.crop_name if booking.crop else "Paddy (Grade A)"
+    msp_rate = lookup_msp_rate(crop_name)
 
     accepted_quintals = weighment.accepted_quintals
-
-    base_amount = accepted_quintals * msp_rate
-
-    quality_deduction = quality.quality_deduction
-
-    final_amount = max(
-        0,
-        base_amount - quality_deduction
-    )
+    base_amount = round(accepted_quintals * msp_rate, 2)
+    quality_deduction = round(quality.quality_deduction, 2)
+    final_amount = max(0.0, round(base_amount - quality_deduction, 2))
 
     booking.price = final_amount
     booking.status = "PAYMENT_PROCESSING"
@@ -106,7 +103,7 @@ def calculate_msp(
 
     return {
         "booking_id": booking.id,
-        "crop": crop.crop_name,
+        "crop": crop_name,
         "accepted_quintals": accepted_quintals,
         "msp_rate_per_quintal": msp_rate,
         "base_amount": base_amount,

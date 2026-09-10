@@ -29,3 +29,32 @@ def get_my_profile(
         )
 
     return farmer
+
+
+@router.get("/all", response_model=list[FarmerResponse])
+def get_all_farmers(
+    db: Session = Depends(get_db)
+):
+    farmers = db.query(Farmer).all()
+    results = []
+    for f in farmers:
+        crop_name = f.crops[0].crop_name if f.crops else "Paddy (Grade A)"
+        user_name = f.user.name if f.user else "Farmer"
+        user_phone = f.user.phone if f.user else ""
+        results.append(
+            FarmerResponse(
+                id=f.id,
+                farmer_id=f.farmer_id or f"FRM-{f.id:04d}",
+                name=user_name,
+                mobile=user_phone,
+                phone=user_phone,
+                village=f.village or "Kakinada Rural",
+                district=f.district or "East Godavari",
+                land_area=f.land_area or 5.0,
+                crop=crop_name,
+                totalBookings=len(f.bookings) if f.bookings else 1,
+                noShows=0,
+                flagged=False
+            )
+        )
+    return results

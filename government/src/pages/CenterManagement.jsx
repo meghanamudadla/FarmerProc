@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import StatusBadge from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { CENTERS, getDistrictName } from '../data/mockData';
+import { getCenters } from '../api/api';
 
 const pendingCenters = [
   { id: 'c13', name: 'Nellore Agri Hub', district: 'd4', submittedBy: 'Collector, Nellore', submittedAt: '2026-09-06', docsVerified: true, capacityVerified: false },
@@ -13,6 +14,25 @@ export default function CenterManagement() {
   const { canControl, canConfigure } = useAuth();
   const [centers, setCenters] = useState(CENTERS);
   const [pending] = useState(pendingCenters);
+
+  useEffect(() => {
+    getCenters()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveCenters = data.map((c, idx) => ({
+            id: `c${c.id}`,
+            name: c.name,
+            district: c.district || 'East Godavari',
+            status: 'normal',
+            staffOnDuty: Math.max(6, Math.round((c.capacity || 100) / 10)),
+            crops: ['Paddy', 'Cotton', 'Maize'],
+          }));
+          // Merge live centers with mock centers for comprehensive coverage
+          setCenters([...liveCenters, ...CENTERS.filter(mc => !liveCenters.some(lc => lc.name.toLowerCase() === mc.name.toLowerCase()))]);
+        }
+      })
+      .catch((err) => console.log('Using baseline centers data'));
+  }, []);
 
   const toggleCenterStatus = (id) => {
     setCenters(prev => prev.map(c =>

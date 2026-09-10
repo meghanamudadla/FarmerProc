@@ -32,6 +32,13 @@ class FarmerResponse(BaseModel):
     village: Optional[str] = None
     district: Optional[str] = None
     land_area: Optional[float] = None
+    name: Optional[str] = None
+    mobile: Optional[str] = None
+    phone: Optional[str] = None
+    crop: Optional[str] = None
+    totalBookings: Optional[int] = 0
+    noShows: Optional[int] = 0
+    flagged: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -163,17 +170,31 @@ class QueueBookingResponse(BaseModel):
     token_number: str
     farmer_id: int
     farmer_name: str
-    slot_id: int
+    farmer_phone: Optional[str] = None
+    slot_id: Optional[int] = None
     status: str
-    slot_date: date
-    start_time: time
-    end_time: time
+    stage: Optional[str] = None
+    slot_date: Optional[date] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    crop: Optional[str] = None
+    variety: Optional[str] = None
+    quantity: Optional[float] = None
+    price: Optional[float] = None
+    payment_status: Optional[str] = None
+    checked_in: Optional[bool] = False
+    arrival_time: Optional[datetime] = None
+    weight_details: Optional[dict] = None
+    quality: Optional[dict] = None
+    payment: Optional[dict] = None
+    audit_trail: Optional[list] = None
 
 
 class QueueResponse(BaseModel):
     center_id: int
     currently_serving: Optional[QueueBookingResponse] = None
-    waiting: list[QueueBookingResponse]
+    waiting: list[QueueBookingResponse] = []
+    tokens: list[QueueBookingResponse] = []
 
 class NotificationResponse(BaseModel):
     id: int

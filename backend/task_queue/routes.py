@@ -20,17 +20,73 @@ router = APIRouter(
 )
 
 
-def booking_to_queue_response(booking, farmer, user, slot):
+def booking_to_queue_response(booking, farmer, user, slot=None):
+    weight_details = None
+    if booking.weighment:
+        w = booking.weighment
+        weight_details = {
+            "weighed_bags": w.weighed_bags,
+            "gross_weight_kg": w.gross_weight_kg,
+            "tare_weight_kg": w.tare_weight_kg,
+            "net_weight_kg": w.net_weight_kg,
+            "accepted_weight_kg": w.accepted_weight_kg,
+            "accepted_quintals": w.accepted_quintals,
+        }
+
+    quality_details = None
+    if booking.quality_check:
+        q = booking.quality_check
+        quality_details = {
+            "moisture_percent": q.moisture_percent,
+            "foreign_matter_percent": q.foreign_matter_percent,
+            "damaged_grains_percent": q.damaged_grains_percent,
+            "grade": q.grade,
+            "result": q.result,
+            "rejection_reason": q.rejection_reason,
+            "quality_deduction": q.quality_deduction,
+        }
+
+    payment_details = None
+    if booking.price is not None:
+        payment_details = {
+            "amount": booking.price,
+            "status": booking.payment_status,
+            "method": booking.payment_method or "DBT_DIRECT_TRANSFER",
+        }
+
+    crop_name = booking.crop.crop_name if booking.crop else "Paddy (Grade A)"
+    crop_variety = booking.crop.variety if booking.crop else "FAQ Standard"
+
     return QueueBookingResponse(
         id=booking.id,
         token_number=booking.token_number,
         farmer_id=farmer.id,
         farmer_name=user.name,
-        slot_id=slot.id,
+        farmer_phone=user.phone,
+        slot_id=slot.id if slot else booking.slot_id,
         status=booking.status,
-        slot_date=slot.date,
-        start_time=slot.start_time,
-        end_time=slot.end_time
+        stage=booking.status,
+        slot_date=slot.date if slot else booking.booking_date,
+        start_time=slot.start_time if slot else None,
+        end_time=slot.end_time if slot else None,
+        crop=crop_name,
+        variety=crop_variety,
+        quantity=booking.quantity,
+        price=booking.price,
+        payment_status=booking.payment_status,
+        checked_in=booking.checked_in,
+        arrival_time=booking.arrival_time,
+        weight_details=weight_details,
+        quality=quality_details,
+        payment=payment_details,
+        audit_trail=[
+            {
+                "event": "Token Generated",
+                "role": "Booking System",
+                "time": str(booking.created_at),
+                "details": f"Token issued for {booking.quantity} Qtl {crop_name}"
+            }
+        ]
     )
 
 
@@ -57,30 +113,24 @@ def get_center_queue(
             detail="Procurement center not found"
         )
 
-    rows = (
-        db.query(Booking, Farmer, User, Slot)
-        .join(
-            Farmer,
-            Booking.farmer_id == Farmer.id
-        )
-        .join(
-            User,
-            Farmer.user_id == User.id
-        )
-        .join(
-            Slot,
-            Booking.slot_id == Slot.id
-        )
-        .filter(
-            Slot.center_id == center_id
-        )
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.center_id == center_id)
+        .order_by(Booking.created_at.asc())
         .all()
     )
 
     currently_serving = None
     waiting = []
+    all_tokens = []
 
-    for booking, farmer, user, slot in rows:
+    for booking in bookings:
+        farmer = booking.farmer
+        user = farmer.user if farmer else None
+        slot = booking.slot
+
+        if not farmer or not user:
+            continue
 
         item = booking_to_queue_response(
             booking,
@@ -89,27 +139,19 @@ def get_center_queue(
             slot
         )
 
-        if booking.status == "WEIGHING":
+        all_tokens.append(item)
 
-            currently_serving = item
-
-        elif booking.status in ["BOOKED", "WAITING"]:
-
+        if booking.status in ["WEIGHING", "QUALITY_CHECK", "PAYMENT_PROCESSING"]:
+            if not currently_serving:
+                currently_serving = item
+        elif booking.status in ["BOOKED", "WAITING", "ARRIVED"]:
             waiting.append(item)
-
-    # Sort waiting farmers
-    waiting.sort(
-        key=lambda x: (
-            x.slot_date,
-            x.start_time,
-            x.token_number
-        )
-    )
 
     return QueueResponse(
         center_id=center_id,
         currently_serving=currently_serving,
-        waiting=waiting
+        waiting=waiting,
+        tokens=all_tokens
     )
 
 
