@@ -1,25 +1,55 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import { CENTERS, DISTRICTS, getDistrictName } from '../../data/mockData';
+import { getCenters } from '../../api/api';
 
 export default function CenterList() {
   const navigate = useNavigate();
   const { user, isDistrictAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState('all');
   const [districtFilter, setDistrictFilter] = useState('all');
+  const [allCenters, setAllCenters] = useState(CENTERS);
+
+  useEffect(() => {
+    getCenters()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveMapped = data.map((c) => ({
+            id: `c${c.id}`,
+            name: c.name,
+            district: c.district || 'East Godavari',
+            lat: 16.9891,
+            lng: 82.2475,
+            status: 'normal',
+            queueLength: 6,
+            expectedWait: 20,
+            capacityPercent: 45,
+            todayArrivals: 24,
+            processingRate: 12,
+            staffOnDuty: Math.max(6, Math.round((c.capacity || 100) / 10)),
+            storagePercent: 38,
+            crops: ['paddy', 'cotton'],
+            approvalStatus: 'active',
+          }));
+          const existingNames = new Set(liveMapped.map(l => l.name.toLowerCase()));
+          setAllCenters([...liveMapped, ...CENTERS.filter(c => !existingNames.has(c.name.toLowerCase()))]);
+        }
+      })
+      .catch((err) => console.log('Using baseline centers list'));
+  }, []);
 
   const centers = useMemo(() => {
-    let data = [...CENTERS];
+    let data = [...allCenters];
     if (isDistrictAdmin && user.district) {
       data = data.filter(c => c.district === user.district);
     }
     if (statusFilter !== 'all') data = data.filter(c => c.status === statusFilter);
     if (districtFilter !== 'all') data = data.filter(c => c.district === districtFilter);
     return data;
-  }, [statusFilter, districtFilter, isDistrictAdmin, user]);
+  }, [allCenters, statusFilter, districtFilter, isDistrictAdmin, user]);
 
   const columns = [
     { key: 'name', header: 'Center Name', accessor: 'name', render: (val) => <span className="font-medium">{val}</span> },

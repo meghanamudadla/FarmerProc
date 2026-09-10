@@ -32,3 +32,37 @@ export async function apiRequest(endpoint, options = {}) {
 
   return response.json();
 }
+
+export async function getFarmerProfile() {
+  return apiRequest("/farmers/me");
+}
+
+export async function getMyCrops() {
+  return apiRequest("/crops/my");
+}
+
+export async function createCrop(cropData) {
+  return apiRequest("/crops/", {
+    method: "POST",
+    body: JSON.stringify(cropData),
+  });
+}
+
+export async function getMyBookings() {
+  return apiRequest("/bookings/my");
+}
+
+export async function createBooking(bookingData) {
+  return apiRequest("/bookings/", {
+    method: "POST",
+    body: JSON.stringify(bookingData),
+  });
+}
+
+export async function getCenters() {
+  return apiRequest("/centers/");
+}
+
+export async function getCenterSlots(centerId) {
+  return apiRequest(`/slots/center/${centerId}`);
+}

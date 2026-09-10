@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { SeverityBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { ALERTS, CENTERS } from '../data/mockData';
+import { getAllGrievances } from '../api/api';
 
 const STATUS_FLOW = ['new', 'acknowledged', 'in_progress', 'resolved'];
 const STATUS_LABELS = { new: 'New', acknowledged: 'Acknowledged', in_progress: 'In Progress', resolved: 'Resolved' };
@@ -16,6 +17,28 @@ export default function Alerts() {
   const [alerts, setAlerts] = useState(ALERTS);
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  useEffect(() => {
+    getAllGrievances()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveAlerts = data.map((g) => ({
+            id: g.complaint_id || `ALT-G${g.id}`,
+            type: g.category?.toLowerCase().includes('payment') ? 'payment_delay' : 'abnormal_pattern',
+            severity: (g.urgency === 'HIGH' || g.urgency === 'CRITICAL') ? 'critical' : 'warning',
+            centerId: 'c1',
+            title: `Farmer Grievance: ${g.category.replace('_', ' ')} (${g.complaint_id})`,
+            description: g.description,
+            status: g.status === 'SUBMITTED' ? 'new' : g.status === 'ASSIGNED' ? 'acknowledged' : 'in_progress',
+            createdAt: g.created_at || new Date().toISOString(),
+            acknowledgedBy: g.assigned_officer || null,
+            resolvedAt: null,
+          }));
+          setAlerts([...liveAlerts, ...ALERTS]);
+        }
+      })
+      .catch((err) => console.log('Using baseline alerts'));
+  }, []);
 
   const filtered = useMemo(() => {
     let data = [...alerts];

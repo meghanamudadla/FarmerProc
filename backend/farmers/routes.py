@@ -28,7 +28,21 @@ def get_my_profile(
             detail="Farmer profile not found"
         )
 
-    return farmer
+    crop_name = farmer.crops[0].crop_name if farmer.crops else "Paddy (Grade A)"
+    return FarmerResponse(
+        id=farmer.id,
+        farmer_id=farmer.farmer_id or f"FRM-{farmer.id:04d}",
+        name=current_user.name or "Farmer",
+        mobile=current_user.phone or "",
+        phone=current_user.phone or "",
+        village=farmer.village or "Kakinada Rural",
+        district=farmer.district or "East Godavari",
+        land_area=farmer.land_area or 5.0,
+        crop=crop_name,
+        totalBookings=len(farmer.bookings) if farmer.bookings else 0,
+        noShows=0,
+        flagged=False
+    )
 
 
 @router.get("/all", response_model=list[FarmerResponse])

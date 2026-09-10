@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line } from 'recharts';
 import { motion } from 'framer-motion';
@@ -6,6 +6,7 @@ import StatusBadge from '../../components/StatusBadge';
 import ChartBlock from '../../components/ChartBlock';
 import { useAuth } from '../../context/AuthContext';
 import { CENTERS, getDistrictName } from '../../data/mockData';
+import { getCenterDetail, getCenterQueue } from '../../api/api';
 
 const mockQueueData = [
   { token: 'T-301', farmer: 'Raman K.', crop: 'Paddy', stage: 'WEIGHING', wait: '25m' },
@@ -32,19 +33,60 @@ const mockStorage = [
 
 const stageColors = {
   WAITING: 'text-status-busy', WEIGHING: 'text-accent-blue', QUALITY_CHECK: 'text-accent-purple',
-  PAYMENT: 'text-accent-emerald', ACCEPTED: 'text-status-normal', REJECTED: 'text-severity-critical',
+  PAYMENT: 'text-accent-emerald', PAYMENT_PROCESSING: 'text-accent-emerald',
+  PAYMENT_COMPLETED: 'text-status-normal', ACCEPTED: 'text-status-normal', REJECTED: 'text-severity-critical',
 };
 
 export default function CenterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { canControl } = useAuth();
-  const center = CENTERS.find(c => c.id === id);
+  const [centerData, setCenterData] = useState(() => CENTERS.find(c => c.id === id) || null);
+  const [queueItems, setQueueItems] = useState(mockQueueData);
+
+  useEffect(() => {
+    getCenterDetail(id)
+      .then((c) => {
+        if (c && c.name) {
+          setCenterData((prev) => ({
+            ...(prev || {}),
+            id: `c${c.id}`,
+            name: c.name,
+            district: c.district || 'East Godavari',
+            status: prev?.status || 'normal',
+            crops: prev?.crops || ['Paddy', 'Cotton'],
+            queueLength: prev?.queueLength || 4,
+            todayArrivals: prev?.todayArrivals || 12,
+            processingRate: prev?.processingRate || 10,
+            staffOnDuty: prev?.staffOnDuty || Math.max(6, Math.round((c.capacity || 100) / 10)),
+            storagePercent: prev?.storagePercent || 40,
+          }));
+        }
+      })
+      .catch(() => console.log('Using baseline center info'));
+
+    getCenterQueue(id)
+      .then((q) => {
+        if (q && Array.isArray(q.tokens) && q.tokens.length > 0) {
+          const liveTokens = q.tokens.map((t) => ({
+            token: t.token_number,
+            farmer: t.farmer_name,
+            crop: t.crop || 'Paddy (Grade A)',
+            stage: t.status || t.stage || 'WAITING',
+            wait: t.status === 'PAYMENT_COMPLETED' ? 'Done' : '15m',
+          }));
+          setQueueItems(liveTokens);
+        }
+      })
+      .catch(() => console.log('Using baseline queue data'));
+  }, [id]);
+
+  const center = centerData;
 
   if (!center) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-text-muted">Center not found</p>
+        <p className="text-text-muted">Loading center details...</p>
       </div>
     );
   }
@@ -96,7 +138,7 @@ export default function CenterDetail() {
         <div className="bg-bg-card border border-gray-800 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-text-primary mb-4">📋 Live Queue</h3>
           <div className="space-y-2">
-            {mockQueueData.map(q => (
+            {queueItems.map(q => (
               <div key={q.token} className="flex items-center justify-between py-2 border-b border-gray-800/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="font-tabular text-xs text-accent-blue font-bold">{q.token}</span>

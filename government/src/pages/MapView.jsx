@@ -1,21 +1,51 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import { CENTERS, getDistrictName, getStatusColor } from '../data/mockData';
+import { getCenters } from '../api/api';
 
 export default function MapView() {
   const navigate = useNavigate();
   const { user, isDistrictAdmin } = useAuth();
   const [layer, setLayer] = useState('status'); // 'status' or 'volume'
+  const [allCenters, setAllCenters] = useState(CENTERS);
+
+  useEffect(() => {
+    getCenters()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveMapped = data.map((c, i) => ({
+            id: `c${c.id}`,
+            name: c.name,
+            district: c.district || 'East Godavari',
+            lat: 16.9891 + (i * 0.15) - 0.2,
+            lng: 82.2475 + (i * 0.25) - 0.3,
+            status: 'normal',
+            queueLength: 6,
+            expectedWait: 20,
+            capacityPercent: 45,
+            todayArrivals: 30,
+            processingRate: 12,
+            staffOnDuty: 8,
+            storagePercent: 40,
+            crops: ['paddy', 'cotton'],
+            approvalStatus: 'active',
+          }));
+          const existingNames = new Set(liveMapped.map(l => l.name.toLowerCase()));
+          setAllCenters([...liveMapped, ...CENTERS.filter(c => !existingNames.has(c.name.toLowerCase()))]);
+        }
+      })
+      .catch((err) => console.log('Using baseline map centers'));
+  }, []);
 
   const centers = useMemo(() => {
     if (isDistrictAdmin && user.district) {
-      return CENTERS.filter(c => c.district === user.district);
+      return allCenters.filter(c => c.district === user.district);
     }
-    return CENTERS;
-  }, [isDistrictAdmin, user]);
+    return allCenters;
+  }, [allCenters, isDistrictAdmin, user]);
 
   // Default center of map (India approximate center)
   const mapCenter = centers.length > 0

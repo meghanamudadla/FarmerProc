@@ -23,11 +23,22 @@ export default function Login({
   handleOtpChange,
   handleOtpKeyDown,
   handleOtpPaste,
+  authLoading,
+  authError,
+  setAuthError,
+  setAuthPassword,
   login,
   addNotif,
 }) {
- const [localPassword, setLocalPassword] = useState("");
-const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPasswordState] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  function setPassword(val) {
+    setPasswordState(val);
+    if (typeof setAuthPassword === "function") {
+      setAuthPassword(val);
+    }
+  }
 
   // Keep login page in light theme.
   useEffect(() => {

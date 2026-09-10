@@ -32,6 +32,12 @@ import {
   loginFarmer,
   logoutFarmer,
 } from './services/authService.js';
+import {
+  getFarmerProfile,
+  getMyCrops,
+  getMyBookings,
+  createBooking,
+} from './services/api.js';
 import SecurityTestModal from './components/SecurityTestModal.jsx';
 
 
@@ -163,6 +169,75 @@ const [authError, setAuthError] = useState('');
       setCrops(CropRepository.getCropsForFarmer(farmer.farmerId));
     }
   }, [farmer?.farmerId]);
+
+  useEffect(() => {
+    if (!authed) return;
+
+    // 1. Live Farmer Profile from FastAPI
+    getFarmerProfile()
+      .then((data) => {
+        if (data) {
+          setFarmer((prev) => ({
+            ...prev,
+            farmerId: data.farmer_id || prev.farmerId,
+            fullName: data.name || prev.fullName,
+            village: data.village || prev.village,
+            district: data.district || prev.district,
+            landAcres: data.land_area != null ? String(data.land_area) : prev.landAcres,
+          }));
+        }
+      })
+      .catch(() => console.log('Using baseline farmer profile'));
+
+    // 2. Live Crops registered in FastAPI
+    getMyCrops()
+      .then((cropList) => {
+        if (Array.isArray(cropList) && cropList.length > 0) {
+          const mappedCrops = cropList.map((c) => ({
+            cropRecordId: `CROP-${c.id}`,
+            cropId: c.crop_name?.toLowerCase().includes('paddy') ? 'paddy' : c.crop_name?.toLowerCase().includes('cotton') ? 'cotton' : 'wheat',
+            cropName: c.crop_name,
+            cropLabel: c.crop_name,
+            variety: c.variety,
+            entitlementQuantity: c.quantity,
+            remainingQuantity: c.remaining_quantity,
+            season: c.season || 'Kharif 2026',
+            status: c.status,
+          }));
+          setCrops(mappedCrops);
+        }
+      })
+      .catch(() => console.log('Using baseline crops data'));
+
+    // 3. Live Bookings from FastAPI
+    getMyBookings()
+      .then((bList) => {
+        if (Array.isArray(bList) && bList.length > 0) {
+          const mappedBookings = bList.map((b) => ({
+            id: `b_${b.id}`,
+            token: b.token_number,
+            farmerId: farmer.farmerId,
+            cropId: b.crop ? b.crop.crop_name?.toLowerCase() : 'paddy',
+            cropLabel: b.crop ? b.crop.crop_name : 'Paddy (Grade A)',
+            qty: b.quantity,
+            centreId: `c${b.center_id}`,
+            date: b.booking_date,
+            slotIdx: 0,
+            status: (b.status || 'booked').toLowerCase(),
+            price: b.price || 0,
+            paymentStatus: (b.payment_status || 'pending').toLowerCase(),
+            paymentMethod: b.payment_method || 'Direct DBT Payout (Aadhaar Seeded)',
+            checkedIn: b.checked_in,
+            arrivalTime: b.arrival_time ? new Date(b.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+          }));
+          setBookings((prev) => {
+            const liveTokens = new Set(mappedBookings.map(mb => mb.token));
+            return [...mappedBookings, ...prev.filter(p => !liveTokens.has(p.token))];
+          });
+        }
+      })
+      .catch(() => console.log('Using baseline bookings data'));
+  }, [authed]);
 
   const [profileDraft, setProfileDraft] = useState(farmer);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -803,6 +878,32 @@ async function login(loginData = {}) {
     };
 
     setBookings((prev) => [b, ...prev]);
+    if (authed) {
+      const centerNum = parseInt(String(form.centreId).replace(/\D/g, '')) || 1;
+      const cropNum = matchedCrop?.id === 'cotton' ? 2 : 1;
+      const slotNum = ((form.slotIdx ?? 0) % 3) + 1;
+      createBooking({
+        center_id: centerNum,
+        crop_id: cropNum,
+        quantity: qtyNum,
+        booking_date: form.date,
+        slot_id: slotNum,
+      })
+        .then((res) => {
+          if (res?.token_number) {
+            setBookings((prev) =>
+              prev.map((item) =>
+                item.id === b.id
+                  ? { ...item, token: res.token_number, id: `b_${res.id}` }
+                  : item
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          console.log('Online booking sync notice:', err.message);
+        });
+    }
     setSlotFill((prev) => ({ ...prev, [slotKey(form.centreId, form.date, form.slotIdx)]: (prev[slotKey(form.centreId, form.date, form.slotIdx)] || 0) + 1 }));
     setActiveBookingId(b.id);
     addNotif('sms', nt.booked(token, form.date, SLOT_TIMES[form.slotIdx], centre[lang]));

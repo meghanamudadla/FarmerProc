@@ -51,3 +51,13 @@ export async function getAllFarmers() {
 export async function getPaymentsSummary() {
   return apiRequest("/procurement/summary");
 }
+
+export async function getCenterDetail(centerId) {
+  const numericId = String(centerId).replace(/\D/g, "") || 1;
+  return apiRequest(`/centers/${numericId}`);
+}
+
+export async function getCenterQueue(centerId) {
+  const numericId = String(centerId).replace(/\D/g, "") || 1;
+  return apiRequest(`/queue/center/${numericId}`);
+}

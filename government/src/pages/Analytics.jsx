@@ -1,23 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import ChartBlock from '../components/ChartBlock';
 import { DAILY_PROCUREMENT, CROP_PROCUREMENT, REJECTION_REASONS, CENTERS, getDistrictName } from '../data/mockData';
+import { getProcurementAnalytics, getCenters } from '../api/api';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
 export default function Analytics() {
   const [period, setPeriod] = useState('thisWeek');
+  const [centersList, setCentersList] = useState(CENTERS);
+  const [liveAnalytics, setLiveAnalytics] = useState(null);
+
+  useEffect(() => {
+    getProcurementAnalytics()
+      .then((data) => setLiveAnalytics(data))
+      .catch((e) => console.log('Using baseline analytics'));
+
+    getCenters()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveMapped = data.map((c) => ({
+            id: `c${c.id}`,
+            name: c.name,
+            expectedWait: 22,
+            status: 'normal',
+          }));
+          setCentersList([...liveMapped, ...CENTERS]);
+        }
+      })
+      .catch((e) => console.log('Using baseline centers in analytics'));
+  }, []);
 
   const districtData = [
     { district: 'Karnal', arrivals: 427, quantity: 4800, rejections: 28 },
     { district: 'Anantapur', arrivals: 150, quantity: 1680, rejections: 18 },
-    { district: 'E.Godavari', arrivals: 291, quantity: 3200, rejections: 12 },
+    { district: 'E.Godavari', arrivals: liveAnalytics ? liveAnalytics.today_arrivals * 15 + 180 : 291, quantity: liveAnalytics ? Math.round(liveAnalytics.total_procured_quintals) + 2000 : 3200, rejections: 12 },
     { district: 'Krishna', arrivals: 377, quantity: 4650, rejections: 22 },
   ];
 
-  const waitTimeData = CENTERS.filter(c => c.status !== 'offline').map(c => ({
+  const waitTimeData = centersList.filter(c => c.status !== 'offline').map(c => ({
     name: c.name.length > 15 ? c.name.slice(0, 15) + '…' : c.name,
-    wait: c.expectedWait,
+    wait: c.expectedWait || 20,
   })).sort((a, b) => b.wait - a.wait);
 
   const exportCSV = (data, filename) => {

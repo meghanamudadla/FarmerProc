@@ -7,23 +7,49 @@ import ChartBlock from '../components/ChartBlock';
 import StatusBadge from '../components/StatusBadge';
 import { useNotifications } from '../context/NotificationContext';
 import { computeKPIs, HOURLY_TODAY, CENTERS, ALERTS } from '../data/mockData';
-import { getProcurementAnalytics } from '../api/api';
+import { getProcurementAnalytics, getCenters, getAllGrievances } from '../api/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { events } = useNotifications();
   const kpis = computeKPIs();
   const [liveAnalytics, setLiveAnalytics] = useState(null);
+  const [liveGrievanceAlerts, setLiveGrievanceAlerts] = useState([]);
+  const [centersCount, setCentersCount] = useState(null);
 
   useEffect(() => {
     getProcurementAnalytics()
       .then((data) => setLiveAnalytics(data))
       .catch((e) => console.log('Using baseline KPI data'));
+
+    getCenters()
+      .then((centers) => {
+        if (Array.isArray(centers) && centers.length > 0) {
+          setCentersCount(centers.length);
+        }
+      })
+      .catch((e) => console.log('Using baseline centers count'));
+
+    getAllGrievances()
+      .then((grievances) => {
+        if (Array.isArray(grievances) && grievances.length > 0) {
+          const highAlerts = grievances
+            .filter((g) => (g.urgency === 'HIGH' || g.urgency === 'CRITICAL') && g.status !== 'RESOLVED')
+            .map((g) => ({
+              id: g.complaint_id,
+              title: `Grievance (${g.complaint_id}): ${g.description.slice(0, 70)}...`,
+              severity: 'critical',
+              status: 'new'
+            }));
+          setLiveGrievanceAlerts(highAlerts);
+        }
+      })
+      .catch((e) => console.log('Using baseline alerts in dashboard'));
   }, []);
 
   const kpiCards = [
     { ...kpis.totalFarmers, value: liveAnalytics?.total_farmers ?? kpis.totalFarmers.value, icon: '👨‍🌾' },
-    { ...kpis.totalCenters, value: liveAnalytics?.total_centers ?? kpis.totalCenters.value, icon: '🏢' },
+    { ...kpis.totalCenters, value: liveAnalytics?.total_centers ?? (centersCount || kpis.totalCenters.value), icon: '🏢' },
     { ...kpis.todayArrivals, value: liveAnalytics?.today_arrivals ?? kpis.todayArrivals.value, icon: '📥' },
     { ...kpis.todayCompleted, value: liveAnalytics?.today_completed ?? kpis.todayCompleted.value, icon: '✅' },
     { ...kpis.totalQuantity, value: liveAnalytics?.total_procured_quintals ?? kpis.totalQuantity.value, icon: '📦', suffix: ' qtl' },
@@ -33,13 +59,16 @@ export default function Dashboard() {
   ];
 
   const statusSummary = [
-    { status: 'normal', count: kpis.normal.value },
+    { status: 'normal', count: (centersCount || kpis.normal.value) },
     { status: 'busy', count: CENTERS.filter(c => c.status === 'busy').length },
     { status: 'congested', count: kpis.congested.value },
     { status: 'offline', count: kpis.offline.value },
   ];
 
-  const criticalAlerts = ALERTS.filter(a => a.severity === 'critical' && a.status !== 'resolved');
+  const criticalAlerts = [
+    ...liveGrievanceAlerts,
+    ...ALERTS.filter(a => a.severity === 'critical' && a.status !== 'resolved')
+  ];
 
   return (
     <div className="space-y-6">
