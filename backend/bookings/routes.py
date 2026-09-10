@@ -9,9 +9,9 @@ from auth.dependencies import get_current_user
 from notifications.service import create_notification
 import secrets
 
+
 def generate_token():
     return "PDC-" + secrets.token_hex(3).upper()
-
 
 
 router = APIRouter(
@@ -53,7 +53,14 @@ async def create_booking(
             detail="Slot not found"
         )
 
-    # 3. Check if farmer already booked this slot
+    # 3. Make sure the slot belongs to the selected center
+    if slot.center_id != booking_data.center_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Selected slot does not belong to the selected center"
+        )
+
+    # 4. Check if farmer already booked this slot
     existing_booking = db.query(Booking).filter(
         Booking.farmer_id == farmer.id,
         Booking.slot_id == slot.id,
@@ -66,7 +73,7 @@ async def create_booking(
             detail="You have already booked this slot"
         )
 
-    # 4. Count existing bookings
+    # 5. Count existing bookings
     booking_count = db.query(
         func.count(Booking.id)
     ).filter(
@@ -74,43 +81,43 @@ async def create_booking(
         Booking.status != "CANCELLED"
     ).scalar()
 
-    # 5. Check capacity
+    # 6. Check slot capacity
     if booking_count >= slot.capacity:
         raise HTTPException(
             status_code=400,
             detail="This slot is full"
         )
 
-    # 6. Generate next token
-    last_booking = db.query(Booking).filter(
-        Booking.slot_id == slot.id
-    ).order_by(
-        Booking.token_number.desc()
-    ).first()
-
-    if last_booking:
-        token_number = last_booking.token_number + 1
-    else:
-        token_number = 1
-
     # 7. Create booking
     booking = Booking(
-    farmer_id=farmer.id,
-    center_id=booking_data.center_id,
-    token_number=generate_token()
-)
+        farmer_id=farmer.id,
+        center_id=booking_data.center_id,
+        crop_id=booking_data.crop_id,
+        quantity=booking_data.quantity,
+        booking_date=booking_data.booking_date,
+        slot_id=booking_data.slot_id,
+        token_number=generate_token(),
+        status="BOOKED",
+        payment_status="PENDING",
+        checked_in=False
+    )
+
     db.add(booking)
     db.commit()
     db.refresh(booking)
 
-    # Create a notification for the farmer
+    # 8. Create notification for farmer
     create_notification(
         db=db,
         user_id=farmer.user_id,
         title="Booking Created",
-        message=f"Your booking is confirmed. Your token number is {booking.token_number}."
+        message=(
+            f"Your booking is confirmed. "
+            f"Your token number is {booking.token_number}."
+        )
     )
 
+    # 9. Notify connected center clients
     await manager.broadcast(
         slot.center_id,
         {
@@ -123,6 +130,7 @@ async def create_booking(
     )
 
     return booking
+
 
 # =========================
 # GET MY BOOKINGS

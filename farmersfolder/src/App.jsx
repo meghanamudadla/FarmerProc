@@ -7,6 +7,7 @@ import {
 import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
+import { testBackend } from './services/testApi.js';
 
 import Sidebar from './components/Sidebar.jsx';
 import TopBar from './components/TopBar.jsx';
@@ -29,6 +30,9 @@ import { complaintService } from './services/complaintService.js';
 import { offlineSyncService } from './services/offlineSyncService.js';
 import SecurityTestModal from './components/SecurityTestModal.jsx';
 
+
+
+
 function formatMobile(v) {
   const digits = v.replace(/\D/g, '').slice(0, 10);
   return digits.length > 5 ? digits.slice(0, 5) + ' ' + digits.slice(5) : digits;
@@ -38,6 +42,15 @@ export default function App() {
   const [lang, setLang] = useState('en');
   const t = STR[lang];
   const nt = NOTIF_TEMPLATES[lang];
+    useEffect(() => {
+    testBackend()
+      .then((data) => {
+        console.log("Farmer site backend connected:", data);
+      })
+      .catch((error) => {
+        console.error("Farmer site backend connection failed:", error);
+      });
+  }, []);
 
   const [theme, setTheme] = useState(() => {
     try {
