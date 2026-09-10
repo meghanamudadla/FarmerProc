@@ -21,7 +21,7 @@ class UserLogin(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str
+    access_token: str =Field(minlength=2, maxlength=8)
     token_type: str
 
 
@@ -161,7 +161,7 @@ class PaymentResponse(BaseModel):
 
 class QueueBookingResponse(BaseModel):
     id: int
-    token_number: int
+    token_number: str
     farmer_id: int
     farmer_name: str
     slot_id: int
@@ -272,3 +272,53 @@ class QualityCheckResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================
+# GRIEVANCE SCHEMAS
+# ============================================================
+
+class GrievanceCreate(BaseModel):
+    transaction_id: Optional[str] = None
+    category: str
+    description: str
+    urgency: str = "MEDIUM"
+    attachment_name: Optional[str] = None
+
+
+class GrievanceUpdate(BaseModel):
+    status: str
+    assigned_department: Optional[str] = None
+    assigned_officer: Optional[str] = None
+    official_response: Optional[str] = None
+    resolution_details: Optional[str] = None
+
+
+class GrievanceResponse(BaseModel):
+    id: int
+    complaint_id: str
+    farmer_id: int
+
+    transaction_id: Optional[str] = None
+    category: str
+    description: str
+    urgency: str
+    attachment_name: Optional[str] = None
+
+    status: str
+
+    assigned_department: Optional[str] = None
+    assigned_officer: Optional[str] = None
+    official_response: Optional[str] = None
+    resolution_details: Optional[str] = None
+
+    audit_trail: Optional[str] = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PaymentStatusUpdate(BaseModel):
+    status: str

@@ -6,7 +6,11 @@ from auth.dependencies import require_role
 from models import User
 from database import get_db
 from models import Procurement, Payment
-from schemas import PaymentCreate, PaymentResponse
+from schemas import (
+    PaymentCreate,
+    PaymentResponse,
+    PaymentStatusUpdate
+)
 
 
 router = APIRouter(

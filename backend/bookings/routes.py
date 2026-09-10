@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from task_queue.manager import manager
 from database import get_db
-from models import Booking, Slot, User, Farmer
+from models import Booking, Slot, User, Farmer,Crop
 from schemas import BookingCreate, BookingResponse
 from auth.dependencies import get_current_user
 from notifications.service import create_notification
@@ -90,6 +90,7 @@ async def create_booking(
 
     # 7. Create booking
     booking = Booking(
+<<<<<<< HEAD
         farmer_id=farmer.id,
         center_id=booking_data.center_id,
         crop_id=booking_data.crop_id,
@@ -105,6 +106,13 @@ async def create_booking(
     db.add(booking)
     db.commit()
     db.refresh(booking)
+=======
+    farmer_id=farmer.id,
+    center_id=booking_data.center_id,
+    token_number=generate_token()
+)
+    
+>>>>>>> e92eeff6a7adb5a1211936d78cbe84100fc943ef
 
     # 8. Create notification for farmer
     create_notification(
@@ -116,8 +124,26 @@ async def create_booking(
             f"Your token number is {booking.token_number}."
         )
     )
+    if booking.crop_id:
+    crop = db.query(Crop).filter(
+        Crop.id == booking.crop_id
+    ).first()
 
+<<<<<<< HEAD
     # 9. Notify connected center clients
+=======
+    if crop:
+        crop.remaining_quantity -= booking.quantity
+
+        if crop.remaining_quantity <= 0:
+            crop.remaining_quantity = 0
+            crop.status = "COMPLETED"
+
+
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+>>>>>>> e92eeff6a7adb5a1211936d78cbe84100fc943ef
     await manager.broadcast(
         slot.center_id,
         {
