@@ -394,11 +394,11 @@ input:disabled{color:var(--ink-muted); background:var(--surface-2); border:1.5px
   --border-focus: #A78BFA;
 }
 
-:root[data-theme="dark"] input[type=text]:not(.otp-row input),
-:root[data-theme="dark"] input[type=number],
-:root[data-theme="dark"] input[type=date],
-:root[data-theme="dark"] select,
-:root[data-theme="dark"] textarea {
+:root[data-theme="dark"] input[type=text]:not(.otp-row input):not(.login-wrap *),
+:root[data-theme="dark"] input[type=number]:not(.login-wrap *),
+:root[data-theme="dark"] input[type=date]:not(.login-wrap *),
+:root[data-theme="dark"] select:not(.login-wrap *),
+:root[data-theme="dark"] textarea:not(.login-wrap *) {
   background: #211D38 !important;
   color: #F3F1FB !important;
   border-color: rgba(167, 139, 250, 0.28) !important;
@@ -533,11 +533,16 @@ input:disabled{color:var(--ink-muted); background:var(--surface-2); border:1.5px
     url('/login-bg.jpg') center 65% / cover no-repeat;
   color-scheme:light;
 }
-/* Login card always renders as a clean white surface */
-.login-card input[type=text],
-.login-card input[type=number],
-.login-card input[type=tel],
-.login-card select{
+/* Login card always renders as a clean white surface.
+   The class is repeated to out-specificity the global
+   `:root[data-theme="dark"] input[type=text]...` rule further down this
+   file (also !important) — without this, dark mode wins and inputs on the
+   Sign Up form render as unreadable black-on-black. */
+.login-card.login-card.login-card input[type=text],
+.login-card.login-card.login-card input[type=number],
+.login-card.login-card.login-card input[type=tel],
+.login-card.login-card.login-card input[type=date],
+.login-card.login-card.login-card select{
   background:#FFFFFF !important;
   border:1.5px solid #A3B89A !important;
   color:#17200F !important;
@@ -546,10 +551,11 @@ input:disabled{color:var(--ink-muted); background:var(--surface-2); border:1.5px
 .login-card input[type=text]::placeholder,
 .login-card input[type=number]::placeholder,
 .login-card input[type=tel]::placeholder{ color:#7A907A; opacity:1; }
-.login-card input[type=text]:focus,
-.login-card input[type=number]:focus,
-.login-card input[type=tel]:focus,
-.login-card select:focus{
+.login-card.login-card.login-card input[type=text]:focus,
+.login-card.login-card.login-card input[type=number]:focus,
+.login-card.login-card.login-card input[type=tel]:focus,
+.login-card.login-card.login-card input[type=date]:focus,
+.login-card.login-card.login-card select:focus{
   background:#FFFFFF !important;
   border-color:#2F6B3C !important;
   box-shadow:0 0 0 3px rgba(47,107,60,.15);

@@ -201,3 +201,7 @@ export const NOTIF_TEMPLATES = {
     ivrNote: 'ఫీచర్-ఫోన్ వినియోగదారుల కోసం మీ ఎంచుకున్న భాషలో వాయిస్ కాల్ చేయబడింది.',
   },
 };
+
+// Hindi: aliased to English for now (fast rollout) — swap in real Hindi
+// strings here without touching any call sites.
+STR.hi = STR.en;

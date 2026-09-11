@@ -291,6 +291,9 @@ export default function Login({
             <button className={lang === 'te' ? 'active' : ''} onClick={() => setLang('te')}>
               🇮🇳 తెలుగు
             </button>
+            <button className={lang === 'hi' ? 'active' : ''} onClick={() => setLang('hi')}>
+              🇮🇳 हिन्दी
+            </button>
           </div>
           <div className="login-footer">
             <span className="dot"></span>
