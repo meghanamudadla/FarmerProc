@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rythu Mandi — Access Gateway</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #0b0f0d;
+    color: #e5f5ec;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .header { text-align: center; margin-bottom: 8px; }
+  .header h1 { font-size: 24px; }
+  .sub { text-align: center; color: #9db3a8; margin-bottom: 36px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .card {
+    border-radius: 16px;
+    padding: 28px;
+    background: rgba(255,255,255,0.03);
+  }
+  .card.literate { border: 1px solid #2fbf71; }
+  .card.illiterate { border: 1px solid #2f8fbf; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    float: right;
+  }
+  .literate .badge { background: rgba(47,191,113,.15); color: #4ee38a; }
+  .illiterate .badge { background: rgba(47,143,191,.15); color: #4eb8e3; }
+  .icon { font-size: 32px; margin-bottom: 14px; }
+  h2 { font-size: 26px; margin-bottom: 4px; }
+  .tag { font-weight: 600; margin-bottom: 14px; }
+  .literate .tag { color: #4ee38a; }
+  .illiterate .tag { color: #4eb8e3; }
+  p.desc { color: #cbdad2; margin-bottom: 20px; line-height: 1.5; }
+  ul { list-style: none; margin-bottom: 26px; }
+  li {
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  a.btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    color: #06210f;
+  }
+  .literate a.btn { background: linear-gradient(135deg,#2fbf71,#1f8f52); color: #04140a; }
+  .illiterate a.btn { background: linear-gradient(135deg,#2f8fbf,#1f6b8f); color: #04140a; }
+  .note { text-align: center; margin-top: 28px; color: #7f9689; font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>🌾 Rythu Mandi Procurement Portal</h1>
+  </div>
+  <p class="sub">Choose the most comfortable interface to access Rythu Mandi agricultural services</p>
+
+  <div class="grid">
+    <div class="card literate">
+      <span class="badge">DIGITAL WEB PORTAL</span>
+      <div class="icon">📖</div>
+      <h2>Literate Farmer / Educated</h2>
+      <div class="tag">Full Digital Smartphone App</div>
+      <p class="desc">Rich interactive digital screen UI designed for farmers comfortable reading text &amp; forms.</p>
+      <ul>
+        <li>📄 Self-service slot booking &amp; crop registration</li>
+        <li>📊 Live Mandi yard queue status dashboard</li>
+        <li>💳 Direct DBT payout receipts &amp; bank tracking</li>
+        <li>🔍 Multi-centre distance &amp; congestion comparison</li>
+      </ul>
+      <a class="btn" href="https://farmer-proc.vercel.app">Proceed to Web Portal ➔</a>
+    </div>
+
+    <div class="card illiterate">
+      <span class="badge">VOICE IVR TELEPHONY</span>
+      <div class="icon">📞</div>
+      <h2>Illiterate Farmer / Uneducated</h2>
+      <div class="tag">Automated Phone Call / IVR</div>
+      <p class="desc">Voice-guided telephony call interface tailored for farmers who prefer audio instructions.</p>
+      <ul>
+        <li>🎙️ Telugu, Hindi &amp; English spoken voice prompts</li>
+        <li>📞 Keypad press support (1 for Booking, 2 for Queue Status)</li>
+        <li>🔊 Live synthesized voice confirmation</li>
+        <li>📱 Fast2SMS automated mobile receipt updates</li>
+      </ul>
+      <a class="btn" href="https://kisanseva-telephony.onrender.com">Proceed to Telephony Method 📞</a>
+    </div>
+  </div>
+
+  <p class="note">💡 You can return to this gateway anytime to switch modes.</p>
+</body>
+</html>
