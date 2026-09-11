@@ -10,7 +10,7 @@ export default function BookingReviewModal({
   const cropLabel = matchedCrop ? (matchedCrop[lang] || matchedCrop.en) : form.cropText;
   const reqQtyNum = parseFloat(form.qty) || 0;
   const estimatedPrice = matchedCrop ? Math.round(reqQtyNum * matchedCrop.msp) : Math.round(reqQtyNum * 1500);
-  const slotTimeStr = form.slotIdx != null ? SLOT_TIMES[form.slotIdx] : '—';
+  const slotTimeStr = form.slotLabel || (form.slotIdx != null ? SLOT_TIMES[form.slotIdx] : '—');
   const maskedBankAcc = bank.acc ? `•••• •••• ${bank.acc.slice(-4)}` : (farmer.bankMasked || '•••• •••• 3422');
 
   return (

@@ -1,9 +1,18 @@
 import { useState } from 'react';
+import { centreById } from '../data/domain.js';
 import BookingTicketCard from '../components/BookingTicketCard.jsx';
 import GateScannerModal from '../components/GateScannerModal.jsx';
 import QueueStatusCard from '../components/QueueStatusCard.jsx';
 import MandiOperatorPanel from '../components/MandiOperatorPanel.jsx';
 import ProcurementReceiptCard from '../components/ProcurementReceiptCard.jsx';
+
+const STATUS_BADGE_CLASS = {
+  booked: 'neutral',
+  waiting: 'warn',
+  processing: 'warn',
+  completed: 'success',
+  cancelled: 'critical',
+};
 
 export default function Queue({
   t, lang, farmer, bookings, activeBooking,
@@ -56,7 +65,9 @@ export default function Queue({
                 )}
               </div>
               <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: 'var(--success)' }}>
-                ₹{activeBooking.price.toLocaleString('en-IN')}
+                {activeBooking.price != null
+                  ? `₹${activeBooking.price.toLocaleString('en-IN')}`
+                  : 'Pending weighbridge & quality check'}
               </div>
 
               <div className="btn-row" style={{ marginTop: 12 }}>
@@ -75,6 +86,49 @@ export default function Queue({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* All tokens, every status — not just the single active one above */}
+      {bookings && bookings.length > 0 && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="section-title" style={{ marginBottom: 10 }}>
+            <h3 style={{ fontSize: 15 }}>🗂️ All Your Tokens ({bookings.length})</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {bookings.map((b) => {
+              const centre = centreById(b.centreId);
+              const isActive = activeBooking && b.id === activeBooking.id;
+              return (
+                <div
+                  key={b.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                    background: isActive ? 'var(--accent-soft)' : 'var(--surface)',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13.5 }} className="mono">
+                      {b.token}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
+                      {bookingCropLabel ? bookingCropLabel(b) : b.cropLabel} · {b.qty} Qtl · {centre ? (centre[lang] || centre.en) : ''} · {b.date}
+                    </div>
+                  </div>
+                  <span className={`badge ${STATUS_BADGE_CLASS[b.status] || 'neutral'}`} style={{ fontSize: 11, fontWeight: 700 }}>
+                    {(b.status || 'booked').toUpperCase()}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

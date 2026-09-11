@@ -151,6 +151,11 @@ export class CropRepository {
 
     return {
       cropRecordId: c.cropRecordId || c.id || ('CROP-' + Math.random().toString(36).slice(2, 7).toUpperCase()),
+      // Preserved from real backend crops (see realCrops.js normalizeRealCrop)
+      // so booking submission can reference the actual Crop row — this
+      // normalizer otherwise only knows about the local mock crop shape.
+      backendCropId: c.backendCropId ?? null,
+      isRealCrop: c.isRealCrop || false,
       farmerId: c.farmerId || 'FRM-10245',
       cropId: c.cropId || 'produce',
       cropName: c.cropName || cropById(c.cropId)?.en || c.cropId,

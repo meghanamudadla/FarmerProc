@@ -681,6 +681,10 @@ input:disabled{color:var(--ink-muted); background:var(--surface-2); border:1.5px
   animation: livePulse 1.6s infinite;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @keyframes livePulse {
   0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(47, 138, 70, 0.7); }
   70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(47, 138, 70, 0); }

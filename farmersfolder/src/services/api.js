@@ -22,7 +22,15 @@ export async function apiRequest(endpoint, options = {}) {
 
     try {
       const errorData = await response.json();
-      errorMessage = errorData.detail || errorMessage;
+      const { detail } = errorData;
+      if (typeof detail === "string") {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        // FastAPI validation errors: [{ loc, msg, type }, ...]
+        errorMessage = detail.map((d) => d.msg || JSON.stringify(d)).join("; ") || errorMessage;
+      } else if (detail && typeof detail === "object") {
+        errorMessage = detail.msg || JSON.stringify(detail);
+      }
     } catch {
       // Ignore JSON parsing errors
     }

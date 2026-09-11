@@ -9,7 +9,7 @@ export default function BookingTicketCard({
 
   const centreObj = centreById(booking.centreId);
   const centreName = centreObj ? (centreObj[lang] || centreObj.en) : booking.centreId;
-  const timeSlotStr = booking.slotIdx != null ? SLOT_TIMES[booking.slotIdx] : '—';
+  const timeSlotStr = booking.slotLabel || (booking.slotIdx != null ? SLOT_TIMES[booking.slotIdx] : booking.date || '—');
   
   // SECURE QR PAYLOAD: Contains ONLY booking ID + Token. Sensitive PII (Aadhaar, Bank) is strictly omitted.
   const secureQrPayload = CheckInService.generateSecureQrPayload(booking.id, booking.token);

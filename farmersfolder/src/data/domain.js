@@ -1,3 +1,5 @@
+import { getCachedRealCentre } from '../services/realCentres.js';
+
 export const PREDEFINED_CROPS = [
   { id: 'paddy', en: 'Paddy (Grade A)', te: 'వరి (గ్రేడ్ A)', hi: 'धान (ग्रेड A)', msp: 2300, yieldPerAcre: 20 },
   { id: 'wheat', en: 'Wheat', te: 'గోధుమ', hi: 'गेहूं', msp: 2275, yieldPerAcre: 18 },
@@ -233,6 +235,8 @@ export function cropById(id) {
   return { id: id || 'produce', en: cleanName, te: cleanName, hi: cleanName, msp: DEFAULT_RATE, yieldPerAcre: 10 };
 }
 export function centreById(id) {
+  const realMatch = getCachedRealCentre(id);
+  if (realMatch) return realMatch;
   const found = CENTRES.find((c) => c.id === id);
   if (found) return found;
   return {

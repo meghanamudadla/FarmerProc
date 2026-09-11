@@ -738,6 +738,7 @@ export default function MyCrops({ t, lang, farmer, crops = [], setCrops, onBookS
         t={t}
         lang={lang}
         farmer={farmer}
+        crops={crops}
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onAddCrop={handleAddCrop}

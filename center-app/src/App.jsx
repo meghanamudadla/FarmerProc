@@ -5,12 +5,13 @@ import { QueueProvider, useQueue } from './context/QueueContext';
 import Dashboard from './pages/Dashboard';
 import Queue from './pages/Queue';
 import Capacity from './pages/Capacity';
+import Centers from './pages/Centers';
 import FarmerProcessing from './pages/FarmerProcessing';
 import Weighing from './pages/Weighing';
 import QualityCheck from './pages/QualityCheck';
 import Payment from './pages/Payment';
 
-import { LayoutDashboard, ListOrdered, Building2, Sprout } from 'lucide-react';
+import { LayoutDashboard, ListOrdered, Building2, MapPinned, Sprout } from 'lucide-react';
 
 import './App.css';
 
@@ -79,6 +80,16 @@ function AppHeader() {
             <span>Capacity</span>
           </NavLink>
 
+          <NavLink
+            to="/centers"
+            className={({ isActive }) =>
+              isActive ? 'nav-item active' : 'nav-item'
+            }
+          >
+            <MapPinned size={17} />
+            <span>Centres</span>
+          </NavLink>
+
         </nav>
       </div>
     </header>
@@ -130,6 +141,11 @@ export default function App() {
               <Route
                 path="/capacity"
                 element={<Capacity />}
+              />
+
+              <Route
+                path="/centers"
+                element={<Centers />}
               />
 
               <Route

@@ -2,6 +2,23 @@ import { apiRequest } from "./api.js";
 
 
 /**
+ * Whether a phone number already has a backend account.
+ *
+ * Backend: POST /auth/check-phone
+ *
+ * @param {string} phone
+ * @returns {Promise<boolean>}
+ */
+export async function isPhoneRegistered(phone) {
+  const data = await apiRequest("/auth/check-phone", {
+    method: "POST",
+    body: JSON.stringify({ phone }),
+  });
+  return Boolean(data.registered);
+}
+
+
+/**
  * Login farmer using backend authentication.
  *
  * Backend:

@@ -1,10 +1,30 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
+const TOKEN_KEY = "farmerproc_gov_token";
+
+export function getToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export async function apiRequest(endpoint, options = {}) {
   try {
+    const token = getToken();
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       },
       ...options,
@@ -50,4 +70,18 @@ export async function getAllFarmers() {
 
 export async function getPaymentsSummary() {
   return apiRequest("/procurement/summary");
+}
+
+export async function loginRequest(phone, password) {
+  return apiRequest("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ phone, password }),
+  });
+}
+
+export async function updateGrievance(complaintId, data) {
+  return apiRequest(`/grievances/${complaintId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }

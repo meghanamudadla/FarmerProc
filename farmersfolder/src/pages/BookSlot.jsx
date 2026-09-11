@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
-import { CENTRES, SLOT_TIMES, cropById } from '../data/domain.js';
+import { SLOT_TIMES, cropById } from '../data/domain.js';
+import { useRealCentres } from '../services/realCentres.js';
 import { MockEligibilityService } from '../services/eligibilityService.js';
 import { CentreService } from '../services/centreService.js';
 import { BookingEngine } from '../services/bookingEngine.js';
 import { CropRepository } from '../services/cropRepository.js';
 import { offlineSyncService } from '../services/offlineSyncService.js';
+import { fetchSlotsForCenter, fetchDynamicEta } from '../services/backendData.js';
 import BookingReviewModal from '../components/BookingReviewModal.jsx';
 
 export default function BookSlot({
@@ -12,10 +14,91 @@ export default function BookSlot({
   bookStep, setBookStep, form, setForm, farmer, crops = [], bookings = [],
   spotsLeft, bank, setBank, confirmBooking,
 }) {
+  const { centres: realCentres } = useRealCentres();
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [alternativeSlots, setAlternativeSlots] = useState(null);
+
+  // Real available slots for the selected centre, fetched from the backend
+  // (GET /slots/center/{id}) rather than the fixed mock SLOT_TIMES array.
+  const [realSlots, setRealSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
+
+  // form.centreId starts out as the legacy mock id 'c1'; once real centres
+  // load, snap it to an actual centre id so the dropdown's displayed
+  // selection and the id used for slot/booking requests always agree.
+  useEffect(() => {
+    if (realCentres.length === 0) return;
+    const isValidRealId = realCentres.some((c) => c.id === form.centreId);
+    if (!isValidRealId) {
+      setForm((prev) => ({ ...prev, centreId: realCentres[0].id }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realCentres]);
+
+  useEffect(() => {
+    if (!form.centreId) return;
+    let cancelled = false;
+    setSlotsLoading(true);
+    setSlotsError('');
+    fetchSlotsForCenter(form.centreId)
+      .then((list) => {
+        if (!cancelled) setRealSlots(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRealSlots([]);
+          setSlotsError(err.message || 'Could not load available slots from the server.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.centreId]);
+
+  const slotsForDate = useMemo(
+    () => realSlots.filter((s) => s.date === form.date),
+    [realSlots, form.date]
+  );
+
+  function formatSlotTime(s) {
+    return `${(s.start_time || '').slice(0, 5)} – ${(s.end_time || '').slice(0, 5)}`;
+  }
+
+  // Groups today's slots into Morning / Afternoon / Evening, and marks any
+  // slot whose start time has already passed (only meaningful when the
+  // selected date is today) so the picker never offers an unbookable slot.
+  const isToday = form.date === new Date().toISOString().slice(0, 10);
+  const nowHHMM = new Date().toTimeString().slice(0, 5);
+
+  const slotPeriods = useMemo(() => {
+    const periods = [
+      { key: 'morning', label: 'Morning', icon: '🌅', slots: [] },
+      { key: 'afternoon', label: 'Afternoon', icon: '☀️', slots: [] },
+      { key: 'evening', label: 'Evening', icon: '🌇', slots: [] },
+    ];
+    const sorted = [...slotsForDate].sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+    for (const s of sorted) {
+      const hour = parseInt((s.start_time || '00:00').slice(0, 2), 10);
+      const bucket = hour < 12 ? periods[0] : hour < 16 ? periods[1] : periods[2];
+      bucket.slots.push(s);
+    }
+    return periods.filter((p) => p.slots.length > 0);
+  }, [slotsForDate]);
+
+  const firstBookableSlot = useMemo(() => {
+    for (const period of slotPeriods) {
+      const bookable = period.slots.find((s) => !isToday || (s.start_time || '').slice(0, 5) > nowHHMM);
+      if (bookable) return bookable.id;
+    }
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotPeriods, isToday, nowHHMM]);
 
   // Normalize all crops passed in to guarantee standard fields (status, remainingQuantity, cropName, etc.)
   const normalizedFarmerCrops = useMemo(() => {
@@ -72,11 +155,44 @@ export default function BookSlot({
     ? selectedCropRec.remainingQuantity
     : 0;
 
-  const selectedCentreObj = CENTRES.find((c) => c.id === form.centreId) || CENTRES[0];
+  const selectedCentreObj = realCentres.find((c) => c.id === form.centreId) || realCentres[0];
   const centreCapValidation = CentreService.validateCapacityForBooking(selectedCentreObj);
 
   const reqQty = parseFloat(form.qty) || 0;
   const exceedsRemaining = remainingQty != null && reqQty > remainingQty;
+
+  // Live dynamic queue position + ETA for the currently selected slot, using
+  // real existing bookings rather than a static "capacity" number (see
+  // backend/dqa — inspired by github.com/meghanamudadla/FarmerProc/tree/main/dqa).
+  const [dynamicEta, setDynamicEta] = useState(null);
+  const [dynamicEtaLoading, setDynamicEtaLoading] = useState(false);
+  const [dynamicEtaError, setDynamicEtaError] = useState('');
+
+  useEffect(() => {
+    if (!form.slotId || !selectedCropRec?.backendCropId || reqQty <= 0) {
+      setDynamicEta(null);
+      return;
+    }
+    let cancelled = false;
+    setDynamicEtaLoading(true);
+    setDynamicEtaError('');
+    fetchDynamicEta({ slot_id: form.slotId, crop_id: selectedCropRec.backendCropId, quantity: reqQty })
+      .then((data) => {
+        if (!cancelled) setDynamicEta(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setDynamicEta(null);
+          setDynamicEtaError(err.message || 'Could not compute live queue position.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDynamicEtaLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.slotId, selectedCropRec?.backendCropId, reqQty]);
 
   function handleCropChange(cropRecordId) {
     const rec = farmerRegisteredCrops.find((c) => c.cropRecordId === cropRecordId);
@@ -94,7 +210,7 @@ export default function BookSlot({
     }
   }
 
-  function handleFinalSubmit() {
+  async function handleFinalSubmit() {
     setBookingError('');
     setIsSubmitting(true);
 
@@ -117,41 +233,40 @@ export default function BookSlot({
       return;
     }
 
-    // Backend Validation Pipeline (Sections 32 & 41)
-    const result = BookingEngine.validateAndProcessBooking({
-      farmer,
-      crops: farmerRegisteredCrops,
-      matchedCrop: selectedCropRec
-        ? {
-            id: selectedCropRec.cropId,
-            cropRecordId: selectedCropRec.cropRecordId,
-            en: selectedCropRec.cropName,
-            msp: cropById(selectedCropRec.cropId)?.msp || 1500,
-            yieldPerAcre: 15,
-          }
-        : null,
-      requestedQty: form.qty,
-      centre: selectedCentreObj,
-      date: form.date,
-      slotIdx: form.slotIdx,
-      slotTimes: SLOT_TIMES,
-      bankDetails: bank,
-      existingBookings: bookings,
-    });
-
-    setIsSubmitting(false);
-
-    if (!result.success) {
-      setIsReviewOpen(false);
-      setBookingError(result.errorMessage);
-      if (result.alternativeSlots) {
-        setAlternativeSlots(result.alternativeSlots);
-      }
+    // Local sanity checks before hitting the real backend (Sections 32 & 41)
+    if (!selectedCropRec || !selectedCropRec.backendCropId) {
+      setIsSubmitting(false);
+      setBookingError('No registered crop selected. Please register a crop first in My Crops.');
+      return;
+    }
+    if (exceedsRemaining || reqQty <= 0) {
+      setIsSubmitting(false);
+      setBookingError(`Requested quantity (${reqQty} Qtl) exceeds the remaining quota (${remainingQty} Qtl) for ${selectedCropRec.cropName}.`);
+      return;
+    }
+    if (form.slotId == null) {
+      setIsSubmitting(false);
+      setBookingError('Please select a time slot.');
       return;
     }
 
-    setIsReviewOpen(false);
-    confirmBooking(result.booking);
+    try {
+      await confirmBooking({
+        centerId: selectedCentreObj.id,
+        cropId: selectedCropRec.backendCropId,
+        quantity: reqQty,
+        bookingDate: form.date,
+        slotId: form.slotId,
+        slotLabel: form.slotLabel,
+        cropName: selectedCropRec.cropName,
+      });
+      setIsReviewOpen(false);
+    } catch (err) {
+      setIsReviewOpen(false);
+      setBookingError(err.message || 'Booking failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -479,8 +594,8 @@ export default function BookSlot({
               </div>
               <div className="field">
                 <label>{t.procurementCentre || 'Procurement Centre'}</label>
-                <select value={form.centreId} onChange={(e) => setForm({ ...form, centreId: e.target.value })}>
-                  {CENTRES.map((c) => (
+                <select value={form.centreId ?? ''} onChange={(e) => setForm({ ...form, centreId: Number(e.target.value) })}>
+                  {realCentres.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c[lang] || c.en} ({c.place}) — {c.operatingStatus === 'OPEN' ? `${Math.max(0, c.dailyFarmerCapacity - c.currentBookedCapacity)} spots left` : c.operatingStatus}
                     </option>
@@ -516,49 +631,210 @@ export default function BookSlot({
               <div className="section-title">
                 <h3 style={{ fontSize: 15 }}>Step 3: {t.selectTimeSlot || 'Choose Arrival Time Slot'}</h3>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 10 }}>
-                {form.date} · {selectedCentreObj ? (selectedCentreObj[lang] || selectedCentreObj.en) : ''}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  marginBottom: 16,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
+                  📍 {selectedCentreObj ? (selectedCentreObj[lang] || selectedCentreObj.en) : ''}
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>
+                  📅 {form.date}
+                  {!slotsLoading && !slotsError && slotsForDate.length > 0 && (
+                    <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--accent)' }}>
+                      · {slotsForDate.length} slot{slotsForDate.length === 1 ? '' : 's'} scheduled
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="slot-grid">
-                {SLOT_TIMES.map((time, idx) => {
-                  const left = spotsLeft(form.centreId, form.date, idx);
-                  const status = BookingEngine.getSlotStatus({
-                    date: form.date,
-                    timeSlotStr: time,
-                    bookedCount: 20 - left,
-                    capacityLimit: 20,
-                    centreStatus: selectedCentreObj?.operatingStatus,
-                  });
-                  const isFullOrClosed = status !== 'AVAILABLE';
-
-                  return (
-                    <button
-                      type="button"
-                      key={idx}
-                      disabled={isFullOrClosed}
-                      className={'slot-card' + (form.slotIdx === idx ? ' selected' : '') + (isFullOrClosed ? ' full' : '')}
-                      onClick={() => setForm({ ...form, slotIdx: idx })}
-                    >
-                      <div className="slot-time">{time}</div>
-                      <div style={{ margin: '6px 0' }}>
-                        <span className={`badge ${status === 'AVAILABLE' ? 'success' : status === 'FULL' ? 'critical' : 'neutral'}`} style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px' }}>
-                          {status}
-                        </span>
+              {slotsLoading ? (
+                <div className="hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="spinner" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--accent)', display: 'inline-block', animation: 'spin 0.7s linear infinite' }}></span>
+                  Loading available slots from the mandi server...
+                </div>
+              ) : slotsError ? (
+                <div className="hint error">⚠️ {slotsError}</div>
+              ) : slotsForDate.length === 0 ? (
+                <div className="empty-note">No slots are scheduled for this centre on {form.date}. Try a different date.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {slotPeriods.map((period) => (
+                    <div key={period.key}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '.04em',
+                          color: 'var(--ink-muted)',
+                          marginBottom: 10,
+                        }}
+                      >
+                        <span style={{ fontSize: 15 }}>{period.icon}</span> {period.label}
+                        <span style={{ flex: 1, height: 1, background: 'var(--border)' }}></span>
                       </div>
-                      <div className={'slot-spots' + (isFullOrClosed ? ' none' : left <= 5 ? ' low' : '')}>
-                        {isFullOrClosed ? status : (t.spotsLeft ? t.spotsLeft(left) : `${left} spots left`)}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      <div className="slot-grid">
+                        {period.slots.map((s) => {
+                          const isSelected = form.slotId === s.id;
+                          const hasPassed = isToday && (s.start_time || '').slice(0, 5) <= nowHHMM;
+                          const isRecommended = !hasPassed && s.id === firstBookableSlot;
 
-              <div className="btn-row">
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              disabled={hasPassed}
+                              className={'slot-card' + (isSelected ? ' selected' : '') + (hasPassed ? ' full' : '')}
+                              style={{
+                                position: 'relative',
+                                textAlign: 'left',
+                                border: isSelected ? '2px solid var(--accent)' : undefined,
+                                boxShadow: isSelected ? '0 4px 14px rgba(124, 58, 237, 0.25)' : undefined,
+                                transform: isSelected ? 'translateY(-1px)' : undefined,
+                                transition: 'all .15s ease',
+                              }}
+                              onClick={() => setForm({ ...form, slotId: s.id, slotLabel: formatSlotTime(s) })}
+                            >
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '50%',
+                                    background: 'var(--accent)',
+                                    color: '#fff',
+                                    fontSize: 11,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  ✓
+                                </span>
+                              )}
+                              <div className="slot-time" style={{ fontWeight: 700 }}>
+                                {formatSlotTime(s)}
+                              </div>
+                              <div style={{ margin: '6px 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                <span
+                                  className={`badge ${hasPassed ? 'neutral' : 'success'}`}
+                                  style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px' }}
+                                >
+                                  {hasPassed ? 'PASSED' : 'OPEN'}
+                                </span>
+                                {isRecommended && (
+                                  <span className="badge" style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                                    ⚡ Earliest
+                                  </span>
+                                )}
+                              </div>
+                              <div className="slot-spots">
+                                {s.available_capacity != null
+                                  ? `${s.available_capacity} of ${s.capacity} spots left`
+                                  : `Capacity: ${s.capacity} farmers`}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Live Dynamic Queue Preview — real queue position + ETA computed
+                  from actual bookings for the selected slot, not a static number. */}
+              {form.slotId != null && (
+                <div
+                  className="card"
+                  style={{
+                    marginTop: 18,
+                    padding: '14px 16px',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                  }}
+                >
+                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--ink-muted)', marginBottom: 8 }}>
+                    🚦 Live Queue Preview
+                  </div>
+                  {dynamicEtaLoading ? (
+                    <div className="hint">Calculating your position in the live queue...</div>
+                  ) : dynamicEtaError ? (
+                    <div className="hint error">⚠️ {dynamicEtaError}</div>
+                  ) : dynamicEta ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                      <div>
+                        <div className="label" style={{ fontSize: 11 }}>Queue Position</div>
+                        <div className="mono" style={{ fontWeight: 700, fontSize: 18 }}>
+                          #{dynamicEta.queue_position}
+                          {dynamicEta.ahead_in_queue > 0 && (
+                            <span style={{ fontSize: 11.5, fontWeight: 400, color: 'var(--ink-muted)', marginLeft: 6 }}>
+                              ({dynamicEta.ahead_in_queue} ahead)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="label" style={{ fontSize: 11 }}>Estimated Wait</div>
+                        <div className="mono" style={{ fontWeight: 700, fontSize: 18, color: 'var(--accent)' }}>
+                          ~{dynamicEta.estimated_wait_minutes} min
+                        </div>
+                      </div>
+                      <div>
+                        <div className="label" style={{ fontSize: 11 }}>Est. Processing Time</div>
+                        <div className="mono" style={{ fontWeight: 700, fontSize: 18 }}>
+                          ~{dynamicEta.estimated_service_minutes} min
+                        </div>
+                      </div>
+                      <div>
+                        <div className="label" style={{ fontSize: 11 }}>Lane</div>
+                        <div style={{ marginTop: 2 }}>
+                          {dynamicEta.priority_lane ? (
+                            <span className="badge" style={{ fontSize: 11, fontWeight: 700, background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                              🌱 Small-Farmer Priority
+                            </span>
+                          ) : (
+                            <span className="badge neutral" style={{ fontSize: 11, fontWeight: 700 }}>
+                              Standard FCFS
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="hint" style={{ fontSize: 12 }}>Select a quantity and slot to preview your live queue position.</div>
+                  )}
+                  {dynamicEta?.eta_timestamp && (
+                    <div style={{ marginTop: 10, fontSize: 11.5, color: 'var(--ink-muted)' }}>
+                      Dynamically computed from {dynamicEta.slot_booked_count} farmer{dynamicEta.slot_booked_count === 1 ? '' : 's'} already queued for this slot · not a fixed time guarantee.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="btn-row" style={{ marginTop: 18 }}>
                 <button className="btn btn-ghost" onClick={() => setBookStep(2)}>
                   ← Back
                 </button>
-                <button className="btn btn-primary" disabled={form.slotIdx == null} onClick={() => setBookStep(4)}>
+                <button className="btn btn-primary" disabled={form.slotId == null} onClick={() => setBookStep(4)}>
                   Continue to Payout & Review →
                 </button>
               </div>

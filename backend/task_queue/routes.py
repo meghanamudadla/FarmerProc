@@ -273,7 +273,7 @@ async def complete_farmer(
             detail="Booking not found"
         )
 
-    if booking.status != "WEIGHING":
+    if booking.status not in ("WEIGHING", "PAYMENT_PROCESSING"):
 
         raise HTTPException(
             status_code=400,

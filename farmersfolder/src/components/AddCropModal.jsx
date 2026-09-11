@@ -2,8 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import { PREDEFINED_CROPS } from '../data/domain.js';
 import { SEASONS } from '../services/eligibilityService.js';
 import { CropRepository } from '../services/cropRepository.js';
+import { createCrop } from '../services/backendData.js';
+import { normalizeRealCrop } from '../services/realCrops.js';
 
-export default function AddCropModal({ t, lang, farmer, isOpen, onClose, onAddCrop, onSelectExistingCrop }) {
+export default function AddCropModal({ t, lang, farmer, crops = [], isOpen, onClose, onAddCrop, onSelectExistingCrop }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [cropMode, setCropMode] = useState('PREDEFINED'); // 'PREDEFINED' | 'CUSTOM'
@@ -19,6 +21,7 @@ export default function AddCropModal({ t, lang, farmer, isOpen, onClose, onAddCr
   const [errorMsg, setErrorMsg] = useState('');
   const [duplicateCrop, setDuplicateCrop] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter predefined crops based on case-insensitive search query (Section 7)
   const filteredPredefined = useMemo(() => {
@@ -86,7 +89,7 @@ export default function AddCropModal({ t, lang, farmer, isOpen, onClose, onAddCr
   const expNum = parseFloat(expectedQty) || 0;
   const estimatedEntitlement = expNum > 0 ? expNum : Math.round(landNum * yieldNorm);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
     setDuplicateCrop(null);
@@ -101,40 +104,66 @@ export default function AddCropModal({ t, lang, farmer, isOpen, onClose, onAddCr
       }
     }
 
-    const res = CropRepository.registerCrop({
-      farmerId: farmer?.farmerId || 'FRM-10245',
-      cropType: cropMode,
-      selectedPredefinedId: effectiveCropId,
-      customCropName,
-      registrationDate,
-      season,
-      plotReference,
-      landArea: landNum,
-      expectedQty: parseFloat(expectedQty) || estimatedEntitlement,
-      notes,
-    });
+    const finalCropName =
+      cropMode === 'CUSTOM'
+        ? customCropName.trim()
+        : (filteredPredefined.find((c) => c.id === effectiveCropId) || currentPredefinedObj)?.en || '';
 
-    if (!res.success) {
-      setErrorMsg(res.error || 'Failed to register crop.');
-      if (res.isDuplicate && res.existingCrop) {
-        setDuplicateCrop(res.existingCrop);
-      }
+    if (!finalCropName) {
+      setErrorMsg('Please enter a crop name.');
       return;
     }
 
-    const formattedDate = CropRepository.formatCropDate(res.crop.registrationDate);
-    setSuccessMsg(`✓ Crop registered successfully.\n${res.crop.cropName} — Added on: ${formattedDate}`);
-    onAddCrop(res.crop);
+    // Duplicate check against this farmer's REAL registered crops (not local
+    // browser storage), so it only blocks on crops that actually exist.
+    const normalizedName = finalCropName.trim().toLowerCase();
+    const existingActiveCrop = (crops || []).find((c) => {
+      const isSameCrop = (c.normalizedCropName || (c.cropName || '').toLowerCase()) === normalizedName;
+      const isSameSeason = c.season === season;
+      const isCompleted = c.status === 'COMPLETED' || c.remainingQuantity === 0;
+      const isInactive = c.status === 'INACTIVE' || c.status === 'ARCHIVED';
+      return isSameCrop && isSameSeason && !isCompleted && !isInactive;
+    });
 
-    setTimeout(() => {
-      setSuccessMsg('');
-      setCustomCropName('');
-      setExpectedQty('');
-      setSearchQuery('');
-      setNotes('');
-      setCropMode('PREDEFINED');
-      onClose();
-    }, 900);
+    if (existingActiveCrop) {
+      setErrorMsg(
+        `"${finalCropName}" is already actively registered under your profile for ${season} (Remaining Quota: ${existingActiveCrop.remainingQuantity} Qtl). You can register a new quota cycle once current procurement is completed.`
+      );
+      setDuplicateCrop(existingActiveCrop);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const created = await createCrop({
+        crop_name: finalCropName,
+        variety: plotReference || null,
+        season,
+        quantity: parseFloat(expectedQty) || estimatedEntitlement,
+      });
+
+      // Stamp with the farmer's business id (e.g. "FARMER-XXXX"), not the
+      // backend's raw numeric farmer_id — BookSlot's ownership check compares
+      // against farmer.farmerId, which uses the business id string.
+      const normalized = { ...normalizeRealCrop(created), farmerId: farmer?.farmerId };
+      const formattedDate = CropRepository.formatCropDate(normalized.registrationDate);
+      setSuccessMsg(`✓ Crop registered successfully.\n${normalized.cropName} — Added on: ${formattedDate}`);
+      onAddCrop(normalized);
+
+      setTimeout(() => {
+        setSuccessMsg('');
+        setCustomCropName('');
+        setExpectedQty('');
+        setSearchQuery('');
+        setNotes('');
+        setCropMode('PREDEFINED');
+        onClose();
+      }, 900);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to register crop. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -382,9 +411,9 @@ export default function AddCropModal({ t, lang, farmer, isOpen, onClose, onAddCr
               type="submit"
               className="btn btn-primary"
               style={{ flex: 1, justifyContent: 'center' }}
-              disabled={cropMode === 'CUSTOM' && !customCropName.trim()}
+              disabled={(cropMode === 'CUSTOM' && !customCropName.trim()) || isSubmitting}
             >
-              ✓ {t.addCrop || 'Register Crop to Profile'}
+              {isSubmitting ? 'Registering...' : `✓ ${t.addCrop || 'Register Crop to Profile'}`}
             </button>
           </div>
         </form>
