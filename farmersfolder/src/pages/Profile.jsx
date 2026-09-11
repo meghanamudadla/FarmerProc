@@ -107,6 +107,25 @@ export default function Profile({
             </div>
 
             <div className="detail-item">
+              <div className="dl">Queue Priority Status</div>
+              <div className="dv">
+                {farmer.landAcres && parseFloat(farmer.landAcres) < 1 ? (
+                  <span
+                    className="badge"
+                    style={{ fontSize: 12, fontWeight: 700, background: 'var(--accent-soft)', color: 'var(--accent)' }}
+                    title="Small & marginal farmers (under 1 acre) get bounded-fairness priority in the mandi queue"
+                  >
+                    🌱 Priority Lane Eligible (Small/Marginal Farmer)
+                  </span>
+                ) : (
+                  <span className="badge neutral" style={{ fontSize: 12, fontWeight: 700 }}>
+                    Standard FCFS Queue
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="detail-item">
               <div className="dl">Direct Payout Bank Account</div>
               <div className="dv mono" style={{ letterSpacing: '.05em' }}>
                 {farmer.bankMasked || '•••• •••• 3422'} (SBI)
