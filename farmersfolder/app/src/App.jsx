@@ -21,7 +21,7 @@ function AccessGateway() {
         </p>
 
         <div className="grid md:grid-cols-2 gap-8 text-left">
-          {/* Card 1: Educated / Educated / Literate Farmer */}
+          {/* Card 1: Educated / Educated / Educated / Literate Farmer */}
           <div className="bg-slate-900/90 border border-emerald-500/40 rounded-3xl p-8 hover:border-emerald-400 transition-all duration-300 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -33,7 +33,7 @@ function AccessGateway() {
                 </span>
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">
-                Educated / Educated / Literate Farmer
+                Educated / Educated / Educated / Literate Farmer
               </h2>
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-4">
                 Full Digital Smartphone App
@@ -50,7 +50,7 @@ function AccessGateway() {
             </button>
           </div>
 
-          {/* Card 2: Uneducated / Uneducated / Illiterate Farmer */}
+          {/* Card 2: Uneducated / Uneducated / Uneducated / Illiterate Farmer */}
           <div className="bg-slate-900/90 border border-sky-500/40 rounded-3xl p-8 hover:border-sky-400 transition-all duration-300 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -62,7 +62,7 @@ function AccessGateway() {
                 </span>
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">
-                Uneducated / Uneducated / Illiterate Farmer
+                Uneducated / Uneducated / Uneducated / Illiterate Farmer
               </h2>
               <p className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
                 Automated Phone Call / IVR
