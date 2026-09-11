@@ -11,7 +11,7 @@ function AccessGateway() {
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
       <div className="max-w-4xl w-full text-center">
         <div className="inline-block px-4 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-wider uppercase mb-3">
-          Rythu Mandi • Access Gateway
+          Rythu Mandi ï¿½ Access Gateway
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
           Rythu Mandi Procurement Portal
@@ -21,7 +21,7 @@ function AccessGateway() {
         </p>
 
         <div className="grid md:grid-cols-2 gap-8 text-left">
-          {/* Card 1: Educated / Literate Farmer */}
+          {/* Card 1: Educated / Educated / Literate Farmer */}
           <div className="bg-slate-900/90 border border-emerald-500/40 rounded-3xl p-8 hover:border-emerald-400 transition-all duration-300 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -33,7 +33,7 @@ function AccessGateway() {
                 </span>
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">
-                Educated / Literate Farmer
+                Educated / Educated / Literate Farmer
               </h2>
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-4">
                 Full Digital Smartphone App
@@ -50,7 +50,7 @@ function AccessGateway() {
             </button>
           </div>
 
-          {/* Card 2: Uneducated / Illiterate Farmer */}
+          {/* Card 2: Uneducated / Uneducated / Illiterate Farmer */}
           <div className="bg-slate-900/90 border border-sky-500/40 rounded-3xl p-8 hover:border-sky-400 transition-all duration-300 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -62,7 +62,7 @@ function AccessGateway() {
                 </span>
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">
-                Uneducated / Illiterate Farmer
+                Uneducated / Uneducated / Illiterate Farmer
               </h2>
               <p className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
                 Automated Phone Call / IVR
