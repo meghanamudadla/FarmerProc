@@ -47,7 +47,7 @@ export default function Login({
   role, setRole, authMode, setAuthMode, signupStep, setSignupStep,
   signupData, setSD, mobile, setMobile, formatMobile,
   otpSent, setOtpSent, otp, setOtp, otpRefs, handleOtpChange, handleOtpKeyDown, handleOtpPaste,
-  login, addNotif,
+  login, addNotif, authBusy, authErrorMsg, onSendOtp,
 }) {
   // The login screen is always rendered on a light glass card, regardless of
   // the farmer's saved dashboard theme (dark mode persists across logout).
@@ -75,10 +75,6 @@ export default function Login({
   const step2Valid = signupData.landAcres && signupData.aadhaarLast4.length === 4;
   const canSend = rawDigits.length === 10 && (authMode === 'signin' || (isFarmerSignup ? signupStep === 2 && step2Valid : signupData.name.trim().length > 1));
 
-  function sendOtp() {
-    setOtpSent(true);
-    addNotif('sms', lang === 'en' ? `Your OTP is 4821. Do not share it with anyone.` : 'మీ OTP 4821. దీనిని ఎవరితోనూ పంచుకోవద్దు.');
-  }
 
   return (
     <div className="login-wrap" data-theme="light">
@@ -210,12 +206,17 @@ export default function Login({
                       <input type="tel" inputMode="numeric" value={mobile} onChange={(e) => setMobile(formatMobile(e.target.value))} placeholder="81254 21544" />
                     </div>
                   </div>
+                  {authErrorMsg && (
+                    <div className="hint error" style={{ marginBottom: 10 }}>
+                      ⚠️ {authErrorMsg}
+                    </div>
+                  )}
                   <div className="btn-row" style={{ marginTop: 0 }}>
                     <button className="btn btn-ghost" onClick={() => setSignupStep(1)}>
                       ← {t.back}
                     </button>
-                    <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} disabled={!canSend} onClick={sendOtp}>
-                      {lang === 'en' ? 'Register & Send OTP' : 'నమోదు చేసి OTP పంపండి'}
+                    <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} disabled={!canSend || authBusy} onClick={onSendOtp}>
+                      {authBusy ? (lang === 'en' ? 'Checking...' : 'తనిఖీ చేస్తోంది...') : (lang === 'en' ? 'Register & Send OTP' : 'నమోదు చేసి OTP పంపండి')}
                     </button>
                   </div>
                 </>
@@ -232,8 +233,13 @@ export default function Login({
                       <input type="tel" inputMode="numeric" value={mobile} onChange={(e) => setMobile(formatMobile(e.target.value))} placeholder="81254 21544" />
                     </div>
                   </div>
-                  <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!canSend} onClick={sendOtp}>
-                    {t.sendOtp}
+                  {authErrorMsg && (
+                    <div className="hint error" style={{ marginBottom: 10 }}>
+                      ⚠️ {authErrorMsg}
+                    </div>
+                  )}
+                  <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!canSend || authBusy} onClick={onSendOtp}>
+                    {authBusy ? (lang === 'en' ? 'Checking...' : 'తనిఖీ చేస్తోంది...') : t.sendOtp}
                   </button>
                 </>
               )}
@@ -293,8 +299,18 @@ export default function Login({
                   />
                 ))}
               </div>
-              <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} disabled={otp.some((d) => !d)} onClick={login}>
-                {t.verify}
+              {authErrorMsg && (
+                <div className="hint error" style={{ marginTop: 10 }}>
+                  ⚠️ {authErrorMsg}
+                </div>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%', justifyContent: 'center', marginTop: 14 }}
+                disabled={otp.some((d) => !d) || authBusy}
+                onClick={login}
+              >
+                {authBusy ? (lang === 'en' ? 'Verifying...' : 'ధృవీకరిస్తోంది...') : t.verify}
               </button>
               <div className="login-secondary">
                 <a
@@ -317,6 +333,9 @@ export default function Login({
             </button>
             <button className={lang === 'te' ? 'active' : ''} onClick={() => setLang('te')}>
               🇮🇳 తెలుగు
+            </button>
+            <button className={lang === 'hi' ? 'active' : ''} onClick={() => setLang('hi')}>
+              🇮🇳 हिन्दी
             </button>
           </div>
           <div className="login-footer">

@@ -36,7 +36,7 @@ export default function Dashboard({
                 {bookingCropLabel(activeBooking)} · {activeBooking.qty} {lang === 'en' ? 'Qtl' : 'క్వి'}
               </div>
               <div className="ab-meta">
-                {centreById(activeBooking.centreId)[lang]} · {activeBooking.date} · {SLOT_TIMES[activeBooking.slotIdx]}
+                {centreById(activeBooking.centreId)[lang]} · {activeBooking.date} · {activeBooking.slotLabel || SLOT_TIMES[activeBooking.slotIdx]}
               </div>
               <div className="ab-foot">
                 <span>

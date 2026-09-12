@@ -22,22 +22,20 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [roleSelect, setRoleSelect] = useState('state_admin');
 
-  const handleQuickLogin = (key) => {
+  const handleQuickLogin = async (key) => {
     setSelectedRole(key);
     setLoading(true);
     setErrorMessage('');
-    setTimeout(() => {
-      const success = login(key);
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setErrorMessage('Failed to authenticate role session.');
-        setLoading(false);
-      }
-    }, 350);
+    const result = await login(key);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMessage(result.error || 'Failed to authenticate role session.');
+      setLoading(false);
+    }
   };
 
-  const handleCredentialsLogin = (e) => {
+  const handleCredentialsLogin = async (e) => {
     e.preventDefault();
     if (!officerId.trim() || !password.trim()) {
       setErrorMessage('Please enter both Officer ID/Email and password.');
@@ -45,20 +43,19 @@ export default function Login() {
     }
     setLoading(true);
     setErrorMessage('');
-    setTimeout(() => {
-      const roleObj = ROLES.find(r => r.key === roleSelect);
-      const success = login(null, {
-        officerId: officerId.trim(),
-        role: roleObj ? roleObj.label : 'District Admin',
-        email: officerId.includes('@') ? officerId.trim() : `${officerId.trim()}@gov.in`,
-      });
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setErrorMessage('Authentication failed. Please check credentials.');
-        setLoading(false);
-      }
-    }, 450);
+    const roleObj = ROLES.find(r => r.key === roleSelect);
+    const result = await login(null, {
+      officerId: officerId.trim(),
+      password,
+      role: roleObj ? roleObj.label : 'District Admin',
+      email: officerId.includes('@') ? officerId.trim() : `${officerId.trim()}@gov.in`,
+    });
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMessage(result.error || 'Authentication failed. Please check credentials.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -172,13 +169,13 @@ export default function Login() {
           {tab === 'credentials' && (
             <form onSubmit={handleCredentialsLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1">Officer ID / Govt Email *</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Registered Phone Number *</label>
                 <input
                   type="text"
                   required
                   value={officerId}
                   onChange={(e) => setOfficerId(e.target.value)}
-                  placeholder="e.g. GOV-KR-8421 or rajesh.m@gov.in"
+                  placeholder="e.g. 9000000002 (demo admin)"
                   className="w-full px-3.5 py-2.5 bg-bg-primary border border-gray-800 rounded-xl text-sm text-text-primary placeholder:text-gray-600 focus:outline-none focus:border-accent-blue transition-colors"
                 />
               </div>
@@ -239,6 +236,9 @@ export default function Login() {
 
         {/* Demo note */}
         <p className="text-[11px] text-text-muted text-center mt-6">
+          Demo credentials: phone <span className="font-tabular text-text-secondary">9000000002</span>, password <span className="font-tabular text-text-secondary">password123</span>
+        </p>
+        <p className="text-[11px] text-text-muted text-center mt-1">
           FarmerProc Government Portal — Protected State Level Procurement Console
         </p>
       </motion.div>

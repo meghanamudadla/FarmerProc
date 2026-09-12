@@ -13,6 +13,7 @@ export default function Bookings({
   onRemoveSampleData,
   onOpenReceipt,
   onOpenGrievance,
+  onCancelBooking,
 }) {
   const [cropFilter, setCropFilter] = useState('ALL');
   const [centreFilter, setCentreFilter] = useState('ALL');
@@ -186,6 +187,21 @@ export default function Bookings({
                             }}
                           >
                             📄 View Receipt
+                          </button>
+                        )}
+
+                        {b.status === 'booked' && (
+                          <button
+                            className="btn btn-ghost"
+                            style={{ padding: '5px 10px', fontSize: 12, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)', fontWeight: 600 }}
+                            title="Cancel this booking and restore your crop quota"
+                            onClick={() => {
+                              if (window.confirm(`Cancel booking ${b.token}? Your crop quota will be restored.`)) {
+                                if (onCancelBooking) onCancelBooking(b);
+                              }
+                            }}
+                          >
+                            🗑️ Cancel
                           </button>
                         )}
 

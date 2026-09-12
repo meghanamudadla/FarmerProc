@@ -38,10 +38,23 @@ export default function Payment() {
   }
 
   const acceptedKg = token.weight_details?.accepted_weight_kg || token.weight_details?.net_weight_kg || 2500;
-  const acceptedQuintals = token.weight_details?.accepted_quintals || convertKgToQuintals(acceptedKg);
+  const acceptedQuintals = token.payment?.accepted_quintals || token.weight_details?.accepted_quintals || convertKgToQuintals(acceptedKg);
 
   const deductionNum = parseFloat(qualityDeduction) || 0;
-  const mspCalc = calculateMspPayout(acceptedKg, token.crop, token.quality?.grade || 'FAQ Accepted', deductionNum);
+  const localMspCalc = calculateMspPayout(acceptedKg, token.crop, token.quality?.grade || 'FAQ Accepted', deductionNum);
+
+  // Prefer the authoritative MSP figures already computed server-side
+  // (via GET /msp/{booking_id}) over the local demo rate table.
+  const hasBackendMsp = token.payment?.msp_rate_per_quintal != null;
+  const mspCalc = hasBackendMsp
+    ? {
+        acceptedQuintals,
+        mspRatePerQuintal: token.payment.msp_rate_per_quintal,
+        baseMspAmount: token.payment.base_amount,
+        qualityDeduction: deductionNum,
+        finalPayableAmount: Math.max(0, (token.payment.base_amount || 0) - deductionNum),
+      }
+    : localMspCalc;
 
   const isCompleted = token.payment?.status === 'COMPLETED';
 

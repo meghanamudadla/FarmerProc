@@ -50,7 +50,7 @@ export default function BookingDetailModal({
           </div>
           <div className="detail-item">
             <div className="dl">{t.timeSlot}</div>
-            <div className="dv">{SLOT_TIMES[detailBooking.slotIdx]}</div>
+            <div className="dv">{detailBooking.slotLabel || SLOT_TIMES[detailBooking.slotIdx]}</div>
           </div>
           <div className="detail-item">
             <div className="dl">{lang === 'en' ? 'Farmer Arrival' : 'రైతు రాక సమయం'}</div>

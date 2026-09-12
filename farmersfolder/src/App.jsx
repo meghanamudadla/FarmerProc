@@ -7,6 +7,62 @@ import {
 import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
+import { registerFarmer, fetchFarmerMe, fetchMyCrops, fetchMyBookings, createBooking, cancelBooking } from './services/backendData.js';
+import { loginFarmer, logoutFarmer, isPhoneRegistered } from './services/authService.js';
+import { fetchRealCentres } from './services/realCentres.js';
+import { normalizeRealCrop } from './services/realCrops.js';
+
+// Maps a backend booking status onto the local status vocabulary the UI
+// already understands ('booked' | 'waiting' | 'processing' | 'completed' | 'cancelled').
+function mapBackendBookingStatus(status) {
+  switch (status) {
+    case 'booked':
+      return 'booked';
+    case 'ARRIVED':
+      return 'waiting';
+    case 'WEIGHING':
+    case 'QUALITY_CHECK':
+    case 'ACCEPTED':
+    case 'PAYMENT_PROCESSING':
+      return 'processing';
+    case 'PAYMENT_COMPLETED':
+      return 'completed';
+    case 'REJECTED':
+      return 'cancelled';
+    default:
+      return (status || 'booked').toLowerCase();
+  }
+}
+
+function normalizeRealBooking(b, cropsById) {
+  const crop = cropsById?.[b.crop_id];
+  return {
+    id: 'bk_' + b.id,
+    token: b.token_number,
+    farmerId: String(b.farmer_id),
+    cropRecordId: crop ? crop.cropRecordId : null,
+    cropId: crop ? crop.cropId : null,
+    // Real crop names don't live in the local PREDEFINED_CROPS dictionary,
+    // so mark these bookings "custom" to make the UI show cropLabel as-is
+    // instead of running cropId through that mock lookup.
+    cropCustom: true,
+    cropLabel: crop ? crop.cropName : 'Produce',
+    qty: b.quantity,
+    centreId: b.center_id,
+    date: b.booking_date,
+    slotIdx: null,
+    slotId: b.slot_id,
+    status: mapBackendBookingStatus(b.status),
+    price: b.price,
+    paymentStatus: (b.payment_status || 'pending').toLowerCase(),
+    paymentMethod: b.payment_method || 'Direct DBT Payout',
+    checkedIn: !!b.checked_in,
+    arrivalTime: b.arrival_time,
+    isRealBooking: true,
+    createdTimestamp: b.created_at,
+  };
+}
+
 
 import Sidebar from './components/Sidebar.jsx';
 import TopBar from './components/TopBar.jsx';
@@ -96,6 +152,16 @@ export default function App() {
     }
   }, [authed]);
 
+  // A page reload restores `authed` from sessionStorage, but component state
+  // (crops/bookings/farmer) always starts fresh — refetch this farmer's real
+  // data from the backend so a reload never falls back to empty/default state.
+  useEffect(() => {
+    if (authed) {
+      loadRealFarmerData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [role, setRole] = useState('farmer');
   const [mobile, setMobile] = useState('');
@@ -107,6 +173,19 @@ export default function App() {
     setSignupData((d) => ({ ...d, ...patch }));
   }
   const otpRefs = useRef([]);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authErrorMsg, setAuthErrorMsg] = useState('');
+
+  // The OTP is the farmer-facing verification step; the backend still requires
+  // a password, so we derive one from the phone number rather than asking the
+  // farmer to remember/type one. It never appears in the UI.
+  function derivedBackendPassword(phoneDigits) {
+    return `KS-${phoneDigits}-OTP2026`;
+  }
+
+  // Placeholder until real SMS delivery is wired in: every number uses this
+  // same fixed OTP, and it is never shown anywhere in the UI.
+  const STATIC_DEMO_OTP = '123456';
 
   useEffect(() => {
     if (otpSent) {
@@ -160,13 +239,9 @@ export default function App() {
     aadhaarLast4: '4321',
     bankMasked: '•••• •••• 3422',
   });
-  const [crops, setCrops] = useState(() => CropRepository.getCropsForFarmer('FRM-10245'));
-
-  useEffect(() => {
-    if (farmer?.farmerId) {
-      setCrops(CropRepository.getCropsForFarmer(farmer.farmerId));
-    }
-  }, [farmer?.farmerId]);
+  // Crops are loaded from the real backend for the authenticated farmer
+  // (see loadRealFarmerData), not seeded locally.
+  const [crops, setCrops] = useState([]);
 
   useEffect(() => {
     if (!authed) return;
@@ -240,154 +315,32 @@ export default function App() {
   const [profileDraft, setProfileDraft] = useState(farmer);
   const [editingProfile, setEditingProfile] = useState(false);
 
-  const BOOKINGS_STORAGE_KEY = 'kisanseva_farmer_bookings';
-
-  // Process walkthrough samples demonstrating the 4 government procurement stages:
-  // Stage 1: BOOKED (Original PDC-62F388)
-  // Stage 2: WAITING (Gate Checked-In & Waiting Yard Queue)
-  // Stage 3: PROCESSING (Called to Counter & Weighbridge Scales)
-  // Stage 4: COMPLETED (Weighing Finalized, Digital Receipt & DBT Credited)
-  const PROCESS_WALKTHROUGH_SAMPLES = [
-    {
-      id: 'b_sample_waiting',
-      token: 'PDC-71B420',
-      farmerId: 'FRM-10245',
-      cropRecordId: 'CROP-102',
-      cropId: 'cotton',
-      cropCustom: false,
-      cropLabel: 'Cotton',
-      qty: 28,
-      centreId: 'c2',
-      date: '2026-09-09',
-      slotIdx: 1,
-      status: 'waiting',
-      price: 199360,
-      paymentStatus: 'initiated',
-      paymentMethod: 'Direct DBT Payout (Aadhaar Seeded)',
-      checkedIn: true,
-      arrivalTime: '09:18 AM',
-      isDemoProcessSample: true,
-      createdTimestamp: '2026-09-09T03:48:00.000Z',
-    },
-    {
-      id: 'b_sample_processing',
-      token: 'PDC-84C109',
-      farmerId: 'FRM-10245',
-      cropRecordId: 'CROP-101',
-      cropId: 'paddy',
-      cropCustom: false,
-      cropLabel: 'Paddy (Grade A)',
-      qty: 50,
-      centreId: 'c1',
-      date: '2026-09-09',
-      slotIdx: 0,
-      status: 'processing',
-      price: 115000,
-      paymentStatus: 'processing',
-      paymentMethod: 'Direct DBT Payout (Aadhaar Seeded)',
-      checkedIn: true,
-      arrivalTime: '08:22 AM',
-      counterNumber: 1,
-      isDemoProcessSample: true,
-      createdTimestamp: '2026-09-09T02:52:00.000Z',
-    },
-    {
-      id: 'b_sample_completed',
-      token: 'PDC-95E312',
-      farmerId: 'FRM-10245',
-      cropRecordId: 'CROP-102',
-      cropId: 'cotton',
-      cropCustom: false,
-      cropLabel: 'Cotton',
-      qty: 30,
-      centreId: 'c2',
-      date: '2026-09-03',
-      slotIdx: 2,
-      status: 'completed',
-      price: 213600,
-      paymentStatus: 'credited',
-      paymentMethod: 'Direct DBT Payout (Aadhaar Seeded)',
-      checkedIn: true,
-      arrivalTime: '10:55 AM',
-      counterNumber: 2,
-      isDemoProcessSample: true,
-      createdTimestamp: '2026-09-03T05:25:00.000Z',
-    },
-  ];
-
-  const ORIGINAL_FARMER_BOOKING = {
-    id: 'b_active_62f388',
-    token: 'PDC-62F388',
-    farmerId: 'FRM-10245',
-    cropRecordId: 'CROP-101',
-    cropId: 'paddy',
-    cropCustom: false,
-    cropLabel: 'Paddy (Grade A)',
-    qty: 100,
-    centreId: 'c1',
-    date: '2026-09-10',
-    slotIdx: 0,
-    status: 'booked',
-    price: 230000,
-    paymentStatus: 'initiated',
-    paymentMethod: 'Direct DBT Payout (Aadhaar Seeded)',
-    checkedIn: false,
-    arrivalTime: null,
-    isOriginalUserBooking: true,
-    createdTimestamp: new Date().toISOString(),
-  };
-
-  const [bookings, setBookings] = useState(() => {
-    try {
-      const saved = localStorage.getItem(BOOKINGS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Purge random mock tokens from previous sessions
-          const clean = parsed.filter(
-            (b) =>
-              b &&
-              !b.id?.startsWith('bq_') &&
-              b.id !== 'b_farmer' &&
-              b.id !== 'b_hist1' &&
-              b.token !== 'PDC-A102' &&
-              b.token !== 'PDC-A098' &&
-              b.token !== 'PDC-A099' &&
-              b.token !== 'PDC-A100' &&
-              b.token !== 'PDC-A101' &&
-              b.token !== 'PDC-F51B1E'
-          );
-
-          // Ensure original booking is preserved
-          const hasOriginal = clean.some((b) => b.token === 'PDC-62F388');
-          const list = hasOriginal ? clean : [ORIGINAL_FARMER_BOOKING, ...clean];
-
-          // Ensure process samples are included for the user to understand the flow
-          const sampleTokens = new Set(PROCESS_WALKTHROUGH_SAMPLES.map((s) => s.token));
-          const missingSamples = PROCESS_WALKTHROUGH_SAMPLES.filter((s) => !list.some((b) => b.token === s.token));
-          return [...list, ...missingSamples];
-        }
-      }
-    } catch (e) {
-      console.warn('Could not parse stored bookings', e);
-    }
-
-    // Default: Original booking + Process flow samples
-    return [ORIGINAL_FARMER_BOOKING, ...PROCESS_WALKTHROUGH_SAMPLES];
-  });
-
-  // Automatically persist farmer's bookings to localStorage whenever changed
-  useEffect(() => {
-    try {
-      localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(bookings));
-    } catch (e) {
-      console.warn('Failed to save bookings to localStorage', e);
-    }
-  }, [bookings]);
+  // Bookings are loaded from the real backend for the authenticated farmer
+  // (see loadRealFarmerData) — no demo/sample bookings are seeded locally.
+  const [bookings, setBookings] = useState([]);
 
   function handleRemoveSampleData() {
     setBookings((prev) => prev.filter((b) => !b.isDemoProcessSample));
-    addNotif('sms', lang === 'en' ? 'Process demo samples removed. Only your original crop bookings remain.' : 'నమూనా డేటా తీసివేయబడింది. అసలు బుకింగ్‌లు మాత్రమే ఉన్నాయి.');
+  }
+
+  // Cancels a real booking on the backend (releases the reserved crop
+  // quantity back to the farmer's quota) and reflects it locally.
+  async function handleCancelBooking(booking) {
+    if (!booking) return;
+    if (!booking.isRealBooking) {
+      setBookings((prev) => prev.map((b) => (b.id === booking.id ? { ...b, status: 'cancelled' } : b)));
+      return;
+    }
+    const realId = parseInt(String(booking.id).replace('bk_', ''), 10);
+    try {
+      await cancelBooking(realId);
+      setBookings((prev) => prev.map((b) => (b.id === booking.id ? { ...b, status: 'cancelled' } : b)));
+      addNotif('sms', lang === 'en' ? `Booking ${booking.token} cancelled. Your crop quota has been restored.` : `బుకింగ్ ${booking.token} రద్దు చేయబడింది. మీ పంట కోటా పునరుద్ధరించబడింది.`);
+      // Refresh crops so the restored quantity shows up immediately.
+      loadRealFarmerData();
+    } catch (err) {
+      addNotif('sms', err.message || (lang === 'en' ? 'Could not cancel this booking.' : 'ఈ బుకింగ్‌ను రద్దు చేయలేకపోయాము.'));
+    }
   }
   const [slotFill, setSlotFill] = useState({}); // key -> extra bookings made in this session
 
@@ -571,28 +524,154 @@ export default function App() {
     if (el) el.focus();
   }
 
-  function login() {
-    if (authMode === 'signup' && signupData.name.trim()) {
-      setFarmer((f) => ({
-        ...f,
-        fullName: signupData.name.trim(),
-        mobile: '+91 ' + mobile,
-        village: signupData.village,
-        district: signupData.district,
-        landAcres: signupData.landAcres,
-        primaryCrop: signupData.primaryCrop,
-        aadhaarLast4: signupData.aadhaarLast4,
-        farmerId: signupData.farmerId,
-      }));
-    }
-    setAuthed(true);
+  // Gate OTP entry on the real backend: sign-in only proceeds for a number
+  // that already has an account, sign-up only proceeds for one that doesn't.
+  async function sendOtpChecked() {
+    setAuthErrorMsg('');
+    const phoneDigits = mobile.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) return;
+
+    setAuthBusy(true);
     try {
-      sessionStorage.setItem('kisanseva_authed', JSON.stringify(true));
-    } catch (e) {}
-    const first = (authMode === 'signup' && signupData.name.trim() ? signupData.name.trim() : farmer.fullName).split(' ')[0];
-    addNotif('sms', lang === 'en' ? `Welcome${authMode === 'signup' ? '' : ' back'}, ${first}.` : `${authMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${first}.`);
-    if (authMode === 'signup') {
-      addNotif('push', lang === 'en' ? 'Registration complete. Your eligible quantity has been calculated from your land details.' : 'నమోదు పూర్తయింది. మీ భూమి వివరాల ఆధారంగా అర్హత పరిమాణం లెక్కించబడింది.');
+      const registered = await isPhoneRegistered(phoneDigits);
+
+      if (authMode === 'signin' && !registered) {
+        setAuthErrorMsg(
+          lang === 'en'
+            ? 'This number is not registered. Please sign up first.'
+            : 'ఈ నంబర్ నమోదు కాలేదు. దయచేసి ముందుగా నమోదు చేసుకోండి.'
+        );
+        return;
+      }
+      if (authMode === 'signup' && registered) {
+        setAuthErrorMsg(
+          lang === 'en'
+            ? 'This number is already registered. Please sign in instead.'
+            : 'ఈ నంబర్ ఇప్పటికే నమోదు చేయబడింది. దయచేసి సైన్ ఇన్ చేయండి.'
+        );
+        return;
+      }
+
+      setOtpSent(true);
+      addNotif('sms', lang === 'en' ? 'An OTP has been sent to your registered mobile number.' : 'మీ నమోదిత మొబైల్ నంబర్‌కు OTP పంపబడింది.');
+    } catch (err) {
+      setAuthErrorMsg(err.message || (lang === 'en' ? 'Could not verify this number. Please try again.' : 'ఈ నంబర్‌ను ధృవీకరించలేకపోయాము. మళ్ళీ ప్రయత్నించండి.'));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  // Replaces local demo state with this farmer's real data from the backend
+  // (profile, registered crops, bookings) right after a successful login.
+  async function loadRealFarmerData() {
+    try {
+      const [profile, rawCrops, rawBookings] = await Promise.all([
+        fetchFarmerMe().catch(() => null),
+        fetchMyCrops().catch(() => []),
+        fetchMyBookings().catch(() => []),
+        // Warms the shared centre-name cache (see centreById in domain.js) so
+        // booking rows show real centre names even if Find Centres was never visited.
+        fetchRealCentres().catch(() => []),
+      ]);
+
+      // The crop/booking rows carry the backend's internal numeric farmer_id
+      // (Farmer.id), not the farmer's business id string (e.g. "FARMER-XXXX")
+      // that `farmer.farmerId` uses elsewhere in the UI for ownership checks
+      // (see BookSlot's isFarmerMatch). Every row from /crops/my and
+      // /bookings/my already belongs to this authenticated farmer, so stamp
+      // them with that business id rather than the raw numeric one.
+      const resolvedFarmerId = (profile && profile.farmer_id) || farmer.farmerId;
+
+      const cropList = Array.isArray(rawCrops) ? rawCrops : [];
+      const normalizedCrops = cropList.map((c) => ({ ...normalizeRealCrop(c), farmerId: resolvedFarmerId }));
+      const cropsById = {};
+      cropList.forEach((c, i) => {
+        cropsById[c.id] = normalizedCrops[i];
+      });
+
+      setCrops(normalizedCrops);
+      setBookings(
+        (Array.isArray(rawBookings) ? rawBookings : []).map((b) => ({
+          ...normalizeRealBooking(b, cropsById),
+          farmerId: resolvedFarmerId,
+        }))
+      );
+
+      if (profile) {
+        setFarmer((f) => ({
+          ...f,
+          farmerId: profile.farmer_id || f.farmerId,
+          fullName: profile.name || f.fullName,
+          village: profile.village || f.village,
+          district: profile.district || f.district,
+          landAcres: profile.land_area != null ? String(profile.land_area) : f.landAcres,
+          mobile: profile.phone ? '+91 ' + profile.phone : f.mobile,
+        }));
+      }
+    } catch (err) {
+      console.warn('Could not load real farmer data', err);
+    }
+  }
+
+  // OTP entry is the farmer-facing step; behind it, this performs a real
+  // register (on signup) and login against the backend so every farmer gets
+  // their own account backed by the Postgres database, not just a demo user.
+  async function login() {
+    setAuthErrorMsg('');
+
+    if (otp.join('') !== STATIC_DEMO_OTP) {
+      setAuthErrorMsg(lang === 'en' ? 'Incorrect OTP. Please try again.' : 'తప్పు OTP. దయచేసి మళ్ళీ ప్రయత్నించండి.');
+      return;
+    }
+
+    setAuthBusy(true);
+    const phoneDigits = mobile.replace(/\D/g, '');
+    const backendPassword = derivedBackendPassword(phoneDigits);
+
+    try {
+      if (authMode === 'signup') {
+        await registerFarmer({
+          name: signupData.name.trim(),
+          phone: phoneDigits,
+          password: backendPassword,
+          village: signupData.village,
+          district: signupData.district,
+          land_area: signupData.landAcres ? parseFloat(signupData.landAcres) : null,
+        });
+      }
+
+      await loginFarmer(phoneDigits, backendPassword);
+      await loadRealFarmerData();
+
+      if (authMode === 'signup' && signupData.name.trim()) {
+        setFarmer((f) => ({
+          ...f,
+          fullName: signupData.name.trim(),
+          mobile: '+91 ' + mobile,
+          village: signupData.village,
+          district: signupData.district,
+          landAcres: signupData.landAcres,
+          primaryCrop: signupData.primaryCrop,
+          aadhaarLast4: signupData.aadhaarLast4,
+          farmerId: signupData.farmerId,
+        }));
+      }
+      setAuthed(true);
+      try {
+        sessionStorage.setItem('kisanseva_authed', JSON.stringify(true));
+      } catch (e) {}
+      const first = (authMode === 'signup' && signupData.name.trim() ? signupData.name.trim() : farmer.fullName).split(' ')[0];
+      addNotif('sms', lang === 'en' ? `Welcome${authMode === 'signup' ? '' : ' back'}, ${first}.` : `${authMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${first}.`);
+      if (authMode === 'signup') {
+        addNotif('push', lang === 'en' ? 'Registration complete. Your eligible quantity has been calculated from your land details.' : 'నమోదు పూర్తయింది. మీ భూమి వివరాల ఆధారంగా అర్హత పరిమాణం లెక్కించబడింది.');
+      }
+    } catch (err) {
+      setAuthErrorMsg(
+        err.message ||
+          (lang === 'en' ? 'Could not verify OTP. Please try again.' : 'OTP ధృవీకరణ విఫలమైంది. మళ్ళీ ప్రయత్నించండి.')
+      );
+    } finally {
+      setAuthBusy(false);
     }
   }
 
@@ -612,6 +691,7 @@ export default function App() {
   }
 
   function logout() {
+    logoutFarmer();
     setAuthed(false);
     setOtpSent(false);
     setOtp(['', '', '', '', '', '']);
@@ -619,13 +699,51 @@ export default function App() {
     setAuthMode('signin');
     setSignupStep(1);
     setPage('dashboard');
+    // Clear this farmer's data so it never leaks into the next login on this device.
+    setCrops([]);
+    setBookings([]);
   }
 
   const qtyNum = parseFloat(form.qty);
   const overLimit = eligibleQty != null && qtyNum > eligibleQty;
   const profileComplete = !!farmer.landAcres;
 
-  function confirmBooking(processedBooking) {
+  // Real live booking flow (from BookSlot's Step 4) calls the actual backend
+  // and passes {centerId, cropId, quantity, bookingDate, slotId, ...} —
+  // distinguished from the legacy offline-sync path below, which already
+  // hands over a pre-built local booking object to insert as-is.
+  async function confirmBooking(processedBooking) {
+    if (processedBooking && 'centerId' in processedBooking) {
+      const created = await createBooking({
+        center_id: processedBooking.centerId,
+        crop_id: processedBooking.cropId,
+        quantity: processedBooking.quantity,
+        booking_date: processedBooking.bookingDate,
+        slot_id: processedBooking.slotId,
+      });
+
+      const cropsById = {};
+      crops.forEach((c) => {
+        if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+      });
+      const normalized = { ...normalizeRealBooking(created, cropsById), farmerId: farmer.farmerId };
+      const centre = centreById(processedBooking.centerId);
+
+      setBookings((prev) => [normalized, ...prev]);
+      setActiveBookingId(normalized.id);
+      addNotif('sms', nt.booked(normalized.token, normalized.date, processedBooking.slotLabel || '', centre[lang] || centre.en));
+      addNotif('ivr', nt.ivrNote);
+      addNotif('push', nt.payInit((normalized.price || 0).toLocaleString('en-IN'), normalized.paymentMethod));
+
+      setBookStep(1);
+      setForm({ cropText: CROPS[0].en, qty: '', centreId: null, date: new Date().toISOString().slice(0, 10), slotId: null });
+      setBank({ holder: '', bankName: '', acc: '', confirmAcc: '', ifsc: '' });
+      setPage('bookings');
+      return;
+    }
+
+    // Legacy local/offline-sync booking path: processedBooking is already a
+    // fully-formed local mock booking object (see handleTriggerOfflineSync).
     const centre = centreById(form.centreId);
     const token = processedBooking?.token || ('PDC-' + Math.random().toString(16).slice(2, 8).toUpperCase());
     const typedCropLabel = form.cropText.trim();
@@ -854,6 +972,9 @@ export default function App() {
         handleOtpPaste={handleOtpPaste}
         login={login}
         addNotif={addNotif}
+        authBusy={authBusy}
+        authErrorMsg={authErrorMsg}
+        onSendOtp={sendOtpChecked}
       />
     );
   }
@@ -1033,6 +1154,7 @@ export default function App() {
             onRemoveSampleData={handleRemoveSampleData}
             onOpenReceipt={handleOpenReceipt}
             onOpenGrievance={handleOpenGrievance}
+            onCancelBooking={handleCancelBooking}
             onAddComplaint={(newComp) => {
               setComplaints((prev) => [newComp, ...prev]);
               addNotif('sms', lang === 'en' ? `Grievance ${newComp.complaintId} submitted to Mandi Cell.` : `ఫిర్యాదు ${newComp.complaintId} మండి విభాగానికి సమర్పించబడింది.`);

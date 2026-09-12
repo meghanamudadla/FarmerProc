@@ -44,8 +44,19 @@ export default function FarmerProcessing() {
   const acceptedKg = weight_details?.accepted_weight_kg || 0;
   const acceptedQuintals = weight_details?.accepted_quintals || convertKgToQuintals(acceptedKg);
 
-  // MSP Payout derivations
-  const mspCalc = calculateMspPayout(acceptedKg, token.crop, quality?.grade || 'FAQ Accepted', payment?.quality_deduction || 0);
+  // MSP Payout derivations — prefer the authoritative backend figures
+  // (from GET /msp/{booking_id}, stored on token.payment) over the local demo rate table.
+  const localMspCalc = calculateMspPayout(acceptedKg, token.crop, quality?.grade || 'FAQ Accepted', payment?.quality_deduction || 0);
+  const hasBackendMsp = payment?.msp_rate_per_quintal != null;
+  const mspCalc = hasBackendMsp
+    ? {
+        acceptedQuintals: payment.accepted_quintals ?? acceptedQuintals,
+        mspRatePerQuintal: payment.msp_rate_per_quintal,
+        baseMspAmount: payment.base_amount,
+        qualityDeduction: payment.quality_deduction || 0,
+        finalPayableAmount: payment.final_amount ?? Math.max(0, (payment.base_amount || 0) - (payment.quality_deduction || 0)),
+      }
+    : localMspCalc;
 
   // Define Stage Timeline Steps
   const STAGE_ORDER = [
@@ -277,10 +288,10 @@ export default function FarmerProcessing() {
             </div>
 
             <div className="audit-timeline">
-              {(audit_trail || []).map((entry) => (
-                <div key={entry.id} className="audit-item">
+              {(audit_trail || []).map((entry, idx) => (
+                <div key={entry.id || `${entry.event}-${idx}`} className="audit-item">
                   <div className="audit-left">
-                    <span className="audit-time font-mono">{entry.timestamp}</span>
+                    <span className="audit-time font-mono">{entry.timestamp || entry.time}</span>
                     <span className="audit-role">{entry.role}</span>
                   </div>
                   <div className="audit-right">

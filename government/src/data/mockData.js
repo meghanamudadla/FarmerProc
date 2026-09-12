@@ -180,7 +180,10 @@ export function getCentersByDistrict(districtId) {
 }
 
 export function getDistrictName(districtId) {
-  return DISTRICTS.find(d => d.id === districtId)?.name || 'Unknown';
+  // Real backend records store the district as a plain place name (e.g.
+  // "East Godavari") rather than a mock district id (e.g. "d3") — fall back
+  // to the raw value instead of "Unknown" so live data still displays.
+  return DISTRICTS.find(d => d.id === districtId)?.name || districtId || 'Unknown';
 }
 
 export function getCropName(cropId) {

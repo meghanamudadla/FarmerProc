@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
-const BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:4000';
+const BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:3000';
 const TEST_PHONE = '9876543210';
 
 async function runSimulationTests() {

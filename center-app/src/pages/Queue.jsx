@@ -14,9 +14,10 @@ export default function Queue() {
 
   const filteredTokens = useMemo(() => {
     return tokens.filter((t) => {
+      const search = searchTerm.toLowerCase();
       const matchSearch =
-        t.farmer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.farmer_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(t.farmer_name || '').toLowerCase().includes(search) ||
+        String(t.farmer_id || '').toLowerCase().includes(search) ||
         String(t.token_number).includes(searchTerm);
 
       if (stageFilter === 'ALL') return matchSearch;

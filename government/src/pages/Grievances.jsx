@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { GRIEVANCES, CENTERS } from '../data/mockData';
-import { getAllGrievances } from '../api/api';
+import { getAllGrievances, updateGrievance } from '../api/api';
 
 const STATUS_FLOW = ['new', 'assigned', 'in_progress', 'resolved'];
 const STATUS_LABELS = { new: 'New', assigned: 'Assigned', in_progress: 'In Progress', resolved: 'Resolved' };
@@ -32,6 +32,8 @@ export default function Grievances() {
 
             return {
               id: g.complaint_id || `CMP-${g.id}`,
+              isLive: true,
+              rawComplaintId: g.complaint_id,
               farmerName: `Farmer #${g.farmer_id}`,
               title: g.description ? `${g.category.replace('_', ' ').toUpperCase()}: ${g.description.slice(0, 45)}...` : `${g.category} Issue`,
               description: g.description || 'No description provided.',
@@ -51,13 +53,23 @@ export default function Grievances() {
 
   const filtered = filter === 'all' ? grievances : grievances.filter(g => g.status === filter);
 
-  const handleAdvance = (id) => {
-    setGrievances(prev => prev.map(g => {
-      if (g.id !== id) return g;
-      const idx = STATUS_FLOW.indexOf(g.status);
-      if (idx >= STATUS_FLOW.length - 1) return g;
-      return { ...g, status: STATUS_FLOW[idx + 1] };
-    }));
+  const BACKEND_STATUS = { assigned: 'ASSIGNED', in_progress: 'UNDER_REVIEW', resolved: 'RESOLVED' };
+
+  const handleAdvance = async (grievance) => {
+    const idx = STATUS_FLOW.indexOf(grievance.status);
+    if (idx >= STATUS_FLOW.length - 1) return;
+    const nextStatus = STATUS_FLOW[idx + 1];
+
+    if (grievance.isLive && grievance.rawComplaintId) {
+      try {
+        await updateGrievance(grievance.rawComplaintId, { status: BACKEND_STATUS[nextStatus] });
+      } catch (err) {
+        console.error('Failed to update grievance on server:', err.message);
+        return;
+      }
+    }
+
+    setGrievances(prev => prev.map(g => (g.id === grievance.id ? { ...g, status: nextStatus } : g)));
   };
 
   const getSLAStatus = (deadline) => {
@@ -123,7 +135,7 @@ export default function Grievances() {
                   </div>
                 </div>
                 {canControl && g.status !== 'resolved' && (
-                  <button onClick={() => handleAdvance(g.id)}
+                  <button onClick={() => handleAdvance(g)}
                     className="text-xs px-3 py-1.5 rounded-lg bg-accent-blue/15 text-accent-blue border border-accent-blue/30 hover:bg-accent-blue/25 flex-shrink-0">
                     {g.status === 'new' ? 'Assign' : g.status === 'assigned' ? 'Start Work' : 'Resolve'}
                   </button>

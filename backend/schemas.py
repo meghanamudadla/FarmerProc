@@ -20,6 +20,19 @@ class UserLogin(BaseModel):
     password: str
 
 
+class CheckPhoneRequest(BaseModel):
+    phone: str = Field(min_length=10, max_length=15)
+
+
+class SendOtpRequest(BaseModel):
+    phone: str = Field(min_length=10, max_length=15)
+
+
+class VerifyOtpRequest(BaseModel):
+    phone: str = Field(min_length=10, max_length=15)
+    otp: str = Field(min_length=4, max_length=8)
+
+
 class TokenResponse(BaseModel):
     access_token: str = Field(min_length=20)
     token_type: str

@@ -28,6 +28,7 @@ def get_my_profile(
             detail="Farmer profile not found"
         )
 
+<<<<<<< HEAD
     crop_name = farmer.crops[0].crop_name if farmer.crops else "Paddy (Grade A)"
     return FarmerResponse(
         id=farmer.id,
@@ -38,6 +39,19 @@ def get_my_profile(
         village=farmer.village or "Kakinada Rural",
         district=farmer.district or "East Godavari",
         land_area=farmer.land_area or 5.0,
+=======
+    crop_name = farmer.crops[0].crop_name if farmer.crops else None
+
+    return FarmerResponse(
+        id=farmer.id,
+        farmer_id=farmer.farmer_id,
+        name=current_user.name,
+        mobile=current_user.phone,
+        phone=current_user.phone,
+        village=farmer.village,
+        district=farmer.district,
+        land_area=farmer.land_area,
+>>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
         crop=crop_name,
         totalBookings=len(farmer.bookings) if farmer.bookings else 0,
         noShows=0,

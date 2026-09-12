@@ -25,11 +25,6 @@ export default function Grievances({
   const [submittedAlert, setSubmittedAlert] = useState(null);
   const [registerError, setRegisterError] = useState('');
 
-  // Officer Update State (for staff actions in detail view)
-  const [officerStatus, setOfficerStatus] = useState('UNDER_REVIEW');
-  const [officerResponse, setOfficerResponse] = useState('');
-  const [showStaffConsole, setShowStaffConsole] = useState(false);
-
   useEffect(() => {
     if (prefillToken) {
       setTransactionId(prefillToken);
@@ -136,23 +131,6 @@ export default function Grievances({
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  function handleSaveOfficerUpdate() {
-    if (!selectedComplaint) return;
-    const updated = complaintService.updateComplaintStatus({
-      complaintId: selectedComplaint.complaintId,
-      nextStatus: officerStatus,
-      officerName: 'Officer S. Varma (Grievance Redressal Cell)',
-      responseText: officerResponse || selectedComplaint.officialResponse || 'Issue reviewed by Mandi Superintendent.',
-      resolutionDetails: officerResponse,
-    });
-
-    if (onUpdateComplaint && updated) {
-      onUpdateComplaint(updated);
-    }
-    setSelectedComplaint(updated);
-    setShowStaffConsole(false);
   }
 
   /* -------------------------------------------------------------
@@ -510,54 +488,6 @@ export default function Grievances({
             {c.officerName && (
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 8 }}>
                 Reviewed by: <b>{c.officerName}</b>
-              </div>
-            )}
-          </div>
-
-          {/* Mandi Staff Simulation Console */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Demonstration Testing: Simulate Mandi Officer Status Advancement
-              </span>
-              <button
-                className="btn btn-ghost"
-                style={{ fontSize: 12, padding: '4px 10px' }}
-                onClick={() => setShowStaffConsole(!showStaffConsole)}
-              >
-                ⚙️ {showStaffConsole ? 'Hide Staff Console' : 'Open Staff Console'}
-              </button>
-            </div>
-
-            {showStaffConsole && (
-              <div style={{ marginTop: 12, padding: 14, background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>Advance Status:</label>
-                  <select
-                    className="input-select"
-                    value={officerStatus}
-                    onChange={(e) => setOfficerStatus(e.target.value)}
-                    style={{ fontSize: 12.5 }}
-                  >
-                    <option value="ASSIGNED">ASSIGNED</option>
-                    <option value="UNDER_REVIEW">UNDER_REVIEW</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                    <option value="REJECTED">REJECTED</option>
-                  </select>
-                </div>
-                <div style={{ marginBottom: 10 }}>
-                  <input
-                    type="text"
-                    className="input-text"
-                    placeholder="Officer Remarks / Findings..."
-                    value={officerResponse}
-                    onChange={(e) => setOfficerResponse(e.target.value)}
-                    style={{ width: '100%', fontSize: 12.5 }}
-                  />
-                </div>
-                <button className="btn btn-primary" style={{ fontSize: 12 }} onClick={handleSaveOfficerUpdate}>
-                  Save Status & Advise Farmer
-                </button>
               </div>
             )}
           </div>

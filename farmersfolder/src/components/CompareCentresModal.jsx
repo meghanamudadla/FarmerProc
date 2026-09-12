@@ -170,7 +170,7 @@ export default function CompareCentresModal({
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {remainingCentres.slice(0, 2).map((rc) => (
+                {remainingCentres.map((rc) => (
                   <button
                     key={rc.id}
                     className="btn btn-ghost"

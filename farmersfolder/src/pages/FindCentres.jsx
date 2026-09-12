@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { CENTRES } from '../data/domain.js';
+import { useRealCentres } from '../services/realCentres.js';
 import { CentreService } from '../services/centreService.js';
 import CentreCard from '../components/CentreCard.jsx';
 import CompareCentresModal from '../components/CompareCentresModal.jsx';
 import CentreDetailsModal from '../components/CentreDetailsModal.jsx';
 
 export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking }) {
+  const { centres: CENTRES, loading: centresLoading, error: centresError } = useRealCentres();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('nearest');
@@ -50,7 +51,7 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
       const matchesStatus = statusFilter === 'ALL' || c.operatingStatus === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [searchTerm, statusFilter, lang]);
+  }, [CENTRES, searchTerm, statusFilter, lang]);
 
   // Sort
   const sortedCentres = useMemo(() => {
@@ -139,7 +140,7 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
             Quick Filters:
           </span>
           {[
-            { id: 'ALL', label: 'All Mandis (4)' },
+            { id: 'ALL', label: `All Mandis (${CENTRES.length})` },
             { id: 'OPEN', label: '🟢 Open Mandis' },
             { id: 'NEAR', label: '📍 Nearest' },
             { id: 'LOW_WAIT', label: '⚡ Shortest Wait' },
@@ -177,7 +178,15 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
       </div>
 
       {/* Results List */}
-      {sortedCentres.length === 0 ? (
+      {centresLoading ? (
+        <div className="card empty-note" style={{ textAlign: 'center', padding: '32px 20px' }}>
+          ⏳ Loading procurement centres from the mandi server...
+        </div>
+      ) : centresError ? (
+        <div className="hint error" style={{ padding: '14px 16px', borderRadius: 8 }}>
+          ⚠️ {centresError}
+        </div>
+      ) : sortedCentres.length === 0 ? (
         <div className="card empty-note" style={{ textAlign: 'center', padding: '32px 20px' }}>
           🔍 No procurement centres found matching your search. Try changing your search query or filters.
         </div>

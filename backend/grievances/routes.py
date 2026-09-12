@@ -98,6 +98,11 @@ def get_my_grievances(
 # ============================================================
 # GET ALL GRIEVANCES - GOVERNMENT / ADMIN
 # ============================================================
+<<<<<<< HEAD
+=======
+# Must be declared before /{complaint_id} — otherwise FastAPI matches
+# "all" as a complaint_id and this route is never reached.
+>>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
 
 @router.get("/all", response_model=list[GrievanceResponse])
 def get_all_grievances(

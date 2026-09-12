@@ -106,7 +106,10 @@ def seed_database():
         demo_farmer_user = db.query(User).filter(User.phone == "9876543210").first()
         if not demo_farmer_user:
             print("[INFO] Seeding Default Users & Farmer Profile...")
-            hashed_pw = pwd_context.hash("password123")
+            # Farmer login password matches the farmer app's OTP-derived scheme
+            # (see App.jsx derivedBackendPassword) so this demo account works
+            # through the real OTP sign-in flow, not just direct API calls.
+            hashed_pw = pwd_context.hash("KS-9876543210-OTP2026")
 
             # Demo Farmer
             farmer_user = User(

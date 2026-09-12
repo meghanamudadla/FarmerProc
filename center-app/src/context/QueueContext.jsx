@@ -32,21 +32,27 @@ export function QueueProvider({ children }) {
       setError(null);
       const data = await getCenterQueue(CENTER_ID);
 
+      // Backend uses "BOOKED" for a freshly created booking and "WAITING" for
+      // seeded/waiting bookings — both mean "not yet arrived" in this UI.
+      const normalizeStage = (stage) => (stage === 'BOOKED' ? 'WAITING' : stage);
+
       if (data.tokens && data.tokens.length > 0) {
-        setTokens(data.tokens);
+        setTokens(
+          data.tokens.map((t) => ({ ...t, stage: normalizeStage(t.stage || t.status) }))
+        );
       } else {
         const queueItems = [];
         if (data.currently_serving) {
           queueItems.push({
             ...data.currently_serving,
-            stage: data.currently_serving.status,
+            stage: normalizeStage(data.currently_serving.status),
           });
         }
         if (Array.isArray(data.waiting)) {
           data.waiting.forEach((booking) => {
             queueItems.push({
               ...booking,
-              stage: booking.status,
+              stage: normalizeStage(booking.status),
             });
           });
         }
@@ -192,7 +198,9 @@ export function QueueProvider({ children }) {
     } = qualityInput;
 
     const targetToken = tokens.find((t) => String(t.token_number) === String(tokenNumber));
-    const isAccepted = result === "ACCEPTED";
+    // The staff-facing UI uses its own labels (FAQ_ACCEPTED / DEDUCTION_APPLIED / REJECTED)
+    // from the local rule-engine preview — any non-REJECTED decision counts as accepted.
+    const isAccepted = result !== "REJECTED";
     const newStage = isAccepted ? "ACCEPTED" : "REJECTED";
 
     // 1. Optimistic UI update
@@ -280,7 +288,29 @@ export function QueueProvider({ children }) {
         });
 
         if (isAccepted) {
-          await getMspCalculation(targetToken.id);
+          // The backend is the source of truth for MSP payout — it looks up the
+          // official rate per crop and persists booking.price. Use its numbers
+          // instead of the local demo rate table once they're available.
+          const mspResult = await getMspCalculation(targetToken.id);
+
+          setTokens((prev) =>
+            prev.map((token) => {
+              if (String(token.token_number) === String(tokenNumber)) {
+                return {
+                  ...token,
+                  payment: {
+                    ...(token.payment || {}),
+                    msp_rate_per_quintal: mspResult.msp_rate_per_quintal,
+                    accepted_quintals: mspResult.accepted_quintals,
+                    base_amount: mspResult.base_amount,
+                    quality_deduction: mspResult.quality_deduction,
+                    final_amount: mspResult.final_amount,
+                  },
+                };
+              }
+              return token;
+            })
+          );
         }
       } catch (e) {
         console.warn("Backend quality check sync error:", e);
@@ -329,7 +359,11 @@ export function QueueProvider({ children }) {
     // 2. Sync with Backend
     if (targetToken && targetToken.id) {
       try {
-        const finalAmt = parseFloat(amount) || targetToken.price || 50000;
+        // Prefer the authoritative amount already computed by the backend's
+        // /msp/{booking_id} endpoint (stored on token.payment.final_amount);
+        // fall back to whatever the form submitted.
+        const finalAmt =
+          targetToken.payment?.final_amount || parseFloat(amount) || targetToken.price || 50000;
         const qtl = targetToken.weight_details?.accepted_quintals || 25;
 
         // Record procurement in database
@@ -395,6 +429,10 @@ export function QueueProvider({ children }) {
         updateTokenWeighment,
         updateTokenQuality,
         updateTokenPayment,
+        // Aliases used by the Weighing / QualityCheck / Payment pages.
+        updateWeightDetails: updateTokenWeighment,
+        updateQualityCheck: updateTokenQuality,
+        updatePaymentDetails: updateTokenPayment,
         skipToken,
         updateCenterConfig,
         addAuditEntry,

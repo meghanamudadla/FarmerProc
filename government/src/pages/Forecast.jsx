@@ -5,7 +5,7 @@ import { FORECAST } from '../data/mockData';
 
 export default function Forecast() {
   const { canControl } = useAuth();
-  const { tomorrowArrivals, peakWindow, trendBasis, atRiskCenters, redirections } = FORECAST;
+  const { tomorrowArrivals, peakWindow, modelBasis, atRiskCenters, redirections } = FORECAST;
 
   return (
     <div className="space-y-6">
@@ -23,7 +23,7 @@ export default function Forecast() {
             <div className="h-1.5 flex-1 bg-gray-700 rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-accent-blue to-accent-cyan rounded-full" style={{width:`${(tomorrowArrivals.thresholdRate || 0.82)*100}%`}} />
             </div>
-            <span className="text-xs text-text-muted font-tabular">{Math.round(tomorrowArrivals.confidence*100)}% est. accuracy</span>
+            <span className="text-xs text-text-muted font-tabular">{Math.round((tomorrowArrivals.thresholdRate || 0)*100)}% est. accuracy</span>
           </div>
           <div className="text-xs text-text-secondary mt-2">Range: {tomorrowArrivals.low} – {tomorrowArrivals.high}</div>
         </motion.div>
