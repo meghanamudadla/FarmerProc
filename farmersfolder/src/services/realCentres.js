@@ -45,7 +45,16 @@ export function normalizeRealCentre(c) {
 let realCentreCache = [];
 
 export function getCachedRealCentre(id) {
-  return realCentreCache.find((c) => c.id === id) || null;
+  if (id == null) return null;
+  const numId = String(id).replace(/\D/g, '');
+  return (
+    realCentreCache.find(
+      (c) =>
+        c.id === id ||
+        String(c.id) === String(id) ||
+        (numId && String(c.id) === numId)
+    ) || null
+  );
 }
 
 export async function fetchRealCentres() {

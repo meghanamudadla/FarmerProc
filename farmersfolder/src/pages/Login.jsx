@@ -1,48 +1,6 @@
 import { useEffect } from 'react';
 
 export default function Login({
-<<<<<<< HEAD
-  t,
-  lang,
-  setLang,
-  role,
-  setRole,
-  authMode,
-  setAuthMode,
-  signupStep,
-  setSignupStep,
-  signupData,
-  setSD,
-  mobile,
-  setMobile,
-  formatMobile,
-  otpSent,
-  setOtpSent,
-  otp,
-  setOtp,
-  otpRefs,
-  handleOtpChange,
-  handleOtpKeyDown,
-  handleOtpPaste,
-  authLoading,
-  authError,
-  setAuthError,
-  setAuthPassword,
-  login,
-  addNotif,
-}) {
-  const [password, setPasswordState] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  function setPassword(val) {
-    setPasswordState(val);
-    if (typeof setAuthPassword === "function") {
-      setAuthPassword(val);
-    }
-  }
-
-  // Keep login page in light theme.
-=======
   t, lang, setLang,
   role, setRole, authMode, setAuthMode, signupStep, setSignupStep,
   signupData, setSD, mobile, setMobile, formatMobile,
@@ -58,7 +16,6 @@ export default function Login({
   // input black-on-black. Forcing the attribute onto <html> itself while
   // this page is mounted (and restoring whatever it was on unmount) fixes
   // that at the source instead of patching more CSS specificity.
->>>>>>> c9c0dc897e42562839c8b0b5588da5ea0411dcf6
   useEffect(() => {
     const root = document.documentElement;
     const prevTheme = root.getAttribute('data-theme');
