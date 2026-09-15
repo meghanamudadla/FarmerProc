@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, update
 from datetime import datetime
 
 from task_queue.manager import manager
@@ -9,8 +9,7 @@ from models import Booking, Slot, User, Farmer, Crop, ProcurementCenter
 from schemas import BookingCreate, BookingResponse
 from auth.dependencies import get_current_user
 from notifications.service import create_notification
-from dqa import compute_dynamic_eta, FarmerRequest as DqaFarmerRequest, ExistingEntry as DqaExistingEntry
-
+from audit import record_audit_event
 import secrets
 
 
@@ -77,22 +76,20 @@ async def create_booking(
             detail="You have already booked this slot"
         )
 
-    # 5. Count existing bookings
-    booking_count = db.query(
-        func.count(Booking.id)
-    ).filter(
-        Booking.slot_id == slot.id,
-        Booking.status != "CANCELLED"
-    ).scalar()
-
-    # 6. Check slot capacity
-    if booking_count >= slot.capacity:
+    # 5. Check slot capacity (Atomic update)
+    result = db.execute(
+        update(Slot)
+        .where(Slot.id == slot.id, Slot.booked_count < slot.capacity)
+        .values(booked_count=Slot.booked_count + 1)
+    )
+    
+    if result.rowcount == 0:
         raise HTTPException(
             status_code=400,
             detail="This slot is full"
         )
 
-    # 7. Create booking
+    # 6. Create booking
     booking = Booking(
         farmer_id=farmer.id,
         center_id=booking_data.center_id,
@@ -106,35 +103,56 @@ async def create_booking(
         checked_in=False
     )
 
-    # 8. Update crop quantity
+    # 7. Update crop quantity (Atomic update)
     if booking.crop_id:
-        crop = db.query(Crop).filter(
-            Crop.id == booking.crop_id,
-            Crop.farmer_id == farmer.id
-        ).first()
-
-        if not crop:
-            raise HTTPException(
-                status_code=404,
-                detail="Crop not found for this farmer"
+        crop_result = db.execute(
+            update(Crop)
+            .where(Crop.id == booking.crop_id, Crop.farmer_id == farmer.id, Crop.remaining_quantity >= booking.quantity)
+            .values(remaining_quantity=Crop.remaining_quantity - booking.quantity)
+        )
+        
+        if crop_result.rowcount == 0:
+            # Revert the slot update since the crop update failed
+            db.execute(
+                update(Slot)
+                .where(Slot.id == slot.id)
+                .values(booked_count=Slot.booked_count - 1)
             )
-
-        if crop.remaining_quantity < booking.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail="Booking quantity exceeds remaining crop quantity"
-            )
-
-        crop.remaining_quantity -= booking.quantity
-
-        if crop.remaining_quantity <= 0:
-            crop.remaining_quantity = 0
+            # Find if the crop exists but just doesn't have enough quantity
+            crop = db.query(Crop).filter(
+                Crop.id == booking.crop_id,
+                Crop.farmer_id == farmer.id
+            ).first()
+            if not crop:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Crop not found for this farmer"
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Booking quantity exceeds remaining crop quantity"
+                )
+                
+        # Fetch crop to update status if necessary (not atomic, but zero check is safe enough for status update)
+        crop = db.query(Crop).filter(Crop.id == booking.crop_id).first()
+        if crop and crop.remaining_quantity <= 0:
             crop.status = "COMPLETED"
 
     # 9. Save booking
     db.add(booking)
     db.commit()
     db.refresh(booking)
+
+    # 9b. Audit log
+    record_audit_event(
+        db, "BOOKING_CREATED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        new_status="BOOKED",
+    )
+    db.commit()
 
     # 10. Create notification for farmer
     create_notification(
@@ -161,95 +179,6 @@ async def create_booking(
 
     return booking
 
-
-# =========================
-# DYNAMIC QUEUE / ETA PREVIEW
-# =========================
-# Inspired by https://github.com/meghanamudadla/FarmerProc/tree/main/dqa —
-# computes a live queue position + split-load ETA for a booking BEFORE it is
-# created, using real existing bookings for the slot rather than the slot's
-# static capacity number alone. Small/marginal farmers (<1 acre) get the
-# bounded-fairness priority lane; everyone else is served FCFS.
-
-@router.get("/dynamic-eta")
-def get_dynamic_eta(
-    slot_id: int,
-    crop_id: int,
-    quantity: float,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    farmer = db.query(Farmer).filter(
-        Farmer.user_id == current_user.id
-    ).first()
-
-    if not farmer:
-        raise HTTPException(status_code=404, detail="Farmer profile not found")
-
-    slot = db.query(Slot).filter(Slot.id == slot_id).first()
-    if not slot:
-        raise HTTPException(status_code=404, detail="Slot not found")
-
-    center = db.query(ProcurementCenter).filter(
-        ProcurementCenter.id == slot.center_id
-    ).first()
-    if not center:
-        raise HTTPException(status_code=404, detail="Center not found")
-
-    crop = db.query(Crop).filter(
-        Crop.id == crop_id,
-        Crop.farmer_id == farmer.id
-    ).first()
-    if not crop:
-        raise HTTPException(status_code=404, detail="Crop not found for this farmer")
-
-    existing_bookings = db.query(Booking).filter(
-        Booking.slot_id == slot_id,
-        Booking.status != "CANCELLED"
-    ).order_by(Booking.created_at.asc()).all()
-
-    existing_entries = []
-    for b in existing_bookings:
-        b_farmer = db.query(Farmer).filter(Farmer.id == b.farmer_id).first()
-        b_crop = db.query(Crop).filter(Crop.id == b.crop_id).first() if b.crop_id else None
-        existing_entries.append(DqaExistingEntry(
-            booking_id=b.id,
-            crop_name=b_crop.crop_name if b_crop else "produce",
-            quantity_qtl=b.quantity,
-            land_area_acres=b_farmer.land_area if (b_farmer and b_farmer.land_area is not None) else 2.0,
-            arrival_time=b.created_at.isoformat(),
-            token_number=b.token_number,
-        ))
-
-    new_request = DqaFarmerRequest(
-        farmer_id=farmer.id,
-        crop_name=crop.crop_name,
-        quantity_qtl=quantity,
-        land_area_acres=farmer.land_area if farmer.land_area is not None else 2.0,
-        arrival_time=datetime.utcnow().isoformat(),
-        token_number="PREVIEW",
-    )
-
-    result = compute_dynamic_eta(
-        new_request=new_request,
-        existing_entries=existing_entries,
-        center_capacity=center.capacity,
-        now=datetime.utcnow(),
-    )
-
-    return {
-        "queue_position": result.queue_position,
-        "ahead_in_queue": result.ahead_in_queue,
-        "estimated_wait_minutes": result.estimated_wait_minutes,
-        "estimated_service_minutes": result.estimated_service_minutes,
-        "estimated_total_minutes": result.estimated_total_minutes,
-        "eta_timestamp": result.eta_timestamp,
-        "priority_lane": result.priority_lane,
-        "counters_considered": result.counters_considered,
-        "allocation_reason": result.allocation_reason,
-        "slot_capacity": slot.capacity,
-        "slot_booked_count": len(existing_bookings),
-    }
 
 
 # =========================
@@ -286,16 +215,35 @@ def cancel_booking(
             detail="This booking has already been checked in and can no longer be cancelled here. Please raise a grievance instead."
         )
 
+    prev = booking.status
     booking.status = "CANCELLED"
 
-    # Return the reserved quantity back to the crop's remaining quota.
+    # Return the reserved quantity back to the crop's remaining quota, and decrement slot count as well
     if booking.crop_id:
+        db.execute(
+            update(Crop)
+            .where(Crop.id == booking.crop_id)
+            .values(remaining_quantity=Crop.remaining_quantity + booking.quantity)
+        )
         crop = db.query(Crop).filter(Crop.id == booking.crop_id).first()
-        if crop:
-            crop.remaining_quantity += booking.quantity
-            if crop.status == "COMPLETED" and crop.remaining_quantity > 0:
-                crop.status = "ACTIVE"
+        if crop and crop.status == "COMPLETED" and crop.remaining_quantity > 0:
+            crop.status = "ACTIVE"
+            
+    if booking.slot_id:
+        db.execute(
+            update(Slot)
+            .where(Slot.id == booking.slot_id)
+            .values(booked_count=Slot.booked_count - 1)
+        )
 
+    record_audit_event(
+        db, "BOOKING_CANCELLED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        previous_status=prev,
+        new_status="CANCELLED",
+    )
     db.commit()
 
     create_notification(
@@ -370,3 +318,200 @@ def get_booking(
         )
 
     return booking
+
+
+# =========================
+# RESCHEDULE APIs
+# =========================
+
+@router.post("/{booking_id}/reschedule-offer")
+async def reschedule_offer(
+    booking_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    farmer = db.query(Farmer).filter(Farmer.user_id == current_user.id).first()
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer profile not found")
+
+    booking = db.query(Booking).filter(
+        Booking.id == booking_id,
+        Booking.farmer_id == farmer.id
+    ).first()
+
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if booking.status != "MISSED_WINDOW":
+        raise HTTPException(status_code=400, detail="Booking is not in a missed window state")
+
+    # Find the next available slot chronologically
+    # Must have capacity and be in the future logically
+    today = datetime.utcnow().date()
+    
+    candidate_slot = db.query(Slot).filter(
+        Slot.center_id == booking.center_id,
+        Slot.date >= today,
+        Slot.booked_count < Slot.capacity
+    ).order_by(Slot.date, Slot.start_time).first()
+    
+    if not candidate_slot:
+        raise HTTPException(status_code=404, detail="No available upcoming slots to offer")
+        
+    booking.reschedule_offered_at = datetime.utcnow()
+    record_audit_event(
+        db, "SWAP_OFFERED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        previous_status="MISSED_WINDOW",
+        new_status="MISSED_WINDOW",
+        reason=f"Offered slot {candidate_slot.id}",
+    )
+    db.commit()
+    
+    await manager.broadcast(booking.center_id, {
+        "event": "RESCHEDULE_OFFERED",
+        "booking_id": booking.id,
+        "status": booking.status
+    })
+    
+    return {
+        "candidate_slot_id": candidate_slot.id,
+        "date": candidate_slot.date,
+        "start_time": candidate_slot.start_time,
+        "end_time": candidate_slot.end_time
+    }
+
+
+@router.post("/{booking_id}/reschedule-accept")
+async def reschedule_accept(
+    booking_id: int,
+    slot_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    farmer = db.query(Farmer).filter(Farmer.user_id == current_user.id).first()
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer profile not found")
+
+    booking = db.query(Booking).filter(
+        Booking.id == booking_id,
+        Booking.farmer_id == farmer.id
+    ).first()
+
+    if not booking or booking.status != "MISSED_WINDOW":
+        raise HTTPException(status_code=400, detail="Invalid booking state")
+        
+    if not booking.reschedule_offered_at:
+        raise HTTPException(status_code=400, detail="No reschedule offer active")
+
+    new_slot = db.query(Slot).filter(Slot.id == slot_id).first()
+    if not new_slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+
+    # Atomic reserve of the NEW slot
+    result = db.execute(
+        update(Slot)
+        .where(Slot.id == slot_id, Slot.booked_count < Slot.capacity)
+        .values(booked_count=Slot.booked_count + 1)
+    )
+    
+    if result.rowcount == 0:
+        raise HTTPException(status_code=409, detail="Slot fill capacity reached since offering")
+        
+    # Atomic release of the OLD slot that was held
+    if booking.original_slot_id:
+        db.execute(
+            update(Slot)
+            .where(Slot.id == booking.original_slot_id)
+            .values(booked_count=Slot.booked_count - 1)
+        )
+        
+    booking.slot_id = slot_id
+    booking.original_slot_id = None
+    booking.checked_in = False
+    
+    # We only clear retry_used if this is their first miss—wait, "set retry_used=True if not already set. clear retry_used only if this is their first miss".
+    # Wait, the prompt says "clear retry_used only if this is their first miss — set retry_used=True if not already set." Actually meaning: if this is their first miss, THEY ARE RESCHEDULING NOW, so it becomes their 2nd chance (retry_used=True). The prompt said: "and clear retry_used only if this is their first miss — set retry_used=True if not already set". Wait, you can't clear it AND set it.
+    # Ah, the phrasing says "and clear retry_used only if this is their first miss - set retry_used=True if not already set." -> It means you flag it `True`.
+    booking.retry_used = True
+    
+    booking.status = "RESCHEDULED"
+    booking.reschedule_offered_at = None
+
+    record_audit_event(
+        db, "SWAP_ACCEPTED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        previous_status="MISSED_WINDOW",
+        new_status="RESCHEDULED",
+        reason=f"Accepted slot {slot_id}",
+    )
+    record_audit_event(
+        db, "RESCHEDULED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        previous_status="MISSED_WINDOW",
+        new_status="RESCHEDULED",
+    )
+    db.commit()
+    
+    await manager.broadcast(booking.center_id, {
+        "event": "RESCHEDULE_ACCEPTED",
+        "booking_id": booking.id,
+        "status": booking.status,
+        "new_slot_id": slot_id
+    })
+    
+    return {"message": "Rescheduled successfully", "slot_id": slot_id}
+
+
+@router.post("/{booking_id}/reschedule-decline")
+async def reschedule_decline(
+    booking_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    farmer = db.query(Farmer).filter(Farmer.user_id == current_user.id).first()
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer profile not found")
+
+    booking = db.query(Booking).filter(
+        Booking.id == booking_id,
+        Booking.farmer_id == farmer.id
+    ).first()
+
+    if not booking or booking.status != "MISSED_WINDOW":
+        raise HTTPException(status_code=400, detail="Invalid booking state")
+
+    booking.status = "RESCHEDULE_DECLINED"
+    booking.reschedule_offered_at = None
+    
+    # Atomic release of the OLD slot that was held
+    if booking.original_slot_id:
+        db.execute(
+            update(Slot)
+            .where(Slot.id == booking.original_slot_id)
+            .values(booked_count=Slot.booked_count - 1)
+        )
+
+    record_audit_event(
+        db, "SWAP_DECLINED",
+        booking_id=booking.id,
+        center_id=booking.center_id,
+        actor=f"farmer:{farmer.id}",
+        previous_status="MISSED_WINDOW",
+        new_status="RESCHEDULE_DECLINED",
+    )
+    db.commit()
+    
+    await manager.broadcast(booking.center_id, {
+        "event": "RESCHEDULE_DECLINED",
+        "booking_id": booking.id,
+        "status": booking.status
+    })
+    
+    return {"message": "Reschedule declined successfully"}

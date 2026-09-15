@@ -206,6 +206,18 @@ class Slot(Base):
         nullable=False
     )
 
+    grace_window_minutes = Column(
+        Integer,
+        default=15,
+        nullable=False
+    )
+
+    booked_count = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+
     center = relationship(
         "ProcurementCenter",
         back_populates="slots"
@@ -213,7 +225,8 @@ class Slot(Base):
 
     bookings = relationship(
         "Booking",
-        back_populates="slot"
+        back_populates="slot",
+        foreign_keys="[Booking.slot_id]"
     )
 
 
@@ -308,6 +321,54 @@ class Booking(Base):
         nullable=True
     )
 
+    queue_position = Column(
+        Integer,
+        nullable=True
+    )
+
+    assigned_counter_id = Column(
+        String(50),
+        nullable=True
+    )
+
+    estimated_wait_minutes = Column(
+        Float,
+        nullable=True
+    )
+
+    eta_timestamp = Column(
+        String(50),
+        nullable=True
+    )
+
+    allocation_reason = Column(
+        String(100),
+        nullable=True
+    )
+
+    retry_used = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    missed_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    original_slot_id = Column(
+        Integer,
+        ForeignKey("slots.id"),
+        nullable=True,
+        index=True
+    )
+
+    reschedule_offered_at = Column(
+        DateTime,
+        nullable=True
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
@@ -331,7 +392,13 @@ class Booking(Base):
 
     slot = relationship(
         "Slot",
-        back_populates="bookings"
+        back_populates="bookings",
+        foreign_keys="[Booking.slot_id]"
+    )
+
+    original_slot = relationship(
+        "Slot",
+        foreign_keys="[Booking.original_slot_id]"
     )
 
     weighment = relationship(
@@ -869,4 +936,65 @@ class Grievance(Base):
 
     farmer = relationship(
         "Farmer"
+    )
+
+
+# ============================================================
+# AUDIT LOG ENTRY  (append-only — no updated_at, no update routes)
+# ============================================================
+
+class AuditLogEntry(Base):
+    __tablename__ = "audit_log_entries"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    booking_id = Column(
+        Integer,
+        ForeignKey("bookings.id"),
+        nullable=True,
+        index=True
+    )
+
+    center_id = Column(
+        Integer,
+        ForeignKey("procurement_centers.id"),
+        nullable=True,
+        index=True
+    )
+
+    event_type = Column(
+        String(60),
+        nullable=False,
+        index=True
+    )
+
+    actor = Column(
+        String(100),
+        default="system",
+        nullable=False
+    )
+
+    previous_status = Column(
+        String(40),
+        nullable=True
+    )
+
+    new_status = Column(
+        String(40),
+        nullable=True
+    )
+
+    reason = Column(
+        String(500),
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
     )
