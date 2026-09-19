@@ -24,6 +24,7 @@ from msp.routes import router as msp_router
 from grievances.routes import router as grievance_router
 from analytics.routes import router as analytics_router
 from audit_log.routes import router as audit_log_router
+from counters.routes import router as counter_router
 
 
 @asynccontextmanager
@@ -99,6 +100,7 @@ app.include_router(msp_router)
 app.include_router(grievance_router)
 app.include_router(analytics_router)
 app.include_router(audit_log_router)
+app.include_router(counter_router)
 
 
 # =========================================================

@@ -45,6 +45,7 @@ class FarmerResponse(BaseModel):
     village: Optional[str] = None
     district: Optional[str] = None
     land_area: Optional[float] = None
+    date_of_birth: Optional[date] = None
     name: Optional[str] = None
     mobile: Optional[str] = None
     phone: Optional[str] = None
@@ -56,7 +57,37 @@ class FarmerResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class FarmerUpdate(BaseModel):
+    date_of_birth: Optional[date] = None
+    village: Optional[str] = None
+    district: Optional[str] = None
 
+
+
+
+class CounterCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    specialty_crop: Optional[str] = None
+    accepts_general_when_idle: bool = True
+    status: str = "ACTIVE"
+
+
+class CounterUpdate(BaseModel):
+    specialty_crop: Optional[str] = None
+    accepts_general_when_idle: Optional[bool] = None
+    status: Optional[str] = None
+
+
+class CounterResponse(BaseModel):
+    id: int
+    center_id: int
+    name: str
+    specialty_crop: Optional[str] = None
+    accepts_general_when_idle: bool
+    status: str
+
+    class Config:
+        from_attributes = True
 
 
 class CenterCreate(BaseModel):

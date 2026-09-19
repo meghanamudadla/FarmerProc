@@ -1,0 +1,15 @@
+Missing bookings; injecting test bookings dynamically.
+Executing Check-in requests against DQA via FastAPI ASGI...
+Initializing new DQAEngine for Center 1
+P1 Check-in Response: {'message': 'Farmer checked in successfully', 'token_number': 'MOCK-a04051', 'booking_id': 8, 'checked_in': True, 'arrival_time': '2026-09-14T13:54:29.355113', 'status': 'ASSIGNED', 'queue_position': 1, 'assigned_counter_id': '1-1', 'estimated_wait_minutes': 0.0, 'allocation_reason': 'FCFS_ELIGIBLE'}
+P2 Check-in Response: {'message': 'Farmer checked in successfully', 'token_number': 'MOCK-8c343a', 'booking_id': 9, 'checked_in': True, 'arrival_time': '2026-09-14T13:54:29.430974', 'status': 'ASSIGNED', 'queue_position': 1, 'assigned_counter_id': '1-2', 'estimated_wait_minutes': 0.0, 'allocation_reason': 'FCFS_ELIGIBLE'}
+
+Tracking Output State in Task Queue API:
+
+Completing Farmer 1 from processing pipeline.
+Completion Response: {'message': 'Farmer processing completed', 'booking_id': 8, 'token_number': 'MOCK-a04051', 'status': 'PAYMENT_COMPLETED'}
+
+Validating Re-assignment output state post-completion...
+Post-Completion Queue layout: ['Booking 4 -> 1-2 (FCFS_ELIGIBLE)', 'Booking 8 -> 1-1 (FCFS_ELIGIBLE)', 'Booking 9 -> 1-2 (FCFS_ELIGIBLE)', 'Booking 1 -> None (None)', 'Booking 2 -> None (None)', 'Booking 3 -> None (None)', 'Booking 5 -> None (FCFS_ELIGIBLE)', 'Booking 6 -> None (FCFS_ELIGIBLE)', 'Booking 7 -> None (FCFS_ELIGIBLE)']
+
+ACCEPTANCE CRITERION VERIFIED SUCCESSFULLY.

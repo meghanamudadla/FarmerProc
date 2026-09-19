@@ -48,14 +48,23 @@ async def check_in_farmer(
     # 2. Integrate with DQA Engine
     from dqa_manager import get_engine
     from dqa import FarmerRequest
+    from datetime import timezone, timedelta
     
     engine = get_engine(booking.center_id, db)
+    
+    # Determine exact IST age based on DOB
+    now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
+    if booking.farmer and booking.farmer.date_of_birth:
+        age_val = now.year - booking.farmer.date_of_birth.year - ((now.month, now.day) < (booking.farmer.date_of_birth.month, booking.farmer.date_of_birth.day))
+    else:
+        age_val = 40  # Default fallback not-elderly
+
     farmer_req = FarmerRequest(
         farmer_id=str(booking.farmer_id),
         crop=booking.crop.crop_name.lower() if booking.crop else "paddy",
         quantity_qtl=booking.quantity,
         arrival_time=booking.arrival_time.isoformat(),
-        age=40, # mock default
+        age=age_val,
         land_area_acres=booking.farmer.land_area if booking.farmer and booking.farmer.land_area else 2.0,
         token_number=booking.token_number
     )

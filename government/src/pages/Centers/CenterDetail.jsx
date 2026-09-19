@@ -5,8 +5,16 @@ import { motion } from 'framer-motion';
 import StatusBadge from '../../components/StatusBadge';
 import ChartBlock from '../../components/ChartBlock';
 import { useAuth } from '../../context/AuthContext';
-import { CENTERS, getDistrictName } from '../../data/mockData';
 import { getCenterDetail, getCenterQueue } from '../../api/api';
+
+const DISTRICTS = [
+  { id: "ek", name: "East Godavari" },
+  { id: "wk", name: "West Godavari" },
+  { id: "kr", name: "Krishna" },
+  { id: "kn", name: "Karnal" },
+  { id: "an", name: "Anantapur" }
+];
+const getDistrictName = (id) => DISTRICTS.find(d => d.id === id)?.name || id;
 
 const mockQueueData = [
   { token: 'T-301', farmer: 'Raman K.', crop: 'Paddy', stage: 'WEIGHING', wait: '25m' },
@@ -41,8 +49,8 @@ export default function CenterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { canControl } = useAuth();
-  const [centerData, setCenterData] = useState(() => CENTERS.find(c => c.id === id) || null);
-  const [queueItems, setQueueItems] = useState(mockQueueData);
+  const [centerData, setCenterData] = useState(null);
+  const [queueItems, setQueueItems] = useState([]);
 
   useEffect(() => {
     getCenterDetail(id)
@@ -63,7 +71,7 @@ export default function CenterDetail() {
           }));
         }
       })
-      .catch(() => console.log('Using baseline center info'));
+      .catch(() => console.log('Failed fetching live center info'));
 
     getCenterQueue(id)
       .then((q) => {

@@ -1,8 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import ChartBlock from '../components/ChartBlock';
-import { DAILY_PROCUREMENT, CROP_PROCUREMENT, REJECTION_REASONS, CENTERS, getDistrictName } from '../data/mockData';
 import { getProcurementAnalytics, getCenters } from '../api/api';
+
+// TODO: Not yet backed by real endpoints (requires time-series logging / reporting aggregation routes)
+const DAILY_PROCUREMENT = [
+  { date: 'Mon', arrivals: 45, completed: 42, rejected: 3 },
+  { date: 'Tue', arrivals: 52, completed: 48, rejected: 4 },
+  { date: 'Wed', arrivals: 38, completed: 35, rejected: 2 },
+  { date: 'Thu', arrivals: 65, completed: 60, rejected: 5 },
+  { date: 'Fri', arrivals: 48, completed: 45, rejected: 2 }
+];
+
+const CROP_PROCUREMENT = [
+  { crop: 'Paddy', quantity: 65 },
+  { crop: 'Cotton', quantity: 20 },
+  { crop: 'Wheat', quantity: 15 }
+];
+
+const REJECTION_REASONS = [
+  { reason: 'High Moisture', count: 42 },
+  { reason: 'Foreign Matter', count: 18 },
+  { reason: 'Fungus/Discolored', count: 12 },
+  { reason: 'Under-weight', count: 5 }
+];
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -14,7 +35,7 @@ export default function Analytics() {
   useEffect(() => {
     getProcurementAnalytics()
       .then((data) => setLiveAnalytics(data))
-      .catch((e) => console.log('Using baseline analytics'));
+      .catch((e) => console.log('Failed fetching live analytical hooks natively'));
 
     getCenters()
       .then((data) => {
@@ -25,10 +46,10 @@ export default function Analytics() {
             expectedWait: 22,
             status: 'normal',
           }));
-          setCentersList([...liveMapped, ...CENTERS]);
+          setCentersList(liveMapped);
         }
       })
-      .catch((e) => console.log('Using baseline centers in analytics'));
+      .catch((e) => console.log('Failed getting centers for wait aggregates'));
   }, []);
 
   const districtData = [

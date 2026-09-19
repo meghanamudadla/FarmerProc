@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 from models import ProcurementCenter, Booking, Crop as DBCrop, Slot
 from dqa import DQAEngine, Crop, Counter, ProcurementCapacity, FarmerRequest, QueueStatus
@@ -47,12 +47,26 @@ def get_engine(center_id: int, db: Session) -> DQAEngine:
         crop_info["paddy"] = Crop(name="paddy", avg_service_min_per_qtl=rate)
         
     # 3. Build Counters
-    # Since we do not strictly model Counter entities yet in models.py, we will default
-    # to 2 generic active counters as per acceptance criteria tests.
-    counters = [
-        Counter(counter_id=f"{center_id}-1"),
-        Counter(counter_id=f"{center_id}-2")
-    ]
+    from models import Counter as DBCounter
+    db_counters = db.query(DBCounter).filter(
+        DBCounter.center_id == center_id,
+        DBCounter.status == "ACTIVE"
+    ).all()
+
+    counters = []
+    if db_counters:
+        for c in db_counters:
+            counters.append(Counter(
+                counter_id=str(c.id),
+                specialty=c.specialty_crop,
+                accepts_general_when_idle=c.accepts_general_when_idle
+            ))
+    else:
+        print(f"WARNING: No active DB counters found for center {center_id}. Falling back to 2 generic placeholders.")
+        counters = [
+            Counter(counter_id=f"{center_id}-1"),
+            Counter(counter_id=f"{center_id}-2")
+        ]
     
     # 4. Build capacities
     capacities = []
@@ -73,12 +87,19 @@ def get_engine(center_id: int, db: Session) -> DQAEngine:
     ).order_by(Booking.arrival_time.asc()).all()
     
     for b in existing_bookings:
+        # Determine actual age based on DOB
+        now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
+        if b.farmer and b.farmer.date_of_birth:
+            age = now.year - b.farmer.date_of_birth.year - ((now.month, now.day) < (b.farmer.date_of_birth.month, b.farmer.date_of_birth.day))
+        else:
+            age = 40  # Default fallback not-elderly
+
         farmer_req = FarmerRequest(
             farmer_id=str(b.farmer_id),
             crop=b.crop.crop_name.lower() if b.crop else "paddy",
             quantity_qtl=b.quantity,
             arrival_time=b.arrival_time.isoformat() if b.arrival_time else b.created_at.isoformat(),
-            age=40, # default age mock
+            age=age,
             land_area_acres=b.farmer.land_area if b.farmer and b.farmer.land_area else 2.0,
             token_number=b.token_number
         )

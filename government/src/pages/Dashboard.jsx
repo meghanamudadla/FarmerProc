@@ -6,13 +6,33 @@ import StatCard from '../components/StatCard';
 import ChartBlock from '../components/ChartBlock';
 import StatusBadge from '../components/StatusBadge';
 import { useNotifications } from '../context/NotificationContext';
-import { computeKPIs, HOURLY_TODAY, CENTERS, ALERTS } from '../data/mockData';
 import { getProcurementAnalytics, getCenters, getAllGrievances } from '../api/api';
+
+// TODO: Not yet backed by real endpoints (requires time-series logging/monitoring)
+const HOURLY_TODAY = [
+  { hour: '08:00', arrivals: 12, completed: 8 },
+  { hour: '09:00', arrivals: 25, completed: 18 },
+  { hour: '10:00', arrivals: 45, completed: 35 },
+  { hour: '11:00', arrivals: 60, completed: 52 },
+];
+
+const ALERTS = [];
+
+const DEFAULT_KPIS = {
+  totalFarmers: { label: 'Total Farmers', value: '0', change: '+0', prefix: '' },
+  totalCenters: { label: 'Active Centers', value: '0', change: '0', prefix: '' },
+  todayArrivals: { label: "Today's Arrivals", value: '0', change: '0', prefix: '' },
+  todayCompleted: { label: 'Completed', value: '0', change: '0', prefix: '' },
+  totalQuantity: { label: 'Total Procured', value: '0', change: '+0', prefix: '' },
+  totalPayments: { label: 'Total Paid', value: '0', change: '+0', prefix: '₹' },
+  activeQueues: { label: 'Farmers in Queue', value: '0', change: '-0', prefix: '' },
+  pendingIssues: { label: 'Open Grievances', value: '0', change: '0', prefix: '' },
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { events } = useNotifications();
-  const kpis = computeKPIs();
+  const kpis = DEFAULT_KPIS;
   const [liveAnalytics, setLiveAnalytics] = useState(null);
   const [liveGrievanceAlerts, setLiveGrievanceAlerts] = useState([]);
   const [centersCount, setCentersCount] = useState(null);
@@ -59,10 +79,10 @@ export default function Dashboard() {
   ];
 
   const statusSummary = [
-    { status: 'normal', count: (centersCount || kpis.normal.value) },
-    { status: 'busy', count: CENTERS.filter(c => c.status === 'busy').length },
-    { status: 'congested', count: kpis.congested.value },
-    { status: 'offline', count: kpis.offline.value },
+    { status: 'normal', count: (centersCount || 0) },
+    { status: 'busy', count: 0 },
+    { status: 'congested', count: 0 },
+    { status: 'offline', count: 0 },
   ];
 
   const criticalAlerts = [

@@ -7,16 +7,30 @@ export default function QueueStatusCard({ t, lang, activeBooking, queueList = []
 
   // Subscribe to real-time pub/sub events from queueService
   useEffect(() => {
+    if (activeBooking) {
+      queueService.connect(activeBooking.center_id || activeBooking.centerId || 1, activeBooking.id);
+    }
+
     const updateLocalMetrics = () => {
       setMetrics(queueService.getQueueMetrics(queueList, activeBooking));
     };
 
     updateLocalMetrics();
-    const unsubscribe = queueService.subscribe((event, payload) => {
-      updateLocalMetrics();
+    const unsubscribe = queueService.subscribe((payload) => {
+      // Whenever native backend triggers Queue Updates, we can re-map UI softly 
+      if (payload) {
+         setMetrics(prev => ({
+           ...prev,
+           farmersAhead: payload.queue_position ? Math.max(0, payload.queue_position - 1) : prev.farmersAhead,
+           estWaitTimeRange: queueService.calculateWaitTimeRange(0, payload.estimated_wait_minutes).range
+         }));
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      queueService.disconnect();
+    };
   }, [queueList, activeBooking]);
 
   if (!activeBooking) {

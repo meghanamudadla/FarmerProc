@@ -3,15 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
-import { CENTERS, DISTRICTS, getDistrictName } from '../../data/mockData';
 import { getCenters } from '../../api/api';
+
+const DISTRICTS = [
+  { id: "ek", name: "East Godavari" },
+  { id: "wk", name: "West Godavari" },
+  { id: "kr", name: "Krishna" },
+  { id: "kn", name: "Karnal" },
+  { id: "an", name: "Anantapur" }
+];
+const getDistrictName = (id) => DISTRICTS.find(d => d.id === id)?.name || id;
 
 export default function CenterList() {
   const navigate = useNavigate();
   const { user, isDistrictAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState('all');
   const [districtFilter, setDistrictFilter] = useState('all');
-  const [allCenters, setAllCenters] = useState(CENTERS);
+  const [allCenters, setAllCenters] = useState([]);
 
   useEffect(() => {
     getCenters()
@@ -34,11 +42,10 @@ export default function CenterList() {
             crops: ['paddy', 'cotton'],
             approvalStatus: 'active',
           }));
-          const existingNames = new Set(liveMapped.map(l => l.name.toLowerCase()));
-          setAllCenters([...liveMapped, ...CENTERS.filter(c => !existingNames.has(c.name.toLowerCase()))]);
+          setAllCenters(liveMapped);
         }
       })
-      .catch((err) => console.log('Using baseline centers list'));
+      .catch((err) => console.log('Failed fetching live centers'));
   }, []);
 
   const centers = useMemo(() => {

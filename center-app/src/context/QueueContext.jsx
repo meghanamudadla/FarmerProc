@@ -16,6 +16,7 @@ import {
   submitPayment,
   completeFarmer
 } from "../api/queueapi";
+import { liveQueueSocket } from "../services/liveQueueSocket";
 
 const QueueContext = createContext();
 const CENTER_ID = 1;
@@ -68,6 +69,40 @@ export function QueueProvider({ children }) {
 
   useEffect(() => {
     loadQueue();
+    
+    // Bind robust reconnectable live socket logic gracefully
+    liveQueueSocket.connect(CENTER_ID);
+    
+    const unsubscribe = liveQueueSocket.subscribe((payload) => {
+      console.log("Live WebSocket Event Fired:", payload);
+      const { event, booking_id, status, token_number } = payload;
+      
+      setTokens(prev => {
+         const exists = prev.some(t => String(t.id) === String(booking_id));
+         if (!exists && event === 'NEW_BOOKING') {
+            loadQueue(); // If foreign token suddenly drops in natively fetch completely 
+            return prev;
+         }
+         
+         const nextTokens = prev.map(t => {
+            if (String(t.id) === String(booking_id)) {
+               return {
+                  ...t,
+                  ...payload,
+                  status: status || t.status,
+                  stage: status === 'BOOKED' ? 'WAITING' : (status || t.stage),
+               };
+            }
+            return t;
+         });
+         return nextTokens;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+      liveQueueSocket.disconnect();
+    };
   }, [loadQueue]);
 
   const addAuditEntry = (tokenNumber, eventName, role, details) => {

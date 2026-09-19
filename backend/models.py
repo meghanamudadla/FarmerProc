@@ -102,6 +102,11 @@ class Farmer(Base):
         nullable=True
     )
 
+    date_of_birth = Column(
+        Date,
+        nullable=True
+    )
+
     user = relationship(
         "User",
         back_populates="farmer"
@@ -170,6 +175,12 @@ class ProcurementCenter(Base):
         back_populates="center"
     )
 
+    counters = relationship(
+        "Counter",
+        back_populates="center",
+        cascade="all, delete-orphan"
+    )
+
 
 # ============================================================
 # SLOT
@@ -233,6 +244,54 @@ class Slot(Base):
         "Booking",
         back_populates="slot",
         foreign_keys="[Booking.slot_id]"
+    )
+
+
+# ============================================================
+# COUNTER
+# ============================================================
+
+class Counter(Base):
+    __tablename__ = "counters"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    center_id = Column(
+        Integer,
+        ForeignKey("procurement_centers.id"),
+        nullable=False,
+        index=True
+    )
+
+    name = Column(
+        String(150),
+        nullable=False
+    )
+
+    specialty_crop = Column(
+        String(100),
+        nullable=True
+    )
+
+    accepts_general_when_idle = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    status = Column(
+        String(30),
+        default="ACTIVE",
+        nullable=False
+    )
+
+    center = relationship(
+        "ProcurementCenter",
+        back_populates="counters"
     )
 
 

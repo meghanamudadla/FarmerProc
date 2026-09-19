@@ -19,17 +19,8 @@ def _with_live_occupancy(slots: list[Slot], db: Session) -> list[dict]:
     if not slots:
         return []
 
-    slot_ids = [s.id for s in slots]
-    counts = dict(
-        db.query(Booking.slot_id, func.count(Booking.id))
-        .filter(Booking.slot_id.in_(slot_ids), Booking.status != "CANCELLED")
-        .group_by(Booking.slot_id)
-        .all()
-    )
-
     results = []
     for s in slots:
-        booked = counts.get(s.id, 0)
         results.append({
             "id": s.id,
             "center_id": s.center_id,
@@ -37,8 +28,8 @@ def _with_live_occupancy(slots: list[Slot], db: Session) -> list[dict]:
             "start_time": s.start_time,
             "end_time": s.end_time,
             "capacity": s.capacity,
-            "booked_count": booked,
-            "available_capacity": max(0, s.capacity - booked),
+            "booked_count": s.booked_count,
+            "available_capacity": max(0, s.capacity - s.booked_count),
         })
     return results
 

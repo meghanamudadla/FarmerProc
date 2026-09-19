@@ -23,6 +23,14 @@ router = APIRouter(
 # CREATE PAYMENT
 # ---------------------------------------------------------
 
+@router.get("/", response_model=list[PaymentResponse])
+def get_all_payments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN"))
+):
+    return db.query(Payment).all()
+
+
 @router.post("/", response_model=PaymentResponse)
 def create_payment(
     payment_data: PaymentCreate,

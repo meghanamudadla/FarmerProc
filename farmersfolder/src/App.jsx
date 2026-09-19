@@ -7,7 +7,7 @@ import {
 import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
-import { registerFarmer, fetchFarmerMe, fetchMyCrops, fetchMyBookings, createBooking, cancelBooking } from './services/backendData.js';
+import { registerFarmer, fetchFarmerMe, updateFarmerMe, fetchMyCrops, fetchMyBookings, createBooking, cancelBooking, fetchSlotsForCenter } from './services/backendData.js';
 import { loginFarmer, logoutFarmer, isPhoneRegistered } from './services/authService.js';
 import { fetchRealCentres } from './services/realCentres.js';
 import { normalizeRealCrop } from './services/realCrops.js';
@@ -528,6 +528,7 @@ export default function App() {
           fullName: profile.name || f.fullName,
           village: profile.village || f.village,
           district: profile.district || f.district,
+          date_of_birth: profile.date_of_birth || null,
           landAcres: profile.land_area != null ? String(profile.land_area) : f.landAcres,
           mobile: profile.phone ? '+91 ' + profile.phone : f.mobile,
         }));
@@ -633,89 +634,31 @@ export default function App() {
   const profileComplete = !!farmer.landAcres;
 
   // Real live booking flow (from BookSlot's Step 4) calls the actual backend
-  // and passes {centerId, cropId, quantity, bookingDate, slotId, ...} —
-  // distinguished from the legacy offline-sync path below, which already
-  // hands over a pre-built local booking object to insert as-is.
+  // and passes {centerId, cropId, quantity, bookingDate, slotId, ...}
   async function confirmBooking(processedBooking) {
-    if (processedBooking && 'centerId' in processedBooking) {
-      const created = await createBooking({
-        center_id: processedBooking.centerId,
-        crop_id: processedBooking.cropId,
-        quantity: processedBooking.quantity,
-        booking_date: processedBooking.bookingDate,
-        slot_id: processedBooking.slotId,
-      });
+    const created = await createBooking({
+      center_id: processedBooking.centerId,
+      crop_id: processedBooking.cropId,
+      quantity: processedBooking.quantity,
+      booking_date: processedBooking.bookingDate,
+      slot_id: processedBooking.slotId,
+    });
 
-      const cropsById = {};
-      crops.forEach((c) => {
-        if (c.backendCropId != null) cropsById[c.backendCropId] = c;
-      });
-      const normalized = { ...normalizeRealBooking(created, cropsById), farmerId: farmer.farmerId };
-      const centre = centreById(processedBooking.centerId);
+    const cropsById = {};
+    crops.forEach((c) => {
+      if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+    });
+    const normalized = { ...normalizeRealBooking(created, cropsById), farmerId: farmer.farmerId };
+    const centre = centreById(processedBooking.centerId);
 
-      setBookings((prev) => [normalized, ...prev]);
-      setActiveBookingId(normalized.id);
-      addNotif('sms', nt.booked(normalized.token, normalized.date, processedBooking.slotLabel || '', centre[lang] || centre.en));
-      addNotif('ivr', nt.ivrNote);
-      addNotif('push', nt.payInit((normalized.price || 0).toLocaleString('en-IN'), normalized.paymentMethod));
-
-      setBookStep(1);
-      setForm({ cropText: CROPS[0].en, qty: '', centreId: null, date: new Date().toISOString().slice(0, 10), slotId: null });
-      setBank({ holder: '', bankName: '', acc: '', confirmAcc: '', ifsc: '' });
-      setPage('bookings');
-      return;
-    }
-
-    // Legacy local/offline-sync booking path: processedBooking is already a
-    // fully-formed local mock booking object (see handleTriggerOfflineSync).
-    const centre = centreById(form.centreId);
-    const token = processedBooking?.token || ('PDC-' + Math.random().toString(16).slice(2, 8).toUpperCase());
-    const typedCropLabel = form.cropText.trim();
-    const cropLabel = matchedCrop ? matchedCrop[lang] : typedCropLabel;
-    const price = processedBooking?.price || (matchedCrop ? Math.round(qtyNum * matchedCrop.msp) : Math.round(qtyNum * DEFAULT_RATE));
-
-    const b = processedBooking || {
-      id: 'b' + Date.now(), token, cropId: matchedCrop ? matchedCrop.id : null, cropCustom: !matchedCrop, cropLabel: matchedCrop ? null : typedCropLabel, qty: qtyNum,
-      centreId: form.centreId, date: form.date, slotIdx: form.slotIdx, status: 'booked', price,
-      paymentStatus: matchedCrop ? 'initiated' : 'pending_verification', paymentMethod: paymentMethodFor(token), checkedIn: false, arrivalTime: null,
-    };
-
-    setBookings((prev) => [b, ...prev]);
-    if (authed) {
-      const centerNum = parseInt(String(form.centreId).replace(/\D/g, '')) || 1;
-      const cropNum = matchedCrop?.id === 'cotton' ? 2 : 1;
-      const slotNum = ((form.slotIdx ?? 0) % 3) + 1;
-      createBooking({
-        center_id: centerNum,
-        crop_id: cropNum,
-        quantity: qtyNum,
-        booking_date: form.date,
-        slot_id: slotNum,
-      })
-        .then((res) => {
-          if (res?.token_number) {
-            setBookings((prev) =>
-              prev.map((item) =>
-                item.id === b.id
-                  ? { ...item, token: res.token_number, id: `b_${res.id}` }
-                  : item
-              )
-            );
-          }
-        })
-        .catch((err) => {
-          console.log('Online booking sync notice:', err.message);
-        });
-    }
-    setSlotFill((prev) => ({ ...prev, [slotKey(form.centreId, form.date, form.slotIdx)]: (prev[slotKey(form.centreId, form.date, form.slotIdx)] || 0) + 1 }));
-    setActiveBookingId(b.id);
-    addNotif('sms', nt.booked(token, form.date, SLOT_TIMES[form.slotIdx], centre[lang]));
+    setBookings((prev) => [normalized, ...prev]);
+    setActiveBookingId(normalized.id);
+    addNotif('sms', nt.booked(normalized.token, normalized.date, processedBooking.slotLabel || '', centre[lang] || centre.en));
     addNotif('ivr', nt.ivrNote);
-    if (matchedCrop) {
-      addNotif('push', nt.payInit(price.toLocaleString('en-IN'), b.paymentMethod || paymentMethodFor(token)));
-    }
+    addNotif('push', nt.payInit((normalized.price || 0).toLocaleString('en-IN'), normalized.paymentMethod));
+
     setBookStep(1);
-    setForm({ cropText: CROPS[0].en, qty: '', centreId: 'c1', date: '2026-09-10', slotIdx: null });
+    setForm({ cropText: CROPS[0].en, qty: '', centreId: null, date: new Date().toISOString().slice(0, 10), slotId: null });
     setBank({ holder: '', bankName: '', acc: '', confirmAcc: '', ifsc: '' });
     setPage('bookings');
   }
@@ -858,10 +801,24 @@ export default function App() {
     // eslint-disable-next-line
   }, [activeBooking && activeBooking.paymentStatus]);
 
-  function saveProfile() {
-    setFarmer(profileDraft);
-    setEditingProfile(false);
-    addNotif('push', lang === 'en' ? 'Profile updated. Your eligible quantity has been recalculated.' : 'ప్రొఫైల్ నవీకరించబడింది. మీ అర్హత పరిమాణం మళ్ళీ లెక్కించబడింది.');
+  async function saveProfile() {
+    try {
+      const updated = await updateFarmerMe({
+        date_of_birth: profileDraft.date_of_birth || null,
+        village: profileDraft.village || null,
+        district: profileDraft.district || null,
+      });
+      setFarmer((f) => ({
+        ...f,
+        village: updated.village || f.village,
+        district: updated.district || f.district,
+        date_of_birth: updated.date_of_birth || null,
+      }));
+      setEditingProfile(false);
+      addNotif('push', lang === 'en' ? 'Profile updated. Your eligible quantity has been recalculated.' : 'ప్రొఫైల్ నవీకరించబడింది. మీ అర్హత పరిమాణం మళ్ళీ లెక్కించబడింది.');
+    } catch (err) {
+      addNotif('sms', lang === 'en' ? `Failed to update profile: ${err.message}` : `విఫలమైంది: ${err.message}`);
+    }
   }
 
   const totalValue = bookings.reduce((s, b) => s + (b.status !== 'cancelled' ? (parseFloat(b.price) || 0) : 0), 0);
@@ -909,24 +866,53 @@ export default function App() {
   }
 
   function handleTriggerOfflineSync() {
-    offlineSyncService.syncPendingQueue((item) => {
+    offlineSyncService.syncPendingQueue(async (item) => {
       if (item.type === 'BOOKING_REQUEST') {
-        const result = BookingEngine.validateAndProcessBooking({
-          farmer,
-          crops,
-          matchedCrop: findCrop(item.payload.form.cropText),
-          requestedQty: item.payload.form.qty,
-          centre: centreById(item.payload.form.centreId),
-          date: item.payload.form.date,
-          slotIdx: item.payload.form.slotIdx,
-          slotTimes: SLOT_TIMES,
-          bankDetails: item.payload.bank,
-          existingBookings: bookings,
-        });
+        const bk = item.payload.backendData;
+        try {
+          // Native atomic capacity server check execution
+          const created = await createBooking(bk);
 
-        if (result.success) {
-          confirmBooking(result.booking);
-          addNotif('sms', lang === 'en' ? `Re-sync complete: Token ${result.booking.token} confirmed!` : `సింక్ పూర్తయింది: టోకెన్ ${result.booking.token} నిర్ధారించబడింది!`);
+          const cropsById = {};
+          crops.forEach((c) => {
+            if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+          });
+          const normalized = { ...normalizeRealBooking(created, cropsById), farmerId: farmer.farmerId };
+
+          setBookings((prev) => [normalized, ...prev]);
+          addNotif('sms', lang === 'en' ? `Re-sync complete: Token ${normalized.token} confirmed at your original slot!` : `సింక్ పూర్తయింది: టోకెన్ ${normalized.token} నిర్ధారించబడింది!`);
+          return true; // Resolves sync queue
+        } catch (err) {
+          if (err.message && err.message.toLowerCase().includes("slot is full")) {
+            // Find another alternative slot natively
+            const availableSlots = await fetchSlotsForCenter(bk.center_id);
+            const slotCandidates = availableSlots.filter(s => s.date >= bk.booking_date && s.available_capacity > 0);
+            
+            if (slotCandidates.length > 0) {
+                const nextSlot = slotCandidates[0];
+                const fallbackCreated = await createBooking({
+                   ...bk,
+                   booking_date: nextSlot.date,
+                   slot_id: nextSlot.id
+                });
+                
+                const cropsById = {};
+                crops.forEach((c) => {
+                  if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+                });
+                const normalized = { ...normalizeRealBooking(fallbackCreated, cropsById), farmerId: farmer.farmerId };
+                
+                setBookings((prev) => [normalized, ...prev]);
+                addNotif('sms', lang === 'en' ? `Re-sync complete: Your original slot filled up - you're now booked for ${nextSlot.date} at ${(nextSlot.start_time || '').slice(0,5)}.` : `సింక్ పూర్తయింది: మీ అసలైన స్లాట్ నిండిపోయింది - మీరు ఇప్పుడు ${nextSlot.date} కోసం బుక్ చేయబడ్డారు.`);
+                return true; 
+            } else {
+                addNotif('sms', lang === 'en' ? `Offline booking failed: No alternative slots available at this centre.` : `ఆఫ్‌లైన్ బుకింగ్ విఫలమైంది.`);
+                throw new Error("No alternative slots"); // Let loop catch and flag failed
+            }
+          } else {
+            addNotif('sms', lang === 'en' ? `Offline booking failed: ${err.message}` : `ఆఫ్‌లైన్ బుకింగ్ విఫలమైంది.`);
+            throw err;
+          }
         }
       }
     });

@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Farmer, User
-from schemas import FarmerResponse
-from auth.dependencies import get_current_user
+from schemas import FarmerResponse, FarmerUpdate
+from auth.dependencies import get_current_user, require_role
 
 router = APIRouter(
     prefix="/farmers",
@@ -28,7 +28,6 @@ def get_my_profile(
             detail="Farmer profile not found"
         )
 
-<<<<<<< HEAD
     crop_name = farmer.crops[0].crop_name if farmer.crops else "Paddy (Grade A)"
     return FarmerResponse(
         id=farmer.id,
@@ -39,29 +38,62 @@ def get_my_profile(
         village=farmer.village or "Kakinada Rural",
         district=farmer.district or "East Godavari",
         land_area=farmer.land_area or 5.0,
-=======
-    crop_name = farmer.crops[0].crop_name if farmer.crops else None
-
-    return FarmerResponse(
-        id=farmer.id,
-        farmer_id=farmer.farmer_id,
-        name=current_user.name,
-        mobile=current_user.phone,
-        phone=current_user.phone,
-        village=farmer.village,
-        district=farmer.district,
-        land_area=farmer.land_area,
->>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
+        date_of_birth=farmer.date_of_birth,
         crop=crop_name,
         totalBookings=len(farmer.bookings) if farmer.bookings else 0,
         noShows=0,
         flagged=False
     )
 
+@router.patch("/me", response_model=FarmerResponse)
+def update_my_profile(
+    updates: FarmerUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    farmer = db.query(Farmer).filter(
+        Farmer.user_id == current_user.id
+    ).first()
+
+    if not farmer:
+        raise HTTPException(
+            status_code=404,
+            detail="Farmer profile not found"
+        )
+        
+    if updates.date_of_birth is not None:
+        farmer.date_of_birth = updates.date_of_birth
+        
+    if updates.village is not None:
+        farmer.village = updates.village
+        
+    if updates.district is not None:
+        farmer.district = updates.district
+        
+    db.commit()
+    db.refresh(farmer)
+    
+    crop_name = farmer.crops[0].crop_name if farmer.crops else "Paddy (Grade A)"
+    return FarmerResponse(
+        id=farmer.id,
+        farmer_id=farmer.farmer_id or f"FRM-{farmer.id:04d}",
+        name=current_user.name or "Farmer",
+        mobile=current_user.phone or "",
+        phone=current_user.phone or "",
+        village=farmer.village or "Kakinada Rural",
+        district=farmer.district or "East Godavari",
+        land_area=farmer.land_area or 5.0,
+        date_of_birth=farmer.date_of_birth,
+        crop=crop_name,
+        totalBookings=len(farmer.bookings) if farmer.bookings else 0,
+        noShows=0,
+        flagged=False
+    )
 
 @router.get("/all", response_model=list[FarmerResponse])
 def get_all_farmers(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_admin=Depends(require_role("ADMIN"))
 ):
     farmers = db.query(Farmer).all()
     results = []
@@ -79,6 +111,7 @@ def get_all_farmers(
                 village=f.village or "Kakinada Rural",
                 district=f.district or "East Godavari",
                 land_area=f.land_area or 5.0,
+                date_of_birth=f.date_of_birth,
                 crop=crop_name,
                 totalBookings=len(f.bookings) if f.bookings else 1,
                 noShows=0,

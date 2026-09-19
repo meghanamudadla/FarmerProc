@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { GRIEVANCES, CENTERS } from '../data/mockData';
 import { getAllGrievances, updateGrievance } from '../api/api';
 
 const STATUS_FLOW = ['new', 'assigned', 'in_progress', 'resolved'];
@@ -16,7 +15,7 @@ const PRIORITY_STYLES = {
 
 export default function Grievances() {
   const { canControl } = useAuth();
-  const [grievances, setGrievances] = useState(GRIEVANCES);
+  const [grievances, setGrievances] = useState([]);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
@@ -45,10 +44,10 @@ export default function Grievances() {
               assignedTo: g.assigned_officer || (g.assigned_department ? `${g.assigned_department} Desk` : null),
             };
           });
-          setGrievances([...liveGrievances, ...GRIEVANCES]);
+          setGrievances(liveGrievances);
         }
       })
-      .catch((err) => console.log('Using baseline grievances data'));
+      .catch((err) => console.log('Failed fetching grievances'));
   }, []);
 
   const filtered = filter === 'all' ? grievances : grievances.filter(g => g.status === filter);
@@ -105,7 +104,6 @@ export default function Grievances() {
 
       <div className="space-y-3">
         {filtered.map((g, i) => {
-          const center = CENTERS.find(c => c.id === g.centerId);
           const sla = getSLAStatus(g.slaDeadline);
           return (
             <motion.div key={g.id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*0.03}}
@@ -129,7 +127,6 @@ export default function Grievances() {
                     <p className="text-xs text-text-secondary mt-1">{g.description}</p>
                     <div className="flex items-center gap-4 mt-2 text-[11px] text-text-muted">
                       <span>👨‍🌾 {g.farmerName}</span>
-                      {center && <span>📍 {center.name}</span>}
                       {g.assignedTo && <span>👤 {g.assignedTo}</span>}
                     </div>
                   </div>

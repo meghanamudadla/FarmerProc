@@ -17,6 +17,13 @@ export async function fetchFarmerMe() {
   return apiRequest('/farmers/me');
 }
 
+export async function updateFarmerMe(profileData) {
+  return apiRequest('/farmers/me', {
+    method: 'PATCH',
+    body: JSON.stringify(profileData),
+  });
+}
+
 export async function fetchCenters() {
   return apiRequest('/centers/');
 }

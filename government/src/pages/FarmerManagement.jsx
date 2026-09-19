@@ -2,21 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DataTable from '../components/DataTable';
 import { useAuth } from '../context/AuthContext';
-import { FARMERS, getDistrictName, getCropName } from '../data/mockData';
 import { getAllFarmers } from '../api/api';
+
+const DISTRICTS = [
+  { id: "ek", name: "East Godavari" },
+  { id: "wk", name: "West Godavari" },
+  { id: "kr", name: "Krishna" },
+  { id: "kn", name: "Karnal" },
+  { id: "an", name: "Anantapur" }
+];
+const getDistrictName = (id) => DISTRICTS.find(d => d.id === id)?.name || id;
+const getCropName = (id) => ({ paddy: '🌾 Paddy', cotton: '☁️ Cotton' }[id] || id);
 
 export default function FarmerManagement() {
   const { canControl } = useAuth();
-  const [farmers, setFarmers] = useState(FARMERS);
+  const [farmers, setFarmers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getAllFarmers()
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setFarmers(data);
+        if (Array.isArray(data)) {
+          // Normalize API response arrays natively
+          setFarmers(data.map(f => ({
+             id: f.farmer_id || f.id,
+             name: f.name,
+             mobile: f.mobile || f.phone,
+             village: f.village,
+             district: f.district,
+             crop: f.crop || 'Paddy (Grade A)',
+             totalBookings: f.totalBookings || 1,
+             noShows: f.noShows || 0,
+             flagged: f.flagged || false
+          })));
         }
       })
-      .catch((err) => console.log('Using fallback farmer data'));
+      .catch((err) => console.log('Failed fetching farmers:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   const toggleFlag = (id) => {

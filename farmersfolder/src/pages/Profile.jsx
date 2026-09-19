@@ -81,6 +81,11 @@ export default function Profile({
             </div>
 
             <div className="detail-item">
+              <div className="dl">Date of Birth</div>
+              <div className="dv">{farmer.date_of_birth ? new Date(farmer.date_of_birth).toLocaleDateString(lang === 'en' ? 'en-IN' : 'te-IN') : (lang === 'en' ? 'Not specified' : 'పేర్కొనబడలేదు')}</div>
+            </div>
+
+            <div className="detail-item">
               <div className="dl">Preferred Language</div>
               <div className="dv">{lang === 'en' ? '🇬🇧 English' : lang === 'te' ? '🇮🇳 తెలుగు (Telugu)' : '🇮🇳 हिंदी (Hindi)'}</div>
             </div>
@@ -148,6 +153,15 @@ export default function Profile({
           <div className="field">
             <label>{t.mobile} (Use OTP flow for updating mobile number)</label>
             <input type="text" value={farmer.mobile} disabled style={{ opacity: 0.7 }} />
+          </div>
+          
+          <div className="field">
+            <label>Date of Birth</label>
+            <input
+              type="date"
+              value={profileDraft.date_of_birth || ''}
+              onChange={(e) => setProfileDraft({ ...profileDraft, date_of_birth: e.target.value })}
+            />
           </div>
 
           <div className="field-row">

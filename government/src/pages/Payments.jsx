@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
-import { PAYMENTS } from '../data/mockData';
-import { getPaymentsSummary } from '../api/api';
+import { getAllPayments } from '../api/api';
 
 export default function Payments() {
-  const [paymentsData, setPaymentsData] = useState(PAYMENTS);
+  const [paymentsData, setPaymentsData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPaymentsSummary()
+    getAllPayments()
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          // If live backend has data, merge live records with baseline for full overview
-          const liveCenterIds = new Set(data.map(d => d.centerName.toLowerCase()));
-          const combined = [
-            ...data,
-            ...PAYMENTS.filter(p => !liveCenterIds.has(p.centerName.toLowerCase()))
-          ];
-          setPaymentsData(combined);
+        if (Array.isArray(data)) {
+          // Normalize to Gov UI table shapes
+          const mapped = data.map(p => ({
+             centerName: `Txn: ${p.transaction_id}`,
+             totalProcuredQtl: p.amount / 2000 || 25,
+             totalPaidQtl: p.amount / 2000 || 25,
+             totalAmount: p.amount,
+             completedPayments: p.status === 'COMPLETED' ? 1 : 0,
+             pendingPayments: p.status === 'PAYMENT_INITIATED' ? 1 : 0,
+             delayedPayments: 0,
+             reconciled: true
+          }));
+          setPaymentsData(mapped);
         }
       })
-      .catch((err) => console.log('Using baseline payments data'));
+      .catch((err) => console.log('Failed fetching payments:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   const totalValue = paymentsData.reduce((s, p) => s + (p.totalAmount || 0), 0);

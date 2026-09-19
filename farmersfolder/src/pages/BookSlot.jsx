@@ -216,12 +216,19 @@ export default function BookSlot({
 
     // Section 37: Offline Mode Validation
     if (offlineSyncService.isOffline()) {
-      offlineSyncService.queueOfflineBooking({
+      await offlineSyncService.queueOfflineBooking({
         form: {
           ...form,
           cropRecordId: selectedCropRec?.cropRecordId,
           cropId: selectedCropRec?.cropId,
           cropText: selectedCropRec?.cropName,
+        },
+        backendData: {
+          center_id: selectedCentreObj.id,
+          crop_id: selectedCropRec.backendCropId,
+          quantity: reqQty,
+          booking_date: form.date,
+          slot_id: form.slotId
         },
         farmer,
         bank,

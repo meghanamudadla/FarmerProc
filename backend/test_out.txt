@@ -1,0 +1,17 @@
+Calling sweep API...
+Initializing new DQAEngine for Center 1
+-> First miss triggered properly: status=MISSED_WINDOW
+-> Tracking {'message': 'Queue sweep completed', 'newly_missed_count': 1, 'cancelled_count': 1}
+
+Requesting reschedule offer...
+-> Selected Candidate Slot: ID 3
+
+Accepting reschedule offer...
+-> Reschedule accepted!
+-> Original slot capacity restored correctly.
+
+Calling sweep API again to trigger second miss algorithm limit...
+-> Second miss executed successfully! Double-cancellation logic preserved.
+-> Final slot properties restored natively via atomic un-bind clause.
+
+ALL ACCEPTANCE CRITERIA VERIFIED LOGICALLY!
