@@ -153,6 +153,12 @@ class ProcurementCenter(Base):
         nullable=False
     )
 
+    status = Column(
+        String(30),
+        default="normal",
+        nullable=False
+    )
+
     slots = relationship(
         "Slot",
         back_populates="center",

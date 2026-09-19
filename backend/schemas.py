@@ -66,12 +66,21 @@ class CenterCreate(BaseModel):
     capacity: int = 100
 
 
+class CenterUpdate(BaseModel):
+    status: Optional[str] = None
+    name: Optional[str] = None
+    location: Optional[str] = None
+    district: Optional[str] = None
+    capacity: Optional[int] = None
+
+
 class CenterResponse(BaseModel):
     id: int
     name: str
     location: Optional[str] = None
     district: Optional[str] = None
     capacity: int
+    status: str = "normal"
 
     class Config:
         from_attributes = True
@@ -94,6 +103,7 @@ class SlotResponse(BaseModel):
     start_time: time
     end_time: time
     capacity: int
+    booked_count: int
 
     class Config:
         from_attributes = True
@@ -197,6 +207,10 @@ class QueueBookingResponse(BaseModel):
     payment_status: Optional[str] = None
     checked_in: Optional[bool] = False
     arrival_time: Optional[datetime] = None
+    queue_position: Optional[int] = None
+    assigned_counter_id: Optional[str] = None
+    estimated_wait_minutes: Optional[float] = None
+    allocation_reason: Optional[str] = None
     weight_details: Optional[dict] = None
     quality: Optional[dict] = None
     payment: Optional[dict] = None

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ProcurementCenter
-from schemas import CenterCreate, CenterResponse
+from models import ProcurementCenter, User
+from schemas import CenterCreate, CenterUpdate, CenterResponse
+from auth.dependencies import require_role
 
 
 router = APIRouter(
@@ -52,6 +53,33 @@ def create_center(
     )
 
     db.add(center)
+    db.commit()
+    db.refresh(center)
+
+    return center
+
+
+@router.patch("/{center_id}", response_model=CenterResponse)
+def update_center(
+    center_id: int,
+    update_data: CenterUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN"))
+):
+    center = db.query(ProcurementCenter).filter(
+        ProcurementCenter.id == center_id
+    ).first()
+
+    if not center:
+        raise HTTPException(
+            status_code=404,
+            detail="Center not found"
+        )
+
+    update_fields = update_data.model_dump(exclude_unset=True)
+    for field, value in update_fields.items():
+        setattr(center, field, value)
+
     db.commit()
     db.refresh(center)
 

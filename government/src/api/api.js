@@ -101,3 +101,10 @@ export async function updateGrievance(complaintId, data) {
 export async function getAllPayments() {
   return apiRequest("/payments/");
 }
+
+export async function updateCenterStatus(centerId, status) {
+  return apiRequest(`/centers/${centerId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}

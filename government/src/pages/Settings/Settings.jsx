@@ -37,6 +37,15 @@ const USERS = [
   { name: 'Vikram Singh', email: 'vikram.s@gov.in', role: 'State Admin', status: 'active' },
 ];
 
+function DemoBanner({ children }) {
+  return (
+    <div className="flex items-center gap-2 bg-accent-blue/5 border border-accent-blue/20 rounded-lg px-3 py-2 mb-4">
+      <span className="text-sm">ℹ️</span>
+      <span className="text-xs text-accent-blue/80">{children}</span>
+    </div>
+  );
+}
+
 export default function Settings() {
   const { canConfigure } = useAuth();
   const [activeTab, setActiveTab] = useState('crops');
@@ -70,9 +79,14 @@ export default function Settings() {
       </div>
 
       {/* Crop Config */}
+      {/* TODO: Future follow-up — replace this static table with a real admin-editable
+           crop config backed by a new database table. This would feed the DQA engine's
+           EWMA/Erlang-C baseline calculation (currently hardcoded in dqa/engine.py
+           _CROP_RATE_KEYWORDS) with real, admin-set service-time-per-quintal values. */}
       {activeTab === 'crops' && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-text-primary mb-4">Crop Types & MSP Rates</h3>
+          <h3 className="text-sm font-semibold text-text-primary mb-2">Crop Types & MSP Rates</h3>
+          <DemoBanner>Demo configuration — not yet connected to a live backend. Editing crop service-time parameters requires a new admin-editable crop config endpoint (follow-up item).</DemoBanner>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -99,7 +113,8 @@ export default function Settings() {
       {/* Procurement Rules */}
       {activeTab === 'rules' && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-text-primary mb-4">Quality Parameter Limits</h3>
+          <h3 className="text-sm font-semibold text-text-primary mb-2">Quality Parameter Limits</h3>
+          <DemoBanner>Demo configuration — not yet connected to a live backend.</DemoBanner>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800">
@@ -124,7 +139,8 @@ export default function Settings() {
       {/* Thresholds */}
       {activeTab === 'thresholds' && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-text-primary mb-4">Alert & Operational Thresholds</h3>
+          <h3 className="text-sm font-semibold text-text-primary mb-2">Alert & Operational Thresholds</h3>
+          <DemoBanner>Demo configuration — not yet connected to a live backend. Values shown are reference defaults only.</DemoBanner>
           <div className="space-y-3">
             {THRESHOLDS.map(t => (
               <div key={t.name} className="flex items-center justify-between p-3 rounded-lg bg-bg-primary border border-gray-800">
@@ -133,13 +149,13 @@ export default function Settings() {
                   <div className="text-xs text-text-muted">{t.desc}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="number" defaultValue={t.value}
-                    className="w-20 bg-bg-card border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-text-primary font-tabular text-center focus:outline-none focus:border-accent-blue" />
+                  <span className="w-20 bg-bg-card border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-text-primary font-tabular text-center">
+                    {t.value}
+                  </span>
                   <span className="text-xs text-text-muted">{t.unit}</span>
                 </div>
               </div>
             ))}
-            <button className="mt-4 bg-accent-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-blue/80">Save Changes</button>
           </div>
         </motion.div>
       )}
@@ -147,7 +163,8 @@ export default function Settings() {
       {/* Users */}
       {activeTab === 'users' && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-bg-card border border-gray-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-text-primary mb-4">User & Role Management</h3>
+          <h3 className="text-sm font-semibold text-text-primary mb-2">User & Role Management</h3>
+          <DemoBanner>Demo configuration — not yet connected to a live backend. Real user administration requires new admin-only endpoints (follow-up item).</DemoBanner>
           <div className="space-y-2">
             {USERS.map(u => (
               <div key={u.email} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-hover">
