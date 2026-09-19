@@ -1,5 +1,7 @@
-const API_BASE_URL = "https://farmerprocbackend.onrender.com";
-const TOKEN_KEY = "farmerproc_gov_token";
+const API_BASE_URL =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+  "http://localhost:8000";
+const TOKEN_KEY = "kisanseva_token";
 
 export function getToken() {
   try {
@@ -49,7 +51,7 @@ export async function apiRequest(endpoint, options = {}) {
 }
 
 export async function getProcurementAnalytics() {
-  return apiRequest("/procurement/analytics");
+  return apiRequest("/analytics/summary");
 }
 
 export async function getCenters() {
@@ -72,7 +74,6 @@ export async function getPaymentsSummary() {
   return apiRequest("/procurement/summary");
 }
 
-<<<<<<< HEAD
 export async function getCenterDetail(centerId) {
   const numericId = String(centerId).replace(/\D/g, "") || 1;
   return apiRequest(`/centers/${numericId}`);
@@ -81,7 +82,8 @@ export async function getCenterDetail(centerId) {
 export async function getCenterQueue(centerId) {
   const numericId = String(centerId).replace(/\D/g, "") || 1;
   return apiRequest(`/queue/center/${numericId}`);
-=======
+}
+
 export async function loginRequest(phone, password) {
   return apiRequest("/auth/login", {
     method: "POST",
@@ -94,5 +96,8 @@ export async function updateGrievance(complaintId, data) {
     method: "PATCH",
     body: JSON.stringify(data),
   });
->>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
+}
+
+export async function getAllPayments() {
+  return apiRequest("/payments/");
 }

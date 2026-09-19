@@ -12,7 +12,7 @@ from models import (
     ProcurementCenter,
     Notification
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import update
 from schemas import QueueResponse, QueueBookingResponse
 from audit import record_audit_event
@@ -389,7 +389,8 @@ async def sweep_missed_bookings(
     center_id: int,
     db: Session = Depends(get_db)
 ):
-    now = datetime.utcnow()
+    # All slot times are IST wall-clock; comparisons use IST "now", not server-local or UTC
+    now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
     
     # 1. Clear out timed-out reschedule offers (older than 10 minutes)
     timeout_threshold = now - timedelta(minutes=10)
@@ -430,16 +431,12 @@ async def sweep_missed_bookings(
     sweeped = []
     cancelled = []
     
-    # Evaluate dates natively relative to system date processing standard
-    # Localizing if necessary. Currently relying on the backend `utcnow` convention.
     for b in active_bookings:
         # Reconstruct the combined scheduled threshold
         slot_end_dt = datetime.combine(b.slot.date, b.slot.end_time)
         grace_limit = slot_end_dt + timedelta(minutes=b.slot.grace_window_minutes)
         
-        # In testing this script, use `datetime.now()` natively alongside mocked windows
-        # Note we compare naively, assume slot.date natively reflects today locally
-        if datetime.now() > grace_limit:
+        if now > grace_limit:
             # Safely release engine state trace
             try:
                 engine.mark_no_show(str(b.id))
