@@ -166,13 +166,13 @@ class BookingResponse(BaseModel):
 
     price: Optional[float] = None
 
-    payment_status: str
+    payment_status: Optional[str] = "pending"
     payment_method: Optional[str] = None
 
-    checked_in: bool
+    checked_in: bool = False
     arrival_time: Optional[datetime] = None
 
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

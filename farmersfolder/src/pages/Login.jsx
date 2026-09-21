@@ -191,12 +191,47 @@ export default function Login({
                     </div>
                   </div>
                   {authErrorMsg && (
-                    <div className="hint error" style={{ marginBottom: 10 }}>
-                      ⚠️ {authErrorMsg}
+                    <div className="hint error" style={{
+                      marginBottom: 12,
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: '#b91c1c',
+                      fontSize: '13px',
+                      lineHeight: '1.45',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>⚠️ {lang === 'en' ? 'Database Notice' : 'డేటాబేస్ నోటీసు'}</div>
+                      <div>{authErrorMsg}</div>
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          marginTop: 8,
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: '#2fbf71',
+                          color: '#04140a',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                        onClick={() => {
+                          setAuthMode('signup');
+                          setSignupStep(1);
+                        }}
+                      >
+                        ✍️ {lang === 'en' ? 'Register as New Farmer Now' : 'ఇప్పుడే కొత్త రైతుగా నమోదు చేసుకోండి'} →
+                      </button>
                     </div>
                   )}
                   <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!canSend || authBusy} onClick={onSendOtp}>
-                    {authBusy ? (lang === 'en' ? 'Checking...' : 'తనిఖీ చేస్తోంది...') : t.sendOtp}
+                    {authBusy ? (lang === 'en' ? 'Checking Database...' : 'డేటాబేస్ తనిఖీ చేస్తోంది...') : (lang === 'en' ? 'Check Database & Sign In' : 'డేటాబేస్ తనిఖీ చేసి సైన్ ఇన్ చేయండి')}
                   </button>
                 </>
               )}

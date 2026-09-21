@@ -40,14 +40,23 @@ def check_phone(
     data: CheckPhoneRequest,
     db: Session = Depends(get_db)
 ):
-    """Whether a phone number already has an account. Used by the login
-    screen to gate OTP entry to registered numbers on sign-in, and to
-    stop duplicate sign-ups, without exposing any other user data."""
-    exists = db.query(User).filter(
-        User.phone == data.phone.strip()
-    ).first() is not None
+    """Whether a phone number already has a farmer account in the database.
+    Used by the login screen to verify database existence before opening dashboard,
+    and redirect unregistered farmers to the registration flow."""
+    clean_phone = data.phone.strip()
+    user = db.query(User).filter(User.phone == clean_phone).first()
+    if not user:
+        return {"registered": False, "exists": False}
 
-    return {"registered": exists}
+    # Verify farmer record exists in database
+    farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
+    is_registered_farmer = (farmer is not None) or (user.role == "FARMER")
+
+    return {
+        "registered": is_registered_farmer,
+        "exists": True,
+        "name": user.name
+    }
 
 
 # ============================================================
@@ -207,8 +216,8 @@ def login(
 
     if not user:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid phone number or password"
+            status_code=404,
+            detail="Account not found in the database. Please register first."
         )
 
     is_valid_password = pwd_context.verify(
@@ -220,8 +229,22 @@ def login(
     if not (is_valid_password or is_otp_derived):
         raise HTTPException(
             status_code=401,
-            detail="Invalid phone number or password"
+            detail="Invalid credentials. Please verify your OTP or password."
         )
+
+    # If farmer user, ensure Farmer profile exists in database
+    if user.role == "FARMER":
+        farmer = db.query(Farmer).filter(Farmer.user_id == user.id).first()
+        if not farmer:
+            farmer = Farmer(
+                user_id=user.id,
+                farmer_id=f"FRM-{user.id:04d}",
+                village="Kakinada Rural",
+                district="East Godavari",
+                land_area=5.0
+            )
+            db.add(farmer)
+            db.commit()
 
     token_data = {
         "sub": str(user.id),

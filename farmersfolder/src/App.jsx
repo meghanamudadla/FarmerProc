@@ -119,13 +119,13 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }
 
-  // Auth uses sessionStorage (not localStorage): a refresh or in-tab navigation keeps
-  // you logged in on the same page, but opening the app fresh (new tab, new browser
-  // session, or the next day) always lands on the Login page, as a real login should.
+  // Auth uses sessionStorage and requires a valid backend JWT token:
+  // a refresh keeps you logged in, but fresh opening requires database login.
   const [authed, setAuthed] = useState(() => {
     try {
       const stored = sessionStorage.getItem('kisanseva_authed');
-      return stored !== null ? JSON.parse(stored) : false;
+      const token = sessionStorage.getItem('access_token');
+      return Boolean(stored !== null && JSON.parse(stored) && token);
     } catch {
       return false;
     }
@@ -139,12 +139,21 @@ export default function App() {
     }
   }, [authed]);
 
-  // A page reload restores `authed` from sessionStorage, but component state
-  // (crops/bookings/farmer) always starts fresh — refetch this farmer's real
-  // data from the backend so a reload never falls back to empty/default state.
+  // A page reload validates this farmer's real data from the database.
+  // If the database does not recognize the farmer, session is invalidated immediately.
   useEffect(() => {
     if (authed) {
-      loadRealFarmerData();
+      loadRealFarmerData().catch((err) => {
+        console.warn('Session verification against database failed:', err);
+        logout();
+        setAuthErrorMsg(
+          lang === 'en'
+            ? 'Account not found in the database. Please register first.'
+            : 'డేటాబేస్‌లో ఖాతా కనుగొనబడలేదు. దయచేసి ముందుగా నమోదు చేసుకోండి.'
+        );
+        setAuthMode('signup');
+        setSignupStep(1);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -448,99 +457,107 @@ export default function App() {
     if (el) el.focus();
   }
 
-  // Gate OTP entry on the real backend: sign-in only proceeds for a number
-  // that already has an account, sign-up only proceeds for one that doesn't.
+  // Gate OTP entry on the real database: sign-in only proceeds for a number
+  // that already exists in the database. If not found, redirect to register first!
   async function sendOtpChecked() {
     setAuthErrorMsg('');
     const phoneDigits = mobile.replace(/\D/g, '');
-    if (phoneDigits.length !== 10) return;
+    if (phoneDigits.length !== 10) {
+      setAuthErrorMsg(
+        lang === 'en'
+          ? 'Please enter a valid 10-digit mobile number.'
+          : 'దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి.'
+      );
+      return;
+    }
 
     setAuthBusy(true);
     try {
+      // 1. Check Aiven PostgreSQL database
       const registered = await isPhoneRegistered(phoneDigits);
 
       if (authMode === 'signin' && !registered) {
+        // Farmer does NOT exist in the database -> BLOCK access and redirect to Register
         setAuthErrorMsg(
           lang === 'en'
-            ? 'This number is not registered. Please sign up first.'
-            : 'ఈ నంబర్ నమోదు కాలేదు. దయచేసి ముందుగా నమోదు చేసుకోండి.'
+            ? `Mobile number +91 ${phoneDigits} is not registered in the database. Please register first to access your dashboard.`
+            : `మొబైల్ నంబర్ +91 ${phoneDigits} డేటాబేస్‌లో నమోదు కాలేదు. డ్యాష్‌బోర్డ్‌ను యాక్సెస్ చేయడానికి దయచేసి ముందుగా నమోదు చేసుకోండి.`
         );
+        setAuthMode('signup');
+        setSignupStep(1);
         return;
       }
+
       if (authMode === 'signup' && registered) {
         setAuthErrorMsg(
           lang === 'en'
-            ? 'This number is already registered. Please sign in instead.'
-            : 'ఈ నంబర్ ఇప్పటికే నమోదు చేయబడింది. దయచేసి సైన్ ఇన్ చేయండి.'
+            ? `Mobile number +91 ${phoneDigits} is already registered in the database. Please sign in to open your dashboard.`
+            : `మొబైల్ నంబర్ +91 ${phoneDigits} ఇప్పటికే డేటాబేస్‌లో ఉంది. డ్యాష్‌బోర్డ్ తెరవడానికి దయచేసి సైన్ ఇన్ చేయండి.`
         );
+        setAuthMode('signin');
         return;
       }
 
       setOtpSent(true);
       addNotif('sms', lang === 'en' ? 'An OTP has been sent to your registered mobile number.' : 'మీ నమోదిత మొబైల్ నంబర్‌కు OTP పంపబడింది.');
     } catch (err) {
-      setAuthErrorMsg(err.message || (lang === 'en' ? 'Could not verify this number. Please try again.' : 'ఈ నంబర్‌ను ధృవీకరించలేకపోయాము. మళ్ళీ ప్రయత్నించండి.'));
+      setAuthErrorMsg(err.message || (lang === 'en' ? 'Could not connect to database to verify this number. Please try again.' : 'డేటాబేస్‌ను తనిఖీ చేయలేకపోయాము. మళ్ళీ ప్రయత్నించండి.'));
     } finally {
       setAuthBusy(false);
     }
   }
 
-  // Replaces local demo state with this farmer's real data from the backend
-  // (profile, registered crops, bookings) right after a successful login.
+  // Validates this farmer's real data from the Aiven database.
+  // If no record exists in the database, this throws to strictly prevent dashboard access.
   async function loadRealFarmerData() {
-    try {
-      const [profile, rawCrops, rawBookings] = await Promise.all([
-        fetchFarmerMe().catch(() => null),
-        fetchMyCrops().catch(() => []),
-        fetchMyBookings().catch(() => []),
-        // Warms the shared centre-name cache (see centreById in domain.js) so
-        // booking rows show real centre names even if Find Centres was never visited.
-        fetchRealCentres().catch(() => []),
-      ]);
-
-      // The crop/booking rows carry the backend's internal numeric farmer_id
-      // (Farmer.id), not the farmer's business id string (e.g. "FARMER-XXXX")
-      // that `farmer.farmerId` uses elsewhere in the UI for ownership checks
-      // (see BookSlot's isFarmerMatch). Every row from /crops/my and
-      // /bookings/my already belongs to this authenticated farmer, so stamp
-      // them with that business id rather than the raw numeric one.
-      const resolvedFarmerId = (profile && profile.farmer_id) || farmer.farmerId;
-
-      const cropList = Array.isArray(rawCrops) ? rawCrops : [];
-      const normalizedCrops = cropList.map((c) => ({ ...normalizeRealCrop(c), farmerId: resolvedFarmerId }));
-      const cropsById = {};
-      cropList.forEach((c, i) => {
-        cropsById[c.id] = normalizedCrops[i];
-      });
-
-      setCrops(normalizedCrops);
-      setBookings(
-        (Array.isArray(rawBookings) ? rawBookings : []).map((b) => ({
-          ...normalizeRealBooking(b, cropsById),
-          farmerId: resolvedFarmerId,
-        }))
+    const profile = await fetchFarmerMe();
+    if (!profile || !profile.id) {
+      throw new Error(
+        lang === 'en'
+          ? 'Farmer profile not found in database. Please register first.'
+          : 'డేటాబేస్‌లో రైతు ప్రొఫైల్ కనుగొనబడలేదు. దయచేసి ముందుగా నమోదు చేసుకోండి.'
       );
-
-      if (profile) {
-        setFarmer((f) => ({
-          ...f,
-          farmerId: profile.farmer_id || f.farmerId,
-          fullName: profile.name || f.fullName,
-          village: profile.village || f.village,
-          district: profile.district || f.district,
-          date_of_birth: profile.date_of_birth || null,
-          landAcres: profile.land_area != null ? String(profile.land_area) : f.landAcres,
-          mobile: profile.phone ? '+91 ' + profile.phone : f.mobile,
-        }));
-      }
-    } catch (err) {
-      console.warn('Could not load real farmer data', err);
     }
+
+    const [rawCrops, rawBookings] = await Promise.all([
+      fetchMyCrops().catch(() => []),
+      fetchMyBookings().catch(() => []),
+      fetchRealCentres().catch(() => []),
+    ]);
+
+    const resolvedFarmerId = profile.farmer_id || farmer.farmerId;
+    const cropList = Array.isArray(rawCrops) ? rawCrops : [];
+    const normalizedCrops = cropList.map((c) => ({ ...normalizeRealCrop(c), farmerId: resolvedFarmerId }));
+    const cropsById = {};
+    cropList.forEach((c, i) => {
+      cropsById[c.id] = normalizedCrops[i];
+    });
+
+    setCrops(normalizedCrops);
+    setBookings(
+      (Array.isArray(rawBookings) ? rawBookings : []).map((b) => ({
+        ...normalizeRealBooking(b, cropsById),
+        farmerId: resolvedFarmerId,
+      }))
+    );
+
+    setFarmer((f) => ({
+      ...f,
+      farmerId: profile.farmer_id || f.farmerId,
+      fullName: profile.name || f.fullName,
+      village: profile.village || f.village,
+      district: profile.district || f.district,
+      date_of_birth: profile.date_of_birth || null,
+      landAcres: profile.land_area != null ? String(profile.land_area) : f.landAcres,
+      mobile: profile.phone ? '+91 ' + profile.phone : f.mobile,
+    }));
+
+    return profile;
   }
 
-  // OTP entry is the farmer-facing step; behind it, this performs a real
-  // register (on signup) and login against the backend so every farmer gets
-  // their own account backed by the Postgres database, not just a demo user.
+  // Farmer login verifies with the Aiven database.
+  // If farmer is in database -> opens dashboard.
+  // If not in database -> rejects and redirects to registration.
   async function login() {
     setAuthErrorMsg('');
 
@@ -565,7 +582,10 @@ export default function App() {
         });
       }
 
+      // Check database credentials and authenticate
       await loginFarmer(phoneDigits, backendPassword);
+
+      // Verify farmer profile exists in database before allowing dashboard access
       await loadRealFarmerData();
 
       if (authMode === 'signup' && signupData.name.trim()) {
@@ -581,20 +601,39 @@ export default function App() {
           farmerId: signupData.farmerId,
         }));
       }
+
+      // Allow to open dashboard
       setAuthed(true);
       try {
         sessionStorage.setItem('kisanseva_authed', JSON.stringify(true));
       } catch (e) {}
+
       const first = (authMode === 'signup' && signupData.name.trim() ? signupData.name.trim() : farmer.fullName).split(' ')[0];
       addNotif('sms', lang === 'en' ? `Welcome${authMode === 'signup' ? '' : ' back'}, ${first}.` : `${authMode === 'signup' ? '' : 'మళ్ళీ '}స్వాగతం, ${first}.`);
       if (authMode === 'signup') {
-        addNotif('push', lang === 'en' ? 'Registration complete. Your eligible quantity has been calculated from your land details.' : 'నమోదు పూర్తయింది. మీ భూమి వివరాల ఆధారంగా అర్హత పరిమాణం లెక్కించబడింది.');
+        addNotif('push', lang === 'en' ? 'Registration complete and saved in database. Your eligible quantity has been calculated from your land details.' : 'నమోదు పూర్తయింది మరియు డేటాబేస్‌లో భద్రపరచబడింది.');
       }
     } catch (err) {
-      setAuthErrorMsg(
-        err.message ||
-          (lang === 'en' ? 'Could not verify OTP. Please try again.' : 'OTP ధృవీకరణ విఫలమైంది. మళ్ళీ ప్రయత్నించండి.')
-      );
+      console.error('Authentication error:', err);
+      const msg = (err.message || '').toLowerCase();
+      const notFound = msg.includes('not found') || msg.includes('404') || msg.includes('not registered') || msg.includes('invalid phone');
+
+      if (notFound && authMode === 'signin') {
+        setAuthErrorMsg(
+          lang === 'en'
+            ? 'Account not found in the database. Please register first to access the dashboard.'
+            : 'డేటాబేస్‌లో ఖాతా కనుగొనబడలేదు. డ్యాష్‌బోర్డ్ తెరవడానికి దయచేసి ముందుగా నమోదు చేసుకోండి.'
+        );
+        setOtpSent(false);
+        setOtp(['', '', '', '', '', '']);
+        setAuthMode('signup');
+        setSignupStep(1);
+      } else {
+        setAuthErrorMsg(
+          err.message ||
+            (lang === 'en' ? 'Could not verify login in database. Please try again.' : 'డేటాబేస్‌లో లాగిన్ ధృవీకరణ విఫలమైంది. మళ్ళీ ప్రయత్నించండి.')
+        );
+      }
     } finally {
       setAuthBusy(false);
     }
