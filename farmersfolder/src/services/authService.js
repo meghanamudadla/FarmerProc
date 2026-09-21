@@ -19,6 +19,49 @@ export async function isPhoneRegistered(phone) {
 
 
 /**
+ * Send a 6-digit OTP to the registered phone number via backend SMS dispatcher.
+ *
+ * Backend: POST /auth/send-otp
+ *
+ * @param {string} phone
+ * @param {Object} [options]
+ * @param {boolean} [options.forLogin]
+ * @param {boolean} [options.forSignup]
+ * @returns {Promise<Object>}
+ */
+export async function sendOtpToPhone(phone, { forLogin = false, forSignup = false } = {}) {
+  return apiRequest("/auth/send-otp", {
+    method: "POST",
+    body: JSON.stringify({
+      phone,
+      for_login: Boolean(forLogin),
+      for_signup: Boolean(forSignup),
+    }),
+  });
+}
+
+
+/**
+ * Verify entered OTP against backend OTP engine.
+ *
+ * Backend: POST /auth/verify-otp
+ *
+ * @param {string} phone
+ * @param {string} otp
+ * @returns {Promise<Object>}
+ */
+export async function verifyOtpCode(phone, otp) {
+  return apiRequest("/auth/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({
+      phone,
+      otp,
+    }),
+  });
+}
+
+
+/**
  * Login farmer using backend authentication.
  *
  * Backend:

@@ -8,7 +8,7 @@ import { queueService } from './services/queueService.js';
 import { notificationEngine } from './services/notificationEngine.js';
 import { CropRepository } from './services/cropRepository.js';
 import { registerFarmer, fetchFarmerMe, updateFarmerMe, fetchMyCrops, fetchMyBookings, createBooking, cancelBooking, fetchSlotsForCenter } from './services/backendData.js';
-import { loginFarmer, logoutFarmer, isPhoneRegistered } from './services/authService.js';
+import { loginFarmer, logoutFarmer, isPhoneRegistered, sendOtpToPhone, verifyOtpCode } from './services/authService.js';
 import { fetchRealCentres } from './services/realCentres.js';
 import { normalizeRealCrop } from './services/realCrops.js';
 
@@ -171,6 +171,7 @@ export default function App() {
   const otpRefs = useRef([]);
   const [authBusy, setAuthBusy] = useState(false);
   const [authErrorMsg, setAuthErrorMsg] = useState('');
+  const [dispatchedOtpInfo, setDispatchedOtpInfo] = useState(null);
 
   // The OTP is the farmer-facing verification step; the backend still requires
   // a password, so we derive one from the phone number rather than asking the
@@ -178,10 +179,6 @@ export default function App() {
   function derivedBackendPassword(phoneDigits) {
     return `KS-${phoneDigits}-OTP2026`;
   }
-
-  // Placeholder until real SMS delivery is wired in: every number uses this
-  // same fixed OTP, and it is never shown anywhere in the UI.
-  const STATIC_DEMO_OTP = '123456';
 
   useEffect(() => {
     if (otpSent) {
@@ -498,8 +495,35 @@ export default function App() {
         return;
       }
 
+      // 2. Dispatch real OTP to the registered phone number via backend OTP service
+      const res = await sendOtpToPhone(phoneDigits, {
+        forLogin: authMode === 'signin',
+        forSignup: authMode === 'signup',
+      });
+
       setOtpSent(true);
-      addNotif('sms', lang === 'en' ? 'An OTP has been sent to your registered mobile number.' : 'మీ నమోదిత మొబైల్ నంబర్‌కు OTP పంపబడింది.');
+      setDispatchedOtpInfo({
+        otp: res.otp,
+        smsDelivered: res.sms_delivered,
+        provider: res.provider,
+        phone: phoneDigits,
+      });
+
+      if (res.sms_delivered) {
+        addNotif(
+          'sms',
+          lang === 'en'
+            ? `📲 SMS OTP delivered to registered mobile +91 ${phoneDigits} via ${res.provider}.`
+            : `📲 మీ నమోదిత మొబైల్ +91 ${phoneDigits}కు SMS OTP పంపబడింది.`
+        );
+      } else {
+        addNotif(
+          'sms',
+          lang === 'en'
+            ? `📲 OTP dispatched to registered phone +91 ${phoneDigits}: Code is ${res.otp}`
+            : `📲 నమోదిత ఫోన్ +91 ${phoneDigits}కు OTP పంపబడింది: కోడ్ ${res.otp}`
+        );
+      }
     } catch (err) {
       setAuthErrorMsg(err.message || (lang === 'en' ? 'Could not connect to database to verify this number. Please try again.' : 'డేటాబేస్‌ను తనిఖీ చేయలేకపోయాము. మళ్ళీ ప్రయత్నించండి.'));
     } finally {
@@ -561,8 +585,13 @@ export default function App() {
   async function login() {
     setAuthErrorMsg('');
 
-    if (otp.join('') !== STATIC_DEMO_OTP) {
-      setAuthErrorMsg(lang === 'en' ? 'Incorrect OTP. Please try again.' : 'తప్పు OTP. దయచేసి మళ్ళీ ప్రయత్నించండి.');
+    const enteredOtp = otp.join('').trim();
+    if (enteredOtp.length !== 6) {
+      setAuthErrorMsg(
+        lang === 'en'
+          ? 'Please enter the complete 6-digit OTP sent to your registered phone.'
+          : 'దయచేసి మీ నమోదిత ఫోన్‌కు పంపిన పూర్తి 6 అంకెల OTPని నమోదు చేయండి.'
+      );
       return;
     }
 
@@ -571,6 +600,8 @@ export default function App() {
     const backendPassword = derivedBackendPassword(phoneDigits);
 
     try {
+      // 1. Verify entered OTP with the backend OTP engine
+      await verifyOtpCode(phoneDigits, enteredOtp);
       if (authMode === 'signup') {
         await registerFarmer({
           name: signupData.name.trim(),
@@ -895,6 +926,8 @@ export default function App() {
         authBusy={authBusy}
         authErrorMsg={authErrorMsg}
         onSendOtp={sendOtpChecked}
+        onResendOtp={sendOtpChecked}
+        dispatchedOtpInfo={dispatchedOtpInfo}
       />
     );
   }

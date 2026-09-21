@@ -96,3 +96,6 @@ export async function markNotificationRead(notificationId) {
 export async function fetchMsp(bookingId) {
   return apiRequest(`/msp/${bookingId}`);
 }
+
+export { sendOtpToPhone, verifyOtpCode, isPhoneRegistered } from './authService.js';
+

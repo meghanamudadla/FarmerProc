@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Login({
   t, lang, setLang,
   role, setRole, authMode, setAuthMode, signupStep, setSignupStep,
   signupData, setSD, mobile, setMobile, formatMobile,
   otpSent, setOtpSent, otp, setOtp, otpRefs, handleOtpChange, handleOtpKeyDown, handleOtpPaste,
-  login, addNotif, authBusy, authErrorMsg, onSendOtp,
+  login, addNotif, authBusy, authErrorMsg, onSendOtp, onResendOtp, dispatchedOtpInfo,
 }) {
   // The login screen is always rendered on a light glass card, regardless of
   // the farmer's saved dashboard theme (dark mode persists across logout).
@@ -25,6 +25,24 @@ export default function Login({
       else root.removeAttribute('data-theme');
     };
   }, []);
+
+  const [resendTimer, setResendTimer] = useState(30);
+
+  useEffect(() => {
+    let timer;
+    if (otpSent && resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpSent, resendTimer]);
+
+  const handleResend = () => {
+    if (resendTimer > 0 || authBusy) return;
+    setResendTimer(30);
+    if (onResendOtp) onResendOtp();
+  };
 
   const rawDigits = mobile.replace(/\D/g, '');
   const isFarmerSignup = authMode === 'signup' && role === 'farmer';
@@ -231,7 +249,7 @@ export default function Login({
                     </div>
                   )}
                   <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!canSend || authBusy} onClick={onSendOtp}>
-                    {authBusy ? (lang === 'en' ? 'Checking Database...' : 'డేటాబేస్ తనిఖీ చేస్తోంది...') : (lang === 'en' ? 'Check Database & Sign In' : 'డేటాబేస్ తనిఖీ చేసి సైన్ ఇన్ చేయండి')}
+                    {authBusy ? (lang === 'en' ? 'Checking Database & Sending OTP...' : 'డేటాబేస్ తనిఖీ చేసి OTP పంపుతోంది...') : (lang === 'en' ? 'Check Database & Send OTP' : 'డేటాబేస్ తనిఖీ చేసి OTP పంపండి')}
                   </button>
                 </>
               )}
@@ -271,10 +289,106 @@ export default function Login({
             </>
           ) : (
             <>
-              <div className="hint ok" style={{ marginBottom: 10 }}>
-                ✓ {t.otpSentTo('+91 ' + mobile)}
+              {/* Official SMS Dispatch Alert */}
+              <div
+                style={{
+                  marginBottom: 14,
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                  color: '#065f46',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13.5px', marginBottom: 4 }}>
+                  <span>📲</span>
+                  <span>
+                    {lang === 'en'
+                      ? `OTP Sent to Registered Mobile: +91 ${mobile}`
+                      : `నమోదిత మొబైల్‌కు OTP పంపబడింది: +91 ${mobile}`}
+                  </span>
+                </div>
+                <div>
+                  {dispatchedOtpInfo?.smsDelivered ? (
+                    <span style={{ color: '#047857', fontWeight: 600 }}>
+                      ✓ {lang === 'en' ? `Real SMS delivered via ${dispatchedOtpInfo.provider}. Check your phone.` : `SMS ద్వారా OTP పంపబడింది. మీ ఫోన్ చూడండి.`}
+                    </span>
+                  ) : (
+                    <span>
+                      {lang === 'en'
+                        ? '6-digit verification code has been dispatched to this registered number.'
+                        : 'ఈ నమోదిత నంబర్‌కు 6 అంకెల ధృవీకరణ కోడ్ పంపబడింది.'}
+                    </span>
+                  )}
+                </div>
+
+                {dispatchedOtpInfo?.otp && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: '6px 10px',
+                      background: 'rgba(5, 150, 105, 0.12)',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#065f46' }}>
+                        {lang === 'en' ? 'Dispatched Code:' : 'పంపబడిన కోడ్:'}
+                      </span>{' '}
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          fontFamily: 'monospace',
+                          fontSize: '16px',
+                          fontWeight: 800,
+                          letterSpacing: '3px',
+                          background: '#047857',
+                          color: '#ffffff',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {dispatchedOtpInfo.otp}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        background: '#047857',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        const digits = String(dispatchedOtpInfo.otp).slice(0, 6).split('');
+                        setOtp(digits);
+                      }}
+                    >
+                      ⚡ {lang === 'en' ? 'Auto-Fill OTP' : 'OTP నింపండి'}
+                    </button>
+                  </div>
+                )}
               </div>
-              <label>{t.enterOtp}</label>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <label style={{ margin: 0 }}>{t.enterOtp}</label>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                  {lang === 'en' ? '6-digit code' : '6 అంకెల కోడ్'}
+                </span>
+              </div>
+
               <div className="otp-row">
                 {otp.map((v, i) => (
                   <input
@@ -291,30 +405,65 @@ export default function Login({
                   />
                 ))}
               </div>
+
               {authErrorMsg && (
-                <div className="hint error" style={{ marginTop: 10 }}>
+                <div className="hint error" style={{
+                  marginTop: 10,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  color: '#b91c1c',
+                  fontSize: '13px'
+                }}>
                   ⚠️ {authErrorMsg}
                 </div>
               )}
+
               <button
                 className="btn btn-primary"
                 style={{ width: '100%', justifyContent: 'center', marginTop: 14 }}
                 disabled={otp.some((d) => !d) || authBusy}
                 onClick={login}
               >
-                {authBusy ? (lang === 'en' ? 'Verifying...' : 'ధృవీకరిస్తోంది...') : t.verify}
+                {authBusy ? (lang === 'en' ? 'Verifying with Database...' : 'డేటాబేస్‌తో ధృవీకరిస్తోంది...') : (lang === 'en' ? 'Verify OTP & Open Dashboard →' : 'OTP ధృవీకరించి డ్యాష్‌బోర్డ్ తెరవండి →')}
               </button>
-              <div className="login-secondary">
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, fontSize: '13px' }}>
                 <a
                   href="#"
+                  style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}
                   onClick={(e) => {
                     e.preventDefault();
                     setOtpSent(false);
                     setOtp(['', '', '', '', '', '']);
                   }}
                 >
-                  ← {lang === 'en' ? 'Change number' : 'నంబర్ మార్చండి'}
+                  ← {lang === 'en' ? 'Change Number' : 'నంబర్ మార్చండి'}
                 </a>
+
+                {resendTimer > 0 ? (
+                  <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                    {lang === 'en' ? `Resend in ${resendTimer}s` : `${resendTimer}సె లో మళ్ళీ పంపండి`}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      color: '#059669',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      padding: 0,
+                    }}
+                    onClick={handleResend}
+                    disabled={authBusy}
+                  >
+                    🔄 {lang === 'en' ? 'Resend OTP' : 'మళ్ళీ OTP పంపండి'}
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -26,6 +26,8 @@ class CheckPhoneRequest(BaseModel):
 
 class SendOtpRequest(BaseModel):
     phone: str = Field(min_length=10, max_length=15)
+    for_login: Optional[bool] = False
+    for_signup: Optional[bool] = False
 
 
 class VerifyOtpRequest(BaseModel):
