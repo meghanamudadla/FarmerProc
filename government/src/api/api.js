@@ -1,7 +1,7 @@
 const API_BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+  (typeof import.meta !== "undefined" && (import.meta.env?.VITE_API_URL || import.meta.env?.VITE_API_BASE_URL)) ||
   "http://localhost:8000";
-const TOKEN_KEY = "kisanseva_token";
+const TOKEN_KEY = "farmerproc_gov_token";
 
 export function getToken() {
   try {
@@ -36,7 +36,15 @@ export async function apiRequest(endpoint, options = {}) {
       let errorMsg = `API request error: ${response.statusText}`;
       try {
         const errJson = await response.json();
-        errorMsg = errJson.detail || errorMsg;
+        if (typeof errJson.detail === "string") {
+          errorMsg = errJson.detail;
+        } else if (Array.isArray(errJson.detail)) {
+          errorMsg = errJson.detail.map((d) => d.msg || JSON.stringify(d)).join(", ");
+        } else if (errJson.detail) {
+          errorMsg = JSON.stringify(errJson.detail);
+        } else if (errJson.message) {
+          errorMsg = errJson.message;
+        }
       } catch {
         // ignore
       }

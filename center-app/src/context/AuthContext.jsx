@@ -4,13 +4,13 @@ const AuthContext = createContext();
 
 const DEFAULT_USER = {
   id: 'STAFF-8842',
-  name: 'Rajesh Sharma',
+  name: 'Mandi Console Operator',
   role: 'Center Manager',
   roleKey: 'manager',
-  centerId: 'CN-KAR-01',
-  centerName: 'Karnal Main Mandi Center',
-  district: 'Karnal',
-  email: 'rajesh.sharma@agroprocure.gov.in',
+  centerId: 1,
+  centerName: 'Kakinada APMC Mandi Center',
+  district: 'East Godavari',
+  email: 'operator@agroprocure.gov.in',
   avatar: '👨‍💼',
 };
 
@@ -54,10 +54,9 @@ export const ROLE_PROFILES = [
 ];
 
 export const CENTERS = [
-  { id: 'CN-KAR-01', name: 'Karnal Main Mandi Center', district: 'Karnal', state: 'Haryana' },
-  { id: 'CN-PAN-02', name: 'Panipat Grain Hub', district: 'Panipat', state: 'Haryana' },
-  { id: 'CN-AMB-03', name: 'Ambala Procurement Center', district: 'Ambala', state: 'Haryana' },
-  { id: 'CN-HIS-04', name: 'Hisar Mandi Terminal', district: 'Hisar', state: 'Haryana' },
+  { id: 1, name: 'Kakinada APMC Mandi Center', district: 'East Godavari', state: 'Andhra Pradesh' },
+  { id: 2, name: 'Godavari Green Centre', district: 'East Godavari', state: 'Andhra Pradesh' },
+  { id: 3, name: 'Krishna Delta Purchase Point', district: 'NTR District', state: 'Andhra Pradesh' },
 ];
 
 export function AuthProvider({ children }) {

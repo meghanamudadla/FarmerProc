@@ -3,111 +3,292 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rythu Mandi — Access Gateway</title>
+<title>FarmerProc — Unified Agricultural Procurement Platform</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #0b0f0d;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #090e0b;
     color: #e5f5ec;
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 40px 20px 60px;
   }
   .header { text-align: center; margin-bottom: 8px; }
-  .header h1 { font-size: 24px; }
-  .sub { text-align: center; color: #9db3a8; margin-bottom: 36px; }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .header h1 span { color: #2fbf71; }
+  .sub { text-align: center; color: #9db3a8; margin-bottom: 36px; font-size: 15px; }
+
+  .quick-bar {
+    max-width: 1080px;
+    margin: 0 auto 32px;
+    background: rgba(47,191,113,0.08);
+    border: 1px solid rgba(47,191,113,0.25);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .quick-bar-title { font-size: 13px; font-weight: 700; color: #4ee38a; text-transform: uppercase; letter-spacing: .05em; }
+  .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill-link {
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: #e5f5ec;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .pill-link:hover { background: rgba(47,191,113,0.25); color: #4ee38a; }
+
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 24px;
-    max-width: 1000px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    max-width: 1080px;
     margin: 0 auto;
   }
   .card {
     border-radius: 16px;
-    padding: 28px;
+    padding: 24px;
     background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, border-color 0.15s ease;
   }
-  .card.literate { border: 1px solid #2fbf71; }
-  .card.illiterate { border: 1px solid #2f8fbf; }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .card.farmer { border-color: rgba(47,191,113,0.4); }
+  .card.telephony { border-color: rgba(47,143,191,0.4); }
+  .card.center { border-color: rgba(245,158,11,0.4); }
+  .card.govt { border-color: rgba(168,85,247,0.4); }
+
   .badge {
     display: inline-block;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: .05em;
-    padding: 4px 10px;
+    padding: 4px 8px;
     border-radius: 999px;
-    float: right;
+    align-self: flex-start;
+    margin-bottom: 12px;
   }
-  .literate .badge { background: rgba(47,191,113,.15); color: #4ee38a; }
-  .illiterate .badge { background: rgba(47,143,191,.15); color: #4eb8e3; }
-  .icon { font-size: 32px; margin-bottom: 14px; }
-  h2 { font-size: 26px; margin-bottom: 4px; }
-  .tag { font-weight: 600; margin-bottom: 14px; }
-  .literate .tag { color: #4ee38a; }
-  .illiterate .tag { color: #4eb8e3; }
-  p.desc { color: #cbdad2; margin-bottom: 20px; line-height: 1.5; }
-  ul { list-style: none; margin-bottom: 26px; }
+  .farmer .badge { background: rgba(47,191,113,.15); color: #4ee38a; }
+  .telephony .badge { background: rgba(47,143,191,.15); color: #4eb8e3; }
+  .center .badge { background: rgba(245,158,11,.15); color: #fbbf24; }
+  .govt .badge { background: rgba(168,85,247,.15); color: #c084fc; }
+
+  .icon { font-size: 30px; margin-bottom: 10px; }
+  h2 { font-size: 20px; margin-bottom: 4px; }
+  .tag { font-weight: 600; margin-bottom: 12px; font-size: 13px; }
+  .farmer .tag { color: #4ee38a; }
+  .telephony .tag { color: #4eb8e3; }
+  .center .tag { color: #fbbf24; }
+  .govt .tag { color: #c084fc; }
+
+  p.desc { color: #a9beae; margin-bottom: 18px; line-height: 1.45; font-size: 13px; }
+  ul { list-style: none; margin-bottom: 20px; flex-grow: 1; }
   li {
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    font-size: 14px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    color: #cbdad2;
   }
+  .btn-group { display: flex; flex-direction: column; gap: 8px; }
   a.btn {
     display: block;
     text-align: center;
     text-decoration: none;
     font-weight: 700;
-    font-size: 16px;
-    padding: 14px;
-    border-radius: 10px;
-    color: #06210f;
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 8px;
+    color: #04140a;
   }
-  .literate a.btn { background: linear-gradient(135deg,#2fbf71,#1f8f52); color: #04140a; }
-  .illiterate a.btn { background: linear-gradient(135deg,#2f8fbf,#1f6b8f); color: #04140a; }
-  .note { text-align: center; margin-top: 28px; color: #7f9689; font-size: 13px; }
+  .farmer a.btn { background: linear-gradient(135deg,#2fbf71,#1f8f52); color: #04140a; }
+  .telephony a.btn { background: linear-gradient(135deg,#2f8fbf,#1f6b8f); color: #04140a; }
+  .center a.btn { background: linear-gradient(135deg,#f59e0b,#d97706); color: #04140a; }
+  .govt a.btn { background: linear-gradient(135deg,#a855f7,#7e22ce); color: #04140a; }
+
+  a.btn-secondary {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    color: #9db3a8;
+  }
+  a.btn-secondary:hover { background: rgba(255,255,255,0.1); color: #e5f5ec; }
+
+  .note { text-align: center; margin-top: 36px; color: #7f9689; font-size: 13px; }
 </style>
 </head>
 <body>
   <div class="header">
-    <h1>🌾 Rythu Mandi Procurement Portal</h1>
+    <h1>🌾 <span>FarmerProc</span> Access Gateway</h1>
   </div>
-  <p class="sub">Choose the most comfortable interface to access Rythu Mandi agricultural services</p>
+  <p class="sub">Unified Agricultural Harvest Booking, Mandi Operations &amp; State Monitoring Platform</p>
+
+  <div class="quick-bar">
+    <span class="quick-bar-title">⚡ Local Microservices</span>
+    <div class="quick-links">
+      <a class="pill-link" id="status-farmer" href="http://localhost:5173" target="_blank">🟢 Farmer Web :5173</a>
+      <a class="pill-link" id="status-center" href="http://localhost:5174" target="_blank">🟢 Mandi Console :5174</a>
+      <a class="pill-link" id="status-govt" href="http://localhost:5175" target="_blank">🟢 Govt Command :5175</a>
+      <a class="pill-link" id="status-telephony" href="http://localhost:3000" target="_blank">🟢 Telephony IVR :3000</a>
+      <a class="pill-link" id="status-backend" href="http://localhost:8000/docs" target="_blank">🟢 Backend API :8000/docs</a>
+      <a class="pill-link" id="status-db" href="http://localhost:8000/db-test" target="_blank">🟢 Aiven PostgreSQL</a>
+    </div>
+  </div>
 
   <div class="grid">
-    <div class="card literate">
-      <span class="badge">DIGITAL WEB PORTAL</span>
-      <div class="icon">📖</div>
-      <h2>Literate Farmer / Educated</h2>
-      <div class="tag">Full Digital Smartphone App</div>
-      <p class="desc">Rich interactive digital screen UI designed for farmers comfortable reading text &amp; forms.</p>
-      <ul>
-        <li>📄 Self-service slot booking &amp; crop registration</li>
-        <li>📊 Live Mandi yard queue status dashboard</li>
-        <li>💳 Direct DBT payout receipts &amp; bank tracking</li>
-        <li>🔍 Multi-centre distance &amp; congestion comparison</li>
-      </ul>
-      <a class="btn" href="https://farmer-proc.vercel.app">Proceed to Web Portal ➔</a>
+    <!-- 1. Farmer Web Portal -->
+    <div class="card farmer">
+      <div>
+        <span class="badge">FARMER PORTAL</span>
+        <div class="icon">📖</div>
+        <h2>Farmer Portal</h2>
+        <div class="tag">Digital Web App (Port 5173)</div>
+        <p class="desc">Self-service smartphone portal for farmers to manage crops and time-slots.</p>
+        <ul>
+          <li>📄 Land &amp; crop registration</li>
+          <li>🎟️ Slot booking with QR tokens</li>
+          <li>📊 Live Mandi queue position</li>
+          <li>⚖️ Direct DBT bank receipts</li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a class="btn" href="http://localhost:5173" target="_blank">Launch Local (:5173) ➔</a>
+        <a class="btn-secondary" href="https://farmer-proc.vercel.app" target="_blank">Open Cloud Deployment</a>
+      </div>
     </div>
 
-    <div class="card illiterate">
-      <span class="badge">VOICE IVR TELEPHONY</span>
-      <div class="icon">📞</div>
-      <h2>Illiterate Farmer / Uneducated</h2>
-      <div class="tag">Automated Phone Call / IVR</div>
-      <p class="desc">Voice-guided telephony call interface tailored for farmers who prefer audio instructions.</p>
-      <ul>
-        <li>🎙️ Telugu, Hindi &amp; English spoken voice prompts</li>
-        <li>📞 Keypad press support (1 for Booking, 2 for Queue Status)</li>
-        <li>🔊 Live synthesized voice confirmation</li>
-        <li>📱 Fast2SMS automated mobile receipt updates</li>
-      </ul>
-      <a class="btn" href="https://kisanseva-telephony.onrender.com">Proceed to Telephony Method 📞</a>
+    <!-- 2. Voice Telephony IVR -->
+    <div class="card telephony">
+      <div>
+        <span class="badge">VOICE TELEPHONY</span>
+        <div class="icon">📞</div>
+        <h2>Voice IVR System</h2>
+        <div class="tag">Phone Subsystem (Port 3000)</div>
+        <p class="desc">Voice call &amp; SMS interface designed for non-smartphone or illiterate farmers.</p>
+        <ul>
+          <li>🎙️ Telugu, Hindi &amp; English audio</li>
+          <li>🔢 Keypad press slot booking</li>
+          <li>📢 Automated delay call alerts</li>
+          <li>📱 Fast2SMS receipt updates</li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a class="btn" href="http://localhost:3000" target="_blank">Launch Local (:3000) ➔</a>
+        <a class="btn-secondary" href="https://kisanseva-telephony.onrender.com" target="_blank">Open Cloud Deployment</a>
+      </div>
+    </div>
+
+    <!-- 3. Mandi Center Console -->
+    <div class="card center">
+      <div>
+        <span class="badge">MANDI OPERATOR</span>
+        <div class="icon">🏢</div>
+        <h2>Mandi Center Console</h2>
+        <div class="tag">Station Kiosk (Port 5174)</div>
+        <p class="desc">Operational workstation for yard gatekeepers, weighbridges, and quality testers.</p>
+        <ul>
+          <li>📷 QR gate check-in scanner</li>
+          <li>⚖️ Gross &amp; tare weighing station</li>
+          <li>🔬 Rule-based MSP quality checks</li>
+          <li>💳 DBT payment clearance</li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a class="btn" href="http://localhost:5174" target="_blank">Launch Local (:5174) ➔</a>
+        <a class="btn-secondary" href="https://center-app-chi.vercel.app" target="_blank">Open Cloud Deployment</a>
+      </div>
+    </div>
+
+    <!-- 4. Government Command Center -->
+    <div class="card govt">
+      <div>
+        <span class="badge">STATE OVERSIGHT</span>
+        <div class="icon">🏛️</div>
+        <h2>Command Center</h2>
+        <div class="tag">Executive Dashboard (Port 5175)</div>
+        <p class="desc">State-wide executive monitoring, arrival trends, and grievance redressal.</p>
+        <ul>
+          <li>📈 Statewide procurement KPIs</li>
+          <li>🚦 Mandi congestion analysis</li>
+          <li>💰 Payment audit &amp; reconciliation</li>
+          <li>⚖️ Farmer dispute resolution</li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a class="btn" href="http://localhost:5175" target="_blank">Launch Local (:5175) ➔</a>
+        <a class="btn-secondary" href="https://kisanseva-govt.vercel.app" target="_blank">Open Cloud Deployment</a>
+      </div>
     </div>
   </div>
 
-  <p class="note">💡 You can return to this gateway anytime to switch modes.</p>
+  <p class="note">💡 To run all services simultaneously, execute <code>run_all.bat</code> in the repository root directory.</p>
+
+  <script>
+    async function checkService(url, elementId, name) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      try {
+        await fetch(url, { mode: 'no-cors', cache: 'no-store' });
+        el.textContent = '🟢 ' + name;
+        el.style.background = 'rgba(47, 191, 113, 0.15)';
+        el.style.color = '#4ee38a';
+      } catch {
+        el.textContent = '🔴 ' + name;
+        el.style.background = 'rgba(239, 68, 68, 0.15)';
+        el.style.color = '#f87171';
+      }
+    }
+
+    async function checkDatabase() {
+      const el = document.getElementById('status-db');
+      if (!el) return;
+      try {
+        const res = await fetch('http://localhost:8000/db-test', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          el.textContent = '🟢 Aiven DB: Connected';
+          el.style.background = 'rgba(47, 191, 113, 0.15)';
+          el.style.color = '#4ee38a';
+        } else {
+          throw new Error('Database ping failed');
+        }
+      } catch {
+        el.textContent = '🔴 Aiven DB (Offline)';
+        el.style.background = 'rgba(239, 68, 68, 0.15)';
+        el.style.color = '#f87171';
+      }
+    }
+
+    function checkAll() {
+      checkService('http://localhost:5173', 'status-farmer', 'Farmer Web :5173');
+      checkService('http://localhost:5174', 'status-center', 'Mandi Console :5174');
+      checkService('http://localhost:5175', 'status-govt', 'Govt Command :5175');
+      checkService('http://localhost:3000', 'status-telephony', 'Telephony IVR :3000');
+      checkService('http://localhost:8000', 'status-backend', 'Backend API :8000');
+      checkDatabase();
+    }
+
+    checkAll();
+    setInterval(checkAll, 4000);
+  </script>
 </body>
 </html>

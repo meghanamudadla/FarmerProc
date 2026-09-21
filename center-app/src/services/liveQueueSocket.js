@@ -14,12 +14,17 @@ class LiveQueueSocket {
     this.shouldReconnect = true;
     
     // Abstracting protocol mappings intelligently dynamically 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Mapping direct native port (usually localhost:8000 for backend)
-    const baseUrl = 'localhost:8000'; // Assuming standard port testing environment
-    
-    // Build direct WS socket binding
-    const wsUrl = `${protocol}//${baseUrl}/center/${centerId}/ws`;
+    let wsUrl;
+    try {
+      const apiUrl = import.meta.env?.VITE_API_URL || 'http://localhost:8000';
+      const parsed = new URL(apiUrl);
+      const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${parsed.host}/center/${centerId}/ws`;
+    } catch {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const baseUrl = 'localhost:8000';
+      wsUrl = `${protocol}//${baseUrl}/center/${centerId}/ws`;
+    }
     
     this._initSocket(wsUrl);
   }

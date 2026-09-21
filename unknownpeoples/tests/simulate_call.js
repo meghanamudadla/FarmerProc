@@ -55,12 +55,13 @@ async function runSimulationTests() {
     const bookRes = await axios.post(`${BASE_URL}/api/ivr/handle-input`, {
       From: TEST_PHONE,
       Digits: '1',
-      CallSid: `test_sid_${Date.now()}`
+      CallSid: `test_sid_${Date.now()}`,
+      language: 'te'
     });
 
     assert(bookRes.status === 200, 'Option 1 Passthru responded with HTTP 200');
     assert(bookRes.data.action === 'book_slot', 'Action is "book_slot"');
-    assert(bookRes.data.token_id && bookRes.data.token_id.startsWith('MND-'), `Generated Token ID: ${bookRes.data.token_id}`);
+    assert(bookRes.data.token_id && (bookRes.data.token_id.startsWith('MND-') || bookRes.data.token_id.startsWith('PDC-')), `Generated Token ID: ${bookRes.data.token_id}`);
     const audioUrl = bookRes.data.audio_url || bookRes.data.audioUrl;
     assert(audioUrl || bookRes.data.spoken_text, 'Option 1 generated audio URL or spoken confirmation text');
 
@@ -86,12 +87,13 @@ async function runSimulationTests() {
     const statusRes = await axios.post(`${BASE_URL}/api/ivr/handle-input`, {
       From: TEST_PHONE,
       Digits: '2',
-      CallSid: `test_sid_${Date.now()}`
+      CallSid: `test_sid_${Date.now()}`,
+      language: 'te'
     });
 
     assert(statusRes.status === 200, 'Option 2 Passthru responded with HTTP 200');
     assert(statusRes.data.action === 'check_status', 'Action is "check_status"');
-    assert(statusRes.data.token_id && statusRes.data.token_id.startsWith('MND-'), `Retrieved active Token: ${statusRes.data.token_id}`);
+    assert(statusRes.data.token_id && (statusRes.data.token_id.startsWith('MND-') || statusRes.data.token_id.startsWith('PDC-')), `Retrieved active Token: ${statusRes.data.token_id}`);
     assert(statusRes.data.tokens_ahead !== undefined, `Tokens ahead computed: ${statusRes.data.tokens_ahead}`);
     assert(statusRes.data.ewt_minutes !== undefined, `Estimated Wait Time computed: ${statusRes.data.ewt_minutes} mins`);
     assert(statusRes.data.spoken_text && statusRes.data.spoken_text.includes('వేచి ఉండే సమయం'), 'Spoken text contains Telugu wait time');
@@ -239,7 +241,7 @@ async function runSimulationTests() {
 
     assert(acceptRes.status === 200, 'Accept response returned HTTP 200');
     assert(acceptRes.data.action === 'reallocation_accepted', 'Action is reallocation_accepted');
-    assert(acceptRes.data.token_id && acceptRes.data.token_id.startsWith('MND-'), `Slot successfully assigned! New Token ID: ${acceptRes.data.token_id}`);
+    assert(acceptRes.data.token_id && (acceptRes.data.token_id.startsWith('MND-') || acceptRes.data.token_id.startsWith('PDC-')), `Slot successfully assigned! New Token ID: ${acceptRes.data.token_id}`);
     assert(acceptRes.data.status === 'ASSIGNED', 'Re-allocation status is ASSIGNED');
     assert(!!(acceptRes.data.audioUrl || acceptRes.data.audio_url), 'Acceptance generated voice confirmation audio');
 

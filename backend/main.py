@@ -25,6 +25,8 @@ from grievances.routes import router as grievance_router
 from analytics.routes import router as analytics_router
 from audit_log.routes import router as audit_log_router
 from counters.routes import router as counter_router
+from fastapi import WebSocket, WebSocketDisconnect
+from task_queue.manager import manager
 
 
 @asynccontextmanager
@@ -101,6 +103,19 @@ app.include_router(grievance_router)
 app.include_router(analytics_router)
 app.include_router(audit_log_router)
 app.include_router(counter_router)
+
+
+@app.websocket("/center/{center_id}/ws")
+async def center_ws_alias(
+    websocket: WebSocket,
+    center_id: int
+):
+    await manager.connect(websocket, center_id)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, center_id)
 
 
 # =========================================================

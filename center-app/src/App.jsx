@@ -13,11 +13,7 @@ import QualityCheck from './pages/QualityCheck';
 import Payment from './pages/Payment';
 import Login from './pages/Login';
 
-<<<<<<< HEAD
-import { LayoutDashboard, ListOrdered, Building2, Sprout, LogOut, MapPin } from 'lucide-react';
-=======
-import { LayoutDashboard, ListOrdered, Building2, MapPinned, Sprout } from 'lucide-react';
->>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
+import { LayoutDashboard, ListOrdered, Building2, MapPinned, Sprout, LogOut, MapPin } from 'lucide-react';
 
 import './App.css';
 import { testBackend } from './api/testapi';
@@ -97,9 +93,6 @@ function AppHeader() {
             <Building2 size={17} />
             <span>Capacity</span>
           </NavLink>
-<<<<<<< HEAD
-=======
-
           <NavLink
             to="/centers"
             className={({ isActive }) =>
@@ -109,8 +102,6 @@ function AppHeader() {
             <MapPinned size={17} />
             <span>Centres</span>
           </NavLink>
-
->>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
         </nav>
 
         {user && (
@@ -167,6 +158,14 @@ function MainLayout() {
             }
           />
           <Route
+            path="/centers"
+            element={
+              <ProtectedRoute>
+                <Centers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/tokens/:tokenNumber"
             element={
               <ProtectedRoute>
@@ -218,7 +217,6 @@ export default function App() {
   }, []);
 
   return (
-<<<<<<< HEAD
     <AuthProvider>
       <QueueProvider>
         <BrowserRouter>
@@ -229,71 +227,5 @@ export default function App() {
         </BrowserRouter>
       </QueueProvider>
     </AuthProvider>
-=======
-    <QueueProvider>
-      <BrowserRouter>
-
-        <div className="app-shell">
-
-          <AppHeader />
-
-          <main className="app-main">
-
-            <Routes>
-
-              <Route
-                path="/"
-                element={<Navigate to="/dashboard" replace />}
-              />
-
-              <Route
-                path="/dashboard"
-                element={<Dashboard />}
-              />
-
-              <Route
-                path="/queue"
-                element={<Queue />}
-              />
-
-              <Route
-                path="/capacity"
-                element={<Capacity />}
-              />
-
-              <Route
-                path="/centers"
-                element={<Centers />}
-              />
-
-              <Route
-                path="/tokens/:tokenNumber"
-                element={<FarmerProcessing />}
-              />
-
-              <Route
-                path="/tokens/:tokenNumber/weighing"
-                element={<Weighing />}
-              />
-
-              <Route
-                path="/tokens/:tokenNumber/quality"
-                element={<QualityCheck />}
-              />
-
-              <Route
-                path="/tokens/:tokenNumber/payment"
-                element={<Payment />}
-              />
-
-            </Routes>
-
-          </main>
-
-        </div>
-
-      </BrowserRouter>
-    </QueueProvider>
->>>>>>> 01d9a59ab6c541c76d9c353e9788e009e17ddb4d
   );
 }

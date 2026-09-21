@@ -16,12 +16,17 @@ import {
   submitPayment,
   completeFarmer
 } from "../api/queueapi";
+import { useAuth } from "./AuthContext";
 import { liveQueueSocket } from "../services/liveQueueSocket";
 
 const QueueContext = createContext();
-const CENTER_ID = 1;
 
 export function QueueProvider({ children }) {
+  const { center } = useAuth() || {};
+  const activeCenterId = center?.id
+    ? (typeof center.id === 'number' ? center.id : parseInt(String(center.id).replace(/\D/g, '') || '1', 10))
+    : 1;
+
   const [tokens, setTokens] = useState([]);
   const [centerInfo, setCenterInfo] = useState(initialCenter);
   const [loading, setLoading] = useState(true);
@@ -31,7 +36,7 @@ export function QueueProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      const data = await getCenterQueue(CENTER_ID);
+      const data = await getCenterQueue(activeCenterId);
 
       // Backend uses "BOOKED" for a freshly created booking and "WAITING" for
       // seeded/waiting bookings — both mean "not yet arrived" in this UI.
@@ -65,13 +70,13 @@ export function QueueProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeCenterId]);
 
   useEffect(() => {
     loadQueue();
     
     // Bind robust reconnectable live socket logic gracefully
-    liveQueueSocket.connect(CENTER_ID);
+    liveQueueSocket.connect(activeCenterId);
     
     const unsubscribe = liveQueueSocket.subscribe((payload) => {
       console.log("Live WebSocket Event Fired:", payload);
@@ -103,7 +108,7 @@ export function QueueProvider({ children }) {
       unsubscribe();
       liveQueueSocket.disconnect();
     };
-  }, [loadQueue]);
+  }, [loadQueue, activeCenterId]);
 
   const addAuditEntry = (tokenNumber, eventName, role, details) => {
     const newAuditLog = createAuditEvent(eventName, role, details);

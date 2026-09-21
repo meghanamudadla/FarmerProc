@@ -153,7 +153,7 @@ def update_grievance(
     db: Session = Depends(get_db),
     current_user: User = Depends(
         require_role(
-            "CENTER_OPERATOR"
+            ["CENTER_OPERATOR", "GOVERNMENT", "ADMIN"]
         )
     )
 ):

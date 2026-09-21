@@ -25,6 +25,7 @@ const ttsService = require(path.join(baseDir, 'services', 'ttsService'));
 const smsService = require(path.join(baseDir, 'services', 'smsService'));
 const group2Service = require(path.join(baseDir, 'services', 'group2Service'));
 const exotelService = require(path.join(baseDir, 'services', 'exotelService'));
+const db = require(path.join(baseDir, 'services', 'db'));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +89,10 @@ function resolveLanguage(req, callSid, phone) {
 const handleLanguageMenuRequest = async (req, res) => {
   try {
     const callDetails = exotelService.extractCallDetails(req);
+    const cleanPhone = smsService.sanitizePhoneNumber(callDetails.from);
+    if (cleanPhone && cleanPhone.length >= 10) {
+      db.ensureFarmerExists(cleanPhone).catch(e => console.warn('[DB Farmer Check Error]', e.message));
+    }
     const langSelectSpeech = languageStrings.languageSelection.speech;
     const audio = await ttsService.generateAudio(langSelectSpeech, 'te', 'lang_select');
 
@@ -177,6 +182,10 @@ app.post('/api/ivr/select-language', handleLanguageSelect);
 const handleMenuRequest = async (req, res) => {
   try {
     const callDetails = exotelService.extractCallDetails(req);
+    const cleanPhone = smsService.sanitizePhoneNumber(callDetails.from);
+    if (cleanPhone && cleanPhone.length >= 10) {
+      db.ensureFarmerExists(cleanPhone).catch(e => console.warn('[DB Farmer Check Error]', e.message));
+    }
     const lang = resolveLanguage(req, callDetails.callSid, callDetails.from);
     console.log(`[IVR Menu] Inbound call from ${callDetails.from || 'Anonymous'} (Lang: ${lang.toUpperCase()}, CallSid: ${callDetails.callSid})`);
 
@@ -216,6 +225,9 @@ const handleInputRequest = async (req, res) => {
     const callDetails = exotelService.extractCallDetails(req);
     const { from: farmerPhone, digits, callSid } = callDetails;
     const sanitizedPhone = smsService.sanitizePhoneNumber(farmerPhone) || '9876543210';
+    if (sanitizedPhone) {
+      db.ensureFarmerExists(sanitizedPhone).catch(e => console.warn('[DB Farmer Check Error]', e.message));
+    }
     const lang = resolveLanguage(req, callSid, sanitizedPhone);
     const dict = getStrings(lang);
 
@@ -391,6 +403,9 @@ app.post('/api/alerts/payment-delay', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Valid 10-digit Indian phoneNumber is required' });
     }
 
+    // Ensure farmer details exist in PostgreSQL database
+    await db.ensureFarmerExists(cleanPhone, { farmerName });
+
     // Determine language (provided > caller preference > 'te')
     const lang = language || callerPreferences.get(cleanPhone) || 'te';
     const dict = getStrings(lang);
@@ -503,7 +518,7 @@ app.post('/api/ivr/payment-delay-call', handlePaymentDelayCall);
  */
 app.post('/api/alerts/check-delayed-payments', async (req, res) => {
   try {
-    const delayedList = group2Service.getDelayedPayments();
+    const delayedList = await group2Service.getDelayedPayments();
     const results = [];
 
     for (const payment of delayedList) {
@@ -577,6 +592,11 @@ app.post('/api/slots/cancel', async (req, res) => {
     }
 
     console.log(`\n♻️ [Slot Re-allocation] Slot freed (${slotDetails.freedTokenId}). Offering to Farmer #2: ${nextFarmer.farmerName} (+91 ${nextFarmer.phoneNumber})`);
+
+    // Enter farmer details into database when farmer is called with slot offer
+    if (nextFarmer && nextFarmer.phoneNumber) {
+      await db.ensureFarmerExists(nextFarmer.phoneNumber, { farmerName: nextFarmer.farmerName, language: nextFarmer.language });
+    }
 
     const lang = nextFarmer.language || 'te';
     const dict = getStrings(lang);
@@ -744,6 +764,12 @@ const handleSlotReallocateInput = async (req, res) => {
       // ASYNCHRONOUSLY CASCADE TO NEXT FARMER (Farmer #3)
       const nextLang = nextFarmer.language || 'te';
       const nextDict = getStrings(nextLang);
+
+      // Enter cascaded farmer details into database when called
+      if (nextFarmer && nextFarmer.phoneNumber) {
+        db.ensureFarmerExists(nextFarmer.phoneNumber, { farmerName: nextFarmer.farmerName, language: nextFarmer.language })
+          .catch(e => console.warn('[DB Farmer Check Error]', e.message));
+      }
 
       // Send SMS to next farmer
       const nextSms = nextDict.slotReallocation.offerSms(slotDetails);
@@ -917,22 +943,29 @@ app.post('/api/test/simulate', async (req, res) => {
 });
 
 // Health check and Dashboard stats
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  const dbConnected = await db.isHealthy();
+  const delayedPayments = await group2Service.getDelayedPayments();
+
   res.json({
     status: 'ONLINE',
     service: 'Group 1 Telephony Subsystem',
+    database: {
+      connected: dbConnected,
+      provider: 'Aiven Cloud PostgreSQL'
+    },
     features: [
       'Multi-Language IVR (te, hi, en)',
       'Payment Delay Alerts (SMS + Outbound Voice)',
       'Smart Slot Re-allocation Flow'
     ],
-    mockGroup2: process.env.USE_MOCK_GROUP2 !== 'false',
+    mockGroup2: process.env.USE_MOCK_GROUP2 === 'true',
     smsHistory: smsService.getHistory(),
     callHistory: exotelService.getCallHistory(),
     activeBookings: group2Service.getMockBookings(),
     waitlist: group2Service.getWaitlist(),
     reallocations: group2Service.getReallocations(),
-    delayedPayments: group2Service.getDelayedPayments(),
+    delayedPayments,
     callerPreferences: Object.fromEntries(callerPreferences),
     serverBaseUrl: process.env.SERVER_BASE_URL || `http://localhost:${PORT}`
   });
@@ -945,8 +978,13 @@ app.get('/api/reallocations/status', (req, res) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', uptime: process.uptime() });
+app.get('/api/health', async (req, res) => {
+  const dbConnected = await db.isHealthy();
+  res.json({
+    status: 'OK',
+    uptime: process.uptime(),
+    database: dbConnected ? 'CONNECTED' : 'DISCONNECTED'
+  });
 });
 
 // ============================================================================
@@ -959,9 +997,9 @@ app.listen(PORT, async () => {
   console.log(`📊 Test Dashboard: http://localhost:${PORT}/index.html`);
   console.log(`📞 Exotel Webhook URL: http://localhost:${PORT}/api/ivr/handle-input`);
   console.log(`🌐 Multi-Language IVR: http://localhost:${PORT}/api/ivr/language-menu`);
-  console.log(`🚨 Payment Delay Alerts: http://localhost:${PORT}/api/alerts/payment-delay`);
-  console.log(`♻️  Slot Re-allocation: http://localhost:${PORT}/api/slots/cancel`);
-  console.log(`⚙️  Mock Group 2 Enabled: ${process.env.USE_MOCK_GROUP2 !== 'false'}`);
+  const dbHealthy = await db.isHealthy();
+  console.log(`🗄️  PostgreSQL Database: ${dbHealthy ? 'CONNECTED (Aiven Cloud)' : 'OFFLINE'}`);
+  console.log(`⚙️  Mock Group 2 Enabled: ${process.env.USE_MOCK_GROUP2 === 'true'}`);
   console.log(`✉️  Fast2SMS Mode: ${process.env.FAST2SMS_API_KEY ? 'LIVE' : 'SIMULATION / DRY-RUN'}`);
   console.log(`📱 Exotel Mode: ${process.env.EXOTEL_API_KEY ? 'LIVE' : 'SIMULATION / DRY-RUN'}`);
   console.log('=============================================================');

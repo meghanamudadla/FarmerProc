@@ -40,6 +40,7 @@ const mockStorage = [
 ];
 
 const stageColors = {
+  BOOKED: 'text-text-muted', ARRIVED: 'text-accent-blue', CHECKED_IN: 'text-accent-blue',
   WAITING: 'text-status-busy', WEIGHING: 'text-accent-blue', QUALITY_CHECK: 'text-accent-purple',
   PAYMENT: 'text-accent-emerald', PAYMENT_PROCESSING: 'text-accent-emerald',
   PAYMENT_COMPLETED: 'text-status-normal', ACCEPTED: 'text-status-normal', REJECTED: 'text-severity-critical',
@@ -146,8 +147,8 @@ export default function CenterDetail() {
         <div className="bg-bg-card border border-gray-800 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-text-primary mb-4">📋 Live Queue</h3>
           <div className="space-y-2">
-            {queueItems.map(q => (
-              <div key={q.token} className="flex items-center justify-between py-2 border-b border-gray-800/50 last:border-0">
+            {queueItems.map((q, idx) => (
+              <div key={`${q.token}-${idx}`} className="flex items-center justify-between py-2 border-b border-gray-800/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="font-tabular text-xs text-accent-blue font-bold">{q.token}</span>
                   <span className="text-sm text-text-primary">{q.farmer}</span>

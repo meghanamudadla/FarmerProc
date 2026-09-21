@@ -34,9 +34,17 @@ class QueueService {
     this.bookingId = String(bookingId);
     this.shouldReconnect = true;
     
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const baseUrl = 'localhost:8000';
-    const wsUrl = `${protocol}//${baseUrl}/center/${centerId}/ws`;
+    let wsUrl;
+    try {
+      const apiUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:8000';
+      const parsed = new URL(apiUrl);
+      const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${parsed.host}/center/${centerId}/ws`;
+    } catch {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const baseUrl = 'localhost:8000';
+      wsUrl = `${protocol}//${baseUrl}/center/${centerId}/ws`;
+    }
     
     this._initSocket(wsUrl);
   }

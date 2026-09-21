@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Sequence
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
@@ -72,15 +72,17 @@ def get_current_user(
     return user
 
 
-def require_role(required_role: str):
+def require_role(required_role: Union[str, Sequence[str]]):
+    allowed = {required_role} if isinstance(required_role, str) else set(required_role)
+    allowed.add("ADMIN")
+
     def role_checker(
         current_user: User = Depends(get_current_user)
     ):
-        # Admins have super-user access; operators match CENTER_OPERATOR
-        if current_user.role != required_role and current_user.role != "ADMIN":
+        if current_user.role not in allowed and current_user.role != "ADMIN":
             raise HTTPException(
                 status_code=403,
-                detail=f"Permission denied: role '{required_role}' required."
+                detail=f"Permission denied: role in {list(allowed)} required."
             )
         return current_user
 
