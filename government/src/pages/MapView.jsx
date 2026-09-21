@@ -16,20 +16,20 @@ export default function MapView() {
     getCenters()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          const liveMapped = data.map((c, i) => ({
+          const liveMapped = data.map((c) => ({
             id: `c${c.id}`,
             name: c.name,
             district: c.district || 'East Godavari',
-            lat: 16.9891 + (i * 0.15) - 0.2,
-            lng: 82.2475 + (i * 0.25) - 0.3,
-            status: 'normal',
-            queueLength: 6,
-            expectedWait: 20,
-            capacityPercent: 45,
-            todayArrivals: 30,
-            processingRate: 12,
-            staffOnDuty: 8,
-            storagePercent: 40,
+            lat: typeof c.latitude === 'number' ? c.latitude : 16.9891,
+            lng: typeof c.longitude === 'number' ? c.longitude : 82.2475,
+            status: (c.operating_status || c.status || 'normal').toLowerCase(),
+            queueLength: c.current_queue != null ? c.current_queue : 0,
+            expectedWait: c.est_wait_minutes != null ? c.est_wait_minutes : 0,
+            capacityPercent: Math.min(100, Math.round(((c.today_arrivals || 0) / Math.max(1, c.capacity || 100)) * 100)),
+            todayArrivals: c.today_arrivals != null ? c.today_arrivals : 0,
+            processingRate: (c.active_counters || 2) * 4,
+            staffOnDuty: (c.active_counters || 2) * 3,
+            storagePercent: Math.min(100, Math.round(((c.today_arrivals || 0) * 20 / Math.max(1, c.storage_cap_qtl || 5000)) * 100)),
             crops: ['paddy', 'cotton'],
             approvalStatus: 'active',
           }));

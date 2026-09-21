@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react';
+import { sendOtpToPhone, verifyOtpCode } from '../services/authService.js';
 
 export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMobile, addNotif, formatMobile }) {
   const [step, setStep] = useState(1); // 1: Enter number, 2: OTP
   const [newMobile, setNewMobile] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const otpRefs = useRef([]);
 
   if (!isOpen) return null;
@@ -11,10 +14,24 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
   const rawDigits = newMobile.replace(/\D/g, '');
   const isValidMobile = rawDigits.length === 10;
 
-  function handleSendOtp() {
+  async function handleSendOtp() {
     if (!isValidMobile) return;
-    setStep(2);
-    addNotif('sms', lang === 'te' ? `నవీకరణ కోసం మీ OTP 7192.` : lang === 'hi' ? `अपडेट के लिए आपका ओटीपी 7192 है।` : `Your mobile update OTP is 7192. Do not share it.`);
+    setErrorMsg('');
+    setBusy(true);
+    try {
+      await sendOtpToPhone(rawDigits);
+      setStep(2);
+      addNotif(
+        'sms',
+        lang === 'te'
+          ? `మీ నమోదిత ఫోన్ +91 ${rawDigits}కు ధృవీకరణ OTP పంపబడింది. దయచేసి SMS ఇన్‌బాక్స్ చూడండి.`
+          : `Verification OTP sent to registered mobile +91 ${rawDigits}. Please check your phone SMS inbox.`
+      );
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to dispatch OTP. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleOtpChange(i, val) {
@@ -28,16 +45,35 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
     }
   }
 
-  function handleVerifyAndSave() {
-    if (otp.some((d) => !d)) return;
-    const formatted = '+91 ' + rawDigits.slice(0, 5) + ' ' + rawDigits.slice(5);
-    onUpdateMobile(formatted);
-    addNotif('sms', lang === 'te' ? `మీ నమోదిత మొబైల్ సంఖ్య నవీకరించబడింది.` : lang === 'hi' ? `आपका पंजीकृत मोबाइल नंबर अपडेट हो गया है।` : `Your registered mobile number has been updated.`);
-    onClose();
-    // Reset modal state
-    setStep(1);
-    setNewMobile('');
-    setOtp(['', '', '', '', '', '']);
+  async function handleVerifyAndSave() {
+    const enteredOtp = otp.join('').trim();
+    if (enteredOtp.length !== 6) return;
+    setErrorMsg('');
+    setBusy(true);
+    try {
+      await verifyOtpCode(rawDigits, enteredOtp);
+      const formatted = '+91 ' + rawDigits.slice(0, 5) + ' ' + rawDigits.slice(5);
+      onUpdateMobile(formatted);
+      addNotif(
+        'sms',
+        lang === 'te'
+          ? 'మీ నమోదిత మొబైల్ సంఖ్య నవీకరించబడింది.'
+          : lang === 'hi'
+          ? 'आपका पंजीकृत मोबाइल नंबर अपडेट हो गया है।'
+          : 'Your registered mobile number has been updated.'
+      );
+      onClose();
+      // Reset modal state
+      setStep(1);
+      setNewMobile('');
+      setOtp(['', '', '', '', '', '']);
+    } catch (err) {
+      setErrorMsg(err.message || 'Invalid OTP code. Please check your SMS and try again.');
+      setOtp(['', '', '', '', '', '']);
+      if (otpRefs.current[0]) otpRefs.current[0].focus();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -59,6 +95,12 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
           🔒 {t.mobileUpdateNotice || '2-step OTP verification required before changing registered mobile number.'}
         </div>
 
+        {errorMsg && (
+          <div className="hint error" style={{ marginBottom: 14, color: '#b91c1c', background: 'rgba(239, 68, 68, 0.1)', padding: '8px 12px', borderRadius: 6, fontSize: 13 }}>
+            ⚠️ {errorMsg}
+          </div>
+        )}
+
         {step === 1 ? (
           <>
             <div className="field">
@@ -78,23 +120,23 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
             </div>
 
             <div className="btn-row">
-              <button className="btn btn-ghost" onClick={onClose}>
+              <button className="btn btn-ghost" onClick={onClose} disabled={busy}>
                 {t.back || 'Cancel'}
               </button>
               <button
                 className="btn btn-primary"
                 style={{ flex: 1, justifyContent: 'center' }}
-                disabled={!isValidMobile}
+                disabled={!isValidMobile || busy}
                 onClick={handleSendOtp}
               >
-                {t.sendMobileOtp || 'Send OTP'} →
+                {busy ? (lang === 'en' ? 'Sending OTP...' : 'OTP పంపుతోంది...') : (t.sendMobileOtp || 'Send OTP') + ' →'}
               </button>
             </div>
           </>
         ) : (
           <>
             <div className="hint ok" style={{ marginBottom: 12 }}>
-              ✓ {t.otpSentTo ? t.otpSentTo('+91 ' + rawDigits) : `OTP sent to +91 ${rawDigits}`}
+              ✓ {t.otpSentTo ? t.otpSentTo('+91 ' + rawDigits) : `OTP sent via SMS to +91 ${rawDigits}. Please check your phone.`}
             </div>
             <label>{t.enterOtp || 'Enter 6-digit OTP'}</label>
             <div className="otp-row" style={{ margin: '8px 0 16px' }}>
@@ -114,16 +156,16 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
             </div>
 
             <div className="btn-row">
-              <button className="btn btn-ghost" onClick={() => setStep(1)}>
+              <button className="btn btn-ghost" onClick={() => setStep(1)} disabled={busy}>
                 ← {t.back || 'Back'}
               </button>
               <button
                 className="btn btn-primary"
                 style={{ flex: 1, justifyContent: 'center' }}
-                disabled={otp.some((d) => !d)}
+                disabled={otp.some((d) => !d) || busy}
                 onClick={handleVerifyAndSave}
               >
-                ✓ {t.verifyAndUpdate || 'Verify OTP & Save'}
+                {busy ? (lang === 'en' ? 'Verifying...' : 'ధృవీకరిస్తోంది...') : `✓ ${t.verifyAndUpdate || 'Verify OTP & Save'}`}
               </button>
             </div>
           </>
@@ -132,3 +174,4 @@ export default function MobileUpdateModal({ t, lang, isOpen, onClose, onUpdateMo
     </div>
   );
 }
+

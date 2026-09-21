@@ -35,9 +35,10 @@ else:
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
-        pool_recycle=300,
+        pool_recycle=120,
         pool_size=10,
         max_overflow=20,
+        connect_args={"connect_timeout": 10}
     )
 
 SessionLocal = sessionmaker(

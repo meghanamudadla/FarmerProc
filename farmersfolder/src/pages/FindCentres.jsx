@@ -2,11 +2,13 @@ import { useState, useMemo } from 'react';
 import { useRealCentres } from '../services/realCentres.js';
 import { CentreService } from '../services/centreService.js';
 import CentreCard from '../components/CentreCard.jsx';
+import CentresMap from '../components/CentresMap.jsx';
 import CompareCentresModal from '../components/CompareCentresModal.jsx';
 import CentreDetailsModal from '../components/CentreDetailsModal.jsx';
 
 export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking }) {
   const { centres: CENTRES, loading: centresLoading, error: centresError } = useRealCentres();
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'map'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('nearest');
@@ -80,13 +82,31 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
 
   return (
     <>
-      {/* Header Title */}
-      <div className="section-title">
+      {/* Header Title & View Mode Toggle */}
+      <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2>🏢 {t.findCentresTitle || 'Find & Compare Procurement Centres'}</h2>
           <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 2 }}>
             {t.findCentresSub || 'Compare nearby mandis, live queue congestion, and operational capacity.'}
           </div>
+        </div>
+
+        {/* View Mode Toggle */}
+        <div style={{ display: 'flex', gap: 6, background: 'var(--surface-2)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <button
+            className={`btn ${viewMode === 'cards' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '6px 14px', fontSize: 12.5, borderRadius: '8px' }}
+            onClick={() => setViewMode('cards')}
+          >
+            📋 {lang === 'en' ? 'Cards List' : 'కార్డుల జాబితా'}
+          </button>
+          <button
+            className={`btn ${viewMode === 'map' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '6px 14px', fontSize: 12.5, borderRadius: '8px' }}
+            onClick={() => setViewMode('map')}
+          >
+            🗺️ {lang === 'en' ? 'Live Map View' : 'లైవ్ మ్యాప్'}
+          </button>
         </div>
       </div>
 
@@ -177,7 +197,7 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
         </div>
       </div>
 
-      {/* Results List */}
+      {/* Main View: Map or Cards */}
       {centresLoading ? (
         <div className="card empty-note" style={{ textAlign: 'center', padding: '32px 20px' }}>
           ⏳ Loading procurement centres from the mandi server...
@@ -190,6 +210,15 @@ export default function FindCentres({ t, lang, farmer, onSelectCentreForBooking 
         <div className="card empty-note" style={{ textAlign: 'center', padding: '32px 20px' }}>
           🔍 No procurement centres found matching your search. Try changing your search query or filters.
         </div>
+      ) : viewMode === 'map' ? (
+        <CentresMap
+          t={t}
+          lang={lang}
+          centres={sortedCentres}
+          onViewDetails={(c) => setSelectedDetailCentre(c)}
+          onSelectForBooking={(c) => onSelectCentreForBooking(c)}
+          farmer={farmer}
+        />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16 }}>
           {sortedCentres.map((centre) => (

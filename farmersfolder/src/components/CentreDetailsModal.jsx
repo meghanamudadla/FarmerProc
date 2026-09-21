@@ -31,7 +31,7 @@ export default function CentreDetailsModal({
             Congestion: {congestionLevel}
           </span>
           <span className="pill" style={{ background: 'var(--surface-2)' }}>
-            📍 {centre.distanceKm || '3.2'} km away
+            📍 {centre.distanceKm ? `${centre.distanceKm} km away` : `${centre.district} (${centre.pin || ''})`}
           </span>
         </div>
 

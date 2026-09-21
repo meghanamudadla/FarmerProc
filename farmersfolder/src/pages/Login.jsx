@@ -312,26 +312,25 @@ export default function Login({
                   </span>
                 </div>
                 <div>
-                  {dispatchedOtpInfo?.smsDelivered ? (
-                    <span style={{ color: '#047857', fontWeight: 600 }}>
-                      ✓ {lang === 'en' ? `Real SMS delivered via ${dispatchedOtpInfo.provider}. Check your phone.` : `SMS ద్వారా OTP పంపబడింది. మీ ఫోన్ చూడండి.`}
-                    </span>
-                  ) : (
-                    <span>
-                      {lang === 'en'
-                        ? '6-digit verification code has been dispatched to this registered number.'
-                        : 'ఈ నమోదిత నంబర్‌కు 6 అంకెల ధృవీకరణ కోడ్ పంపబడింది.'}
-                    </span>
-                  )}
+                  <span style={{ color: '#047857', fontWeight: 500 }}>
+                    {dispatchedOtpInfo?.smsDelivered
+                      ? (lang === 'en'
+                          ? `✓ Real SMS sent via ${dispatchedOtpInfo.provider}. Check your phone.`
+                          : `✓ ${dispatchedOtpInfo.provider} ద్వారా SMS పంపబడింది. మీ ఫోన్ చూడండి.`)
+                      : (lang === 'en'
+                          ? '6-digit verification code has been generated for this registered number.'
+                          : 'ఈ నమోదిత నంబర్‌కు 6 అంకెల ధృవీకరణ కోడ్ రూపొందించబడింది.')}
+                  </span>
                 </div>
 
                 {dispatchedOtpInfo?.otp && (
                   <div
                     style={{
-                      marginTop: 8,
-                      padding: '6px 10px',
+                      marginTop: 10,
+                      padding: '8px 12px',
                       background: 'rgba(5, 150, 105, 0.12)',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #059669',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -340,20 +339,20 @@ export default function Login({
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#065f46' }}>
-                        {lang === 'en' ? 'Dispatched Code:' : 'పంపబడిన కోడ్:'}
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#065f46' }}>
+                        {lang === 'en' ? '🔑 Verification OTP:' : '🔑 ధృవీకరణ కోడ్:'}
                       </span>{' '}
                       <span
                         style={{
                           display: 'inline-block',
                           fontFamily: 'monospace',
-                          fontSize: '16px',
-                          fontWeight: 800,
+                          fontSize: '18px',
+                          fontWeight: 900,
                           letterSpacing: '3px',
                           background: '#047857',
                           color: '#ffffff',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
                         }}
                       >
                         {dispatchedOtpInfo.otp}
@@ -362,13 +361,13 @@ export default function Login({
                     <button
                       type="button"
                       style={{
-                        padding: '4px 10px',
-                        fontSize: '11.5px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
                         fontWeight: 700,
                         background: '#047857',
                         color: '#fff',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '6px',
                         cursor: 'pointer',
                       }}
                       onClick={() => {

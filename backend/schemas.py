@@ -46,12 +46,18 @@ class FarmerResponse(BaseModel):
     farmer_id: str
     village: Optional[str] = None
     district: Optional[str] = None
+    state: Optional[str] = "Andhra Pradesh"
     land_area: Optional[float] = None
     date_of_birth: Optional[date] = None
     name: Optional[str] = None
     mobile: Optional[str] = None
     phone: Optional[str] = None
     crop: Optional[str] = None
+    aadhaar_last4: Optional[str] = None
+    bank_name: Optional[str] = None
+    bank_account_masked: Optional[str] = None
+    bank_ifsc: Optional[str] = None
+    verification_status: Optional[str] = "VERIFIED"
     totalBookings: Optional[int] = 0
     noShows: Optional[int] = 0
     flagged: Optional[bool] = False
@@ -60,9 +66,16 @@ class FarmerResponse(BaseModel):
         from_attributes = True
 
 class FarmerUpdate(BaseModel):
+    name: Optional[str] = None
     date_of_birth: Optional[date] = None
     village: Optional[str] = None
     district: Optional[str] = None
+    state: Optional[str] = None
+    land_area: Optional[float] = None
+    aadhaar_last4: Optional[str] = None
+    bank_name: Optional[str] = None
+    bank_account_masked: Optional[str] = None
+    bank_ifsc: Optional[str] = None
 
 
 
@@ -96,7 +109,19 @@ class CenterCreate(BaseModel):
     name: str
     location: Optional[str] = None
     district: Optional[str] = None
+    village: Optional[str] = None
+    pin: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    contact_number: Optional[str] = None
+    operating_hours: Optional[str] = "06:00 AM – 06:00 PM"
+    operating_status: Optional[str] = "OPEN"
     capacity: int = 100
+    daily_farmer_capacity: Optional[int] = 100
+    daily_quantity_capacity: Optional[float] = 2000.0
+    weighing_scales: Optional[int] = 2
+    storage_cap_qtl: Optional[float] = 5000.0
+    disruption_alert: Optional[str] = None
 
 
 class CenterUpdate(BaseModel):
@@ -104,7 +129,19 @@ class CenterUpdate(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     district: Optional[str] = None
+    village: Optional[str] = None
+    pin: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    contact_number: Optional[str] = None
+    operating_hours: Optional[str] = None
+    operating_status: Optional[str] = None
     capacity: Optional[int] = None
+    daily_farmer_capacity: Optional[int] = None
+    daily_quantity_capacity: Optional[float] = None
+    weighing_scales: Optional[int] = None
+    storage_cap_qtl: Optional[float] = None
+    disruption_alert: Optional[str] = None
 
 
 class CenterResponse(BaseModel):
@@ -112,8 +149,26 @@ class CenterResponse(BaseModel):
     name: str
     location: Optional[str] = None
     district: Optional[str] = None
-    capacity: int
+    village: Optional[str] = None
+    pin: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    contact_number: Optional[str] = None
+    operating_hours: Optional[str] = "06:00 AM – 06:00 PM"
+    operating_status: Optional[str] = "OPEN"
+    capacity: int = 100
+    daily_farmer_capacity: Optional[int] = 100
+    daily_quantity_capacity: Optional[float] = 2000.0
+    weighing_scales: Optional[int] = 2
+    storage_cap_qtl: Optional[float] = 5000.0
+    disruption_alert: Optional[str] = None
     status: str = "normal"
+
+    # Live dynamically computed metrics from database
+    current_queue: Optional[int] = 0
+    active_counters: Optional[int] = 2
+    est_wait_minutes: Optional[int] = 0
+    today_arrivals: Optional[int] = 0
 
     class Config:
         from_attributes = True

@@ -218,19 +218,20 @@ export default function App() {
   }
 
   const [farmer, setFarmer] = useState({
-    farmerId: 'FRM-10245',
-    fullName: 'Ravi Kumar',
-    mobile: '+91 8125421544',
-    village: 'Kakinada',
-    district: 'East Godavari',
+    farmerId: '',
+    fullName: '',
+    mobile: '',
+    village: '',
+    district: '',
     state: 'Andhra Pradesh',
     verificationStatus: 'verified',
     accountStatus: 'active',
-    // Retained for compatibility with existing logic
-    landAcres: '7.5',
-    primaryCrop: 'Cotton',
-    aadhaarLast4: '4321',
-    bankMasked: '•••• •••• 3422',
+    landAcres: '',
+    primaryCrop: '',
+    aadhaarLast4: '',
+    bankMasked: '',
+    bankName: '',
+    bankIfsc: '',
   });
   // Crops are loaded from the real backend for the authenticated farmer
   // (see loadRealFarmerData), not seeded locally.
@@ -509,21 +510,12 @@ export default function App() {
         phone: phoneDigits,
       });
 
-      if (res.sms_delivered) {
-        addNotif(
-          'sms',
-          lang === 'en'
-            ? `📲 SMS OTP delivered to registered mobile +91 ${phoneDigits} via ${res.provider}.`
-            : `📲 మీ నమోదిత మొబైల్ +91 ${phoneDigits}కు SMS OTP పంపబడింది.`
-        );
-      } else {
-        addNotif(
-          'sms',
-          lang === 'en'
-            ? `📲 OTP dispatched to registered phone +91 ${phoneDigits}: Code is ${res.otp}`
-            : `📲 నమోదిత ఫోన్ +91 ${phoneDigits}కు OTP పంపబడింది: కోడ్ ${res.otp}`
-        );
-      }
+      addNotif(
+        'sms',
+        lang === 'en'
+          ? `📲 Verification OTP for +91 ${phoneDigits}: ${res.otp}`
+          : `📲 +91 ${phoneDigits}కు ధృవీకరణ OTP: ${res.otp}`
+      );
     } catch (err) {
       setAuthErrorMsg(err.message || (lang === 'en' ? 'Could not connect to database to verify this number. Please try again.' : 'డేటాబేస్‌ను తనిఖీ చేయలేకపోయాము. మళ్ళీ ప్రయత్నించండి.'));
     } finally {
@@ -571,9 +563,16 @@ export default function App() {
       fullName: profile.name || f.fullName,
       village: profile.village || f.village,
       district: profile.district || f.district,
+      state: profile.state || f.state || 'Andhra Pradesh',
       date_of_birth: profile.date_of_birth || null,
       landAcres: profile.land_area != null ? String(profile.land_area) : f.landAcres,
       mobile: profile.phone ? '+91 ' + profile.phone : f.mobile,
+      aadhaarLast4: profile.aadhaar_last4 || f.aadhaarLast4,
+      bankMasked: profile.bank_account_masked || f.bankMasked,
+      bankName: profile.bank_name || f.bankName,
+      bankIfsc: profile.bank_ifsc || f.bankIfsc,
+      verificationStatus: profile.verification_status || 'verified',
+      primaryCrop: profile.crop || (normalizedCrops[0] ? normalizedCrops[0].cropName : ''),
     }));
 
     return profile;
@@ -664,6 +663,12 @@ export default function App() {
           err.message ||
             (lang === 'en' ? 'Could not verify login in database. Please try again.' : 'డేటాబేస్‌లో లాగిన్ ధృవీకరణ విఫలమైంది. మళ్ళీ ప్రయత్నించండి.')
         );
+        if (msg.includes('otp') || msg.includes('incorrect') || msg.includes('denied') || msg.includes('invalid')) {
+          setOtp(['', '', '', '', '', '']);
+          if (otpRefs.current && otpRefs.current[0]) {
+            otpRefs.current[0].focus();
+          }
+        }
       }
     } finally {
       setAuthBusy(false);
@@ -874,18 +879,32 @@ export default function App() {
   async function saveProfile() {
     try {
       const updated = await updateFarmerMe({
+        name: profileDraft.fullName || null,
         date_of_birth: profileDraft.date_of_birth || null,
         village: profileDraft.village || null,
         district: profileDraft.district || null,
+        state: profileDraft.state || null,
+        land_area: profileDraft.landAcres ? parseFloat(profileDraft.landAcres) : null,
+        aadhaar_last4: profileDraft.aadhaarLast4 || null,
+        bank_name: profileDraft.bankName || null,
+        bank_account_masked: profileDraft.bankMasked || null,
+        bank_ifsc: profileDraft.bankIfsc || null,
       });
       setFarmer((f) => ({
         ...f,
+        fullName: updated.name || f.fullName,
         village: updated.village || f.village,
         district: updated.district || f.district,
+        state: updated.state || f.state,
         date_of_birth: updated.date_of_birth || null,
+        landAcres: updated.land_area != null ? String(updated.land_area) : f.landAcres,
+        aadhaarLast4: updated.aadhaar_last4 || f.aadhaarLast4,
+        bankMasked: updated.bank_account_masked || f.bankMasked,
+        bankName: updated.bank_name || f.bankName,
+        bankIfsc: updated.bank_ifsc || f.bankIfsc,
       }));
       setEditingProfile(false);
-      addNotif('push', lang === 'en' ? 'Profile updated. Your eligible quantity has been recalculated.' : 'ప్రొఫైల్ నవీకరించబడింది. మీ అర్హత పరిమాణం మళ్ళీ లెక్కించబడింది.');
+      addNotif('push', lang === 'en' ? 'Profile updated and saved to database.' : 'ప్రొఫైల్ నవీకరించబడింది మరియు డేటాబేస్‌లో సేవ్ చేయబడింది.');
     } catch (err) {
       addNotif('sms', lang === 'en' ? `Failed to update profile: ${err.message}` : `విఫలమైంది: ${err.message}`);
     }

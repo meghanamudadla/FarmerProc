@@ -107,6 +107,38 @@ class Farmer(Base):
         nullable=True
     )
 
+    state = Column(
+        String(100),
+        default="Andhra Pradesh",
+        nullable=True
+    )
+
+    aadhaar_last4 = Column(
+        String(4),
+        nullable=True
+    )
+
+    bank_name = Column(
+        String(100),
+        nullable=True
+    )
+
+    bank_account_masked = Column(
+        String(50),
+        nullable=True
+    )
+
+    bank_ifsc = Column(
+        String(20),
+        nullable=True
+    )
+
+    verification_status = Column(
+        String(30),
+        default="VERIFIED",
+        nullable=True
+    )
+
     user = relationship(
         "User",
         back_populates="farmer"
@@ -152,10 +184,76 @@ class ProcurementCenter(Base):
         nullable=True
     )
 
+    village = Column(
+        String(100),
+        nullable=True
+    )
+
+    pin = Column(
+        String(10),
+        nullable=True
+    )
+
+    latitude = Column(
+        Float,
+        nullable=True
+    )
+
+    longitude = Column(
+        Float,
+        nullable=True
+    )
+
+    contact_number = Column(
+        String(25),
+        nullable=True
+    )
+
+    operating_hours = Column(
+        String(50),
+        default="06:00 AM – 06:00 PM",
+        nullable=True
+    )
+
+    operating_status = Column(
+        String(30),
+        default="OPEN",
+        nullable=False
+    )
+
     capacity = Column(
         Integer,
         default=100,
         nullable=False
+    )
+
+    daily_farmer_capacity = Column(
+        Integer,
+        default=100,
+        nullable=True
+    )
+
+    daily_quantity_capacity = Column(
+        Float,
+        default=2000.0,
+        nullable=True
+    )
+
+    weighing_scales = Column(
+        Integer,
+        default=2,
+        nullable=True
+    )
+
+    storage_cap_qtl = Column(
+        Float,
+        default=5000.0,
+        nullable=True
+    )
+
+    disruption_alert = Column(
+        String(255),
+        nullable=True
     )
 
     status = Column(

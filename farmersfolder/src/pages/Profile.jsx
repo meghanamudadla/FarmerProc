@@ -20,7 +20,7 @@ export default function Profile({
             </span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
-            AgriStack KISAN Registry Token: <span className="mono" style={{ fontWeight: 600 }}>{farmer.farmerId || 'FARM-91234567'}</span>
+            AgriStack KISAN Registry Token: <span className="mono" style={{ fontWeight: 600 }}>{farmer.farmerId || 'AgriStack Verified'}</span>
           </div>
         </div>
 
@@ -47,7 +47,7 @@ export default function Profile({
             <div className="detail-item">
               <div className="dl">Farmer ID (AgriStack)</div>
               <div className="dv mono" style={{ color: 'var(--accent)', fontWeight: 700 }}>
-                {farmer.farmerId || 'FARM-91234567'} 🔒
+                {farmer.farmerId || 'AgriStack Verified'} 🔒
               </div>
             </div>
 
@@ -133,13 +133,13 @@ export default function Profile({
             <div className="detail-item">
               <div className="dl">Direct Payout Bank Account</div>
               <div className="dv mono" style={{ letterSpacing: '.05em' }}>
-                {farmer.bankMasked || '•••• •••• 3422'} (SBI)
+                {farmer.bankMasked ? `${farmer.bankMasked} (${farmer.bankName || 'SBI'})` : (farmer.bankName ? `Verified (${farmer.bankName})` : 'Not linked')}
               </div>
             </div>
 
             <div className="detail-item">
               <div className="dl">Aadhaar (Last 4)</div>
-              <div className="dv mono">•••• {farmer.aadhaarLast4 || '4321'}</div>
+              <div className="dv mono">{farmer.aadhaarLast4 ? `•••• ${farmer.aadhaarLast4}` : 'Verified via UIDAI'}</div>
             </div>
           </div>
         </>
