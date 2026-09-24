@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
+const API_BASE_URL =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+  "http://localhost:8000";
+
 const DEFAULT_USER = {
   id: 'STAFF-8842',
   name: 'Mandi Console Operator',
@@ -67,7 +71,6 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error('Failed to parse saved auth user:', e);
     }
-    // Default logged in user for seamless demo if needed, or set to null
     return DEFAULT_USER;
   });
 
@@ -80,6 +83,36 @@ export function AuthProvider({ children }) {
     }
     return CENTERS[0];
   });
+
+  // Acquire real JWT access token from FastAPI backend
+  const fetchOperatorToken = async (phone = "9000000001", password = "password123") => {
+    try {
+      const res = await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          localStorage.setItem("access_token", data.access_token);
+          sessionStorage.setItem("access_token", data.access_token);
+          return data.access_token;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not acquire JWT token for center console:", err);
+    }
+    return null;
+  };
+
+  // Ensure valid token exists if user is authenticated
+  useEffect(() => {
+    const existingToken = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    if (user && !existingToken) {
+      fetchOperatorToken();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -95,9 +128,12 @@ export function AuthProvider({ children }) {
     }
   }, [center]);
 
-  const quickLogin = (roleKey, customCenterId = null) => {
+  const quickLogin = async (roleKey, customCenterId = null) => {
     const profile = ROLE_PROFILES.find((r) => r.key === roleKey) || ROLE_PROFILES[0];
     const selectedCenter = CENTERS.find((c) => c.id === customCenterId) || center || CENTERS[0];
+
+    // Authenticate with center operator credentials to obtain valid JWT
+    await fetchOperatorToken("9000000001", "password123");
 
     const newUser = {
       id: `STAFF-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -117,9 +153,14 @@ export function AuthProvider({ children }) {
     return true;
   };
 
-  const loginWithCredentials = ({ staffId, password, roleKey, centerId }) => {
+  const loginWithCredentials = async ({ staffId, password, roleKey, centerId }) => {
     const profile = ROLE_PROFILES.find((r) => r.key === roleKey) || ROLE_PROFILES[0];
     const selectedCenter = CENTERS.find((c) => c.id === centerId) || CENTERS[0];
+
+    // If staffId is phone number, use it; otherwise use the center operator account
+    const phoneToUse = /^\d{10}$/.test(staffId) ? staffId : "9000000001";
+    const passToUse = password || "password123";
+    await fetchOperatorToken(phoneToUse, passToUse);
 
     const nameFromId = staffId.includes('@')
       ? staffId.split('@')[0].replace('.', ' ').toUpperCase()
@@ -146,6 +187,8 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('center_app_user');
+    localStorage.removeItem('access_token');
+    sessionStorage.removeItem('access_token');
   };
 
   return (

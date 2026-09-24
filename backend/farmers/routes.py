@@ -111,7 +111,7 @@ def update_my_profile(
 @router.get("/all", response_model=list[FarmerResponse])
 def get_all_farmers(
     db: Session = Depends(get_db),
-    current_admin=Depends(require_role("ADMIN"))
+    current_admin=Depends(require_role(["ADMIN", "GOVERNMENT", "SUPER_ADMIN"]))
 ):
     farmers = db.query(Farmer).all()
     return [build_farmer_response(f, f.user) for f in farmers]

@@ -12,15 +12,20 @@ def test_otp_security_workflow():
     
     # 1. Find or verify a registered farmer phone in DB
     db = SessionLocal()
-    farmer_user = db.query(User).filter(User.role == "FARMER").first()
-    db.close()
-    
+    farmer_user = db.query(User).filter(User.phone == "9876543210").first()
     if not farmer_user:
-        print("No farmer found in database. Please seed database first.")
-        return
+        farmer_user = db.query(User).filter(User.role == "FARMER").first()
     
     test_phone = farmer_user.phone[-10:]
-    print(f"Testing with registered farmer: {farmer_user.name} (+91 {test_phone})")
+    farmer_name = farmer_user.name
+    from models import OtpSession
+    db.query(OtpSession).filter(OtpSession.phone == test_phone).delete()
+    db.commit()
+    db.close()
+    _otp_sessions.pop(test_phone, None)
+    _verified_phones.pop(test_phone, None)
+    
+    print(f"Testing with registered farmer: {farmer_name} (+91 {test_phone})")
     
     # STEP 1: Request OTP
     res_send = client.post("/auth/send-otp", json={"phone": test_phone, "for_login": True})

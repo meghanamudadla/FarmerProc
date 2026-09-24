@@ -8,7 +8,10 @@ from sqlalchemy import (
     Date,
     DateTime,
     Time,
-    ForeignKey
+    ForeignKey,
+    CheckConstraint,
+    UniqueConstraint,
+    Index
 )
 from sqlalchemy.orm import relationship
 
@@ -286,6 +289,11 @@ class ProcurementCenter(Base):
 
 class Slot(Base):
     __tablename__ = "slots"
+    __table_args__ = (
+        CheckConstraint("booked_count <= capacity", name="ck_slot_capacity"),
+        CheckConstraint("booked_count >= 0", name="ck_slot_booked_non_negative"),
+        Index("idx_slot_center_date", "center_id", "date"),
+    )
 
     id = Column(
         Integer,
@@ -399,6 +407,10 @@ class Counter(Base):
 
 class Booking(Base):
     __tablename__ = "bookings"
+    __table_args__ = (
+        Index("idx_booking_center_date", "center_id", "booking_date"),
+        Index("idx_booking_farmer_status", "farmer_id", "status"),
+    )
 
     id = Column(
         Integer,
@@ -585,6 +597,11 @@ class Booking(Base):
 
 class Procurement(Base):
     __tablename__ = "procurements"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_procurement_quantity_positive"),
+        CheckConstraint("rate_per_quintal > 0", name="ck_procurement_rate_positive"),
+        CheckConstraint("total_amount >= 0", name="ck_procurement_amount_non_negative"),
+    )
 
     id = Column(
         Integer,
@@ -707,10 +724,39 @@ class Payment(Base):
         nullable=False
     )
 
+    provider_reference = Column(
+        String(100),
+        nullable=True
+    )
+
+    attempt_count = Column(
+        Integer,
+        default=1,
+        nullable=False
+    )
+
+    failure_reason = Column(
+        String(255),
+        nullable=True
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    completed_at = Column(
+        DateTime,
+        nullable=True
+    )
+
     procurement = relationship(
         "Procurement",
         back_populates="payment"
     )
+
 
 
 # ============================================================
@@ -835,6 +881,11 @@ class Crop(Base):
 
 class Weighment(Base):
     __tablename__ = "weighments"
+    __table_args__ = (
+        CheckConstraint("gross_weight_kg > tare_weight_kg", name="ck_weighment_gross_gt_tare"),
+        CheckConstraint("tare_weight_kg >= 0", name="ck_weighment_tare_non_negative"),
+        CheckConstraint("net_weight_kg > 0", name="ck_weighment_net_positive"),
+    )
 
     id = Column(
         Integer,
@@ -1161,3 +1212,118 @@ class AuditLogEntry(Base):
         default=datetime.utcnow,
         nullable=False
     )
+
+
+# ============================================================
+# OTP SESSION (Persistent database-backed OTP management)
+# ============================================================
+
+class OtpSession(Base):
+    __tablename__ = "otp_sessions"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    phone = Column(
+        String(15),
+        nullable=False,
+        index=True
+    )
+
+    otp_hash = Column(
+        String(255),
+        nullable=False
+    )
+
+    attempts = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+
+    max_attempts = Column(
+        Integer,
+        default=3,
+        nullable=False
+    )
+
+    resend_count = Column(
+        Integer,
+        default=1,
+        nullable=False
+    )
+
+    last_sent_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    expires_at = Column(
+        DateTime,
+        nullable=False
+    )
+
+    is_verified = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    is_consumed = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+
+# ============================================================
+# VERIFIED PHONE SESSION (Persistent 5-minute registration/login window)
+# ============================================================
+
+class VerifiedPhoneSession(Base):
+    __tablename__ = "verified_phone_sessions"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    phone = Column(
+        String(15),
+        nullable=False,
+        index=True
+    )
+
+    session_token = Column(
+        String(100),
+        unique=True,
+        nullable=False
+    )
+
+    expires_at = Column(
+        DateTime,
+        nullable=False
+    )
+
+    is_consumed = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )

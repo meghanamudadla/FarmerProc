@@ -62,6 +62,30 @@ export async function getProcurementAnalytics() {
   return apiRequest("/analytics/summary");
 }
 
+export async function getDailyProcurementAnalytics(days = 7) {
+  return apiRequest(`/analytics/daily?days=${days}`);
+}
+
+export async function getHourlyProcurementAnalytics() {
+  return apiRequest("/analytics/hourly");
+}
+
+export async function getCropProcurementAnalytics() {
+  return apiRequest("/analytics/crops");
+}
+
+export async function getRejectionReasonsAnalytics() {
+  return apiRequest("/analytics/rejections");
+}
+
+export async function getDistrictProcurementAnalytics() {
+  return apiRequest("/analytics/districts");
+}
+
+export async function getForecastAnalytics() {
+  return apiRequest("/analytics/forecast");
+}
+
 export async function getCenters() {
   return apiRequest("/centers/");
 }

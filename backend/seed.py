@@ -26,7 +26,9 @@ from models import (
     Payment,
     Notification,
     Grievance,
-    Counter
+    Counter,
+    OtpSession,
+    VerifiedPhoneSession
 )
 
 pwd_context = CryptContext(

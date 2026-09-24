@@ -17,14 +17,7 @@ _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _ENV_PATH = os.path.join(_CURRENT_DIR, ".env")
 if os.path.exists(_ENV_PATH):
     load_dotenv(dotenv_path=_ENV_PATH)
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    DATABASE_URL = "sqlite:///./farmerproc_test.db"
-
-DATABASE_URL = DATABASE_URL.strip()
+from config import DATABASE_URL
 
 # Resilient connection configuration for Aiven Cloud PostgreSQL
 if DATABASE_URL.startswith("sqlite"):

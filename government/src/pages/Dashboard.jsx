@@ -6,10 +6,9 @@ import StatCard from '../components/StatCard';
 import ChartBlock from '../components/ChartBlock';
 import StatusBadge from '../components/StatusBadge';
 import { useNotifications } from '../context/NotificationContext';
-import { getProcurementAnalytics, getCenters, getAllGrievances } from '../api/api';
+import { getProcurementAnalytics, getCenters, getAllGrievances, getHourlyProcurementAnalytics } from '../api/api';
 
-// TODO: Not yet backed by real endpoints (requires time-series logging/monitoring)
-const HOURLY_TODAY = [
+const DEFAULT_HOURLY = [
   { hour: '08:00', arrivals: 12, completed: 8 },
   { hour: '09:00', arrivals: 25, completed: 18 },
   { hour: '10:00', arrivals: 45, completed: 35 },
@@ -36,11 +35,18 @@ export default function Dashboard() {
   const [liveAnalytics, setLiveAnalytics] = useState(null);
   const [liveGrievanceAlerts, setLiveGrievanceAlerts] = useState([]);
   const [centersCount, setCentersCount] = useState(null);
+  const [hourlyData, setHourlyData] = useState(DEFAULT_HOURLY);
 
   useEffect(() => {
     getProcurementAnalytics()
       .then((data) => setLiveAnalytics(data))
       .catch((e) => console.log('Using baseline KPI data'));
+
+    getHourlyProcurementAnalytics()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setHourlyData(data);
+      })
+      .catch((e) => console.log('Using baseline hourly data'));
 
     getCenters()
       .then((centers) => {
@@ -140,7 +146,7 @@ export default function Dashboard() {
         {/* Hourly trend chart */}
         <div className="lg:col-span-2">
           <ChartBlock title="Today's Arrival vs Completion" subtitle="Hourly breakdown">
-            <AreaChart data={HOURLY_TODAY}>
+            <AreaChart data={hourlyData}>
               <defs>
                 <linearGradient id="gArrivals" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />

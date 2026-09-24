@@ -49,9 +49,9 @@ export default function Login() {
     setLoading(true);
     setErrorMessage('');
 
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const success = quickLogin(roleKey, selectedCenterId);
+        const success = await quickLogin(roleKey, selectedCenterId);
         if (success) {
           navigate(fromPath, { replace: true });
         } else {
@@ -75,9 +75,9 @@ export default function Login() {
     setLoading(true);
     setErrorMessage('');
 
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const success = loginWithCredentials({
+        const success = await loginWithCredentials({
           staffId: staffId.trim(),
           password: password.trim(),
           roleKey: roleSelect,

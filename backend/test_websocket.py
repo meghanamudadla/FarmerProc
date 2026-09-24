@@ -2,7 +2,7 @@ import asyncio
 import websockets
 
 
-async def test():
+async def manual_ws_listener():
 
     url = "ws://127.0.0.1:8000/queue/ws/2"
 
@@ -18,4 +18,5 @@ async def test():
             print(message)
 
 
-asyncio.run(test())
+if __name__ == "__main__":
+    asyncio.run(manual_ws_listener())

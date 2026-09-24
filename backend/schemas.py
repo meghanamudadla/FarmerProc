@@ -263,6 +263,15 @@ class ProcurementResponse(BaseModel):
 class PaymentCreate(BaseModel):
     procurement_id: int
     amount: float
+    provider_reference: Optional[str] = None
+    idempotency_key: Optional[str] = None
+
+
+class PaymentProcessRequest(BaseModel):
+    action: str = Field(default="COMPLETE", description="'COMPLETE', 'FAIL', or 'RETRY'")
+    transaction_id: Optional[str] = None
+    provider_reference: Optional[str] = None
+    failure_reason: Optional[str] = None
 
 
 class PaymentResponse(BaseModel):
@@ -270,8 +279,13 @@ class PaymentResponse(BaseModel):
     procurement_id: int
     amount: float
     transaction_id: Optional[str] = None
+    provider_reference: Optional[str] = None
+    attempt_count: Optional[int] = 1
+    failure_reason: Optional[str] = None
     status: str
     created_at: datetime
+    updated_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

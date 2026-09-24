@@ -524,15 +524,11 @@ async def queue_websocket(
     )
 
     try:
-
         while True:
-
-            # Keep connection alive
-            await websocket.receive_text()
-
+            text = await websocket.receive_text()
+            if "ping" in text:
+                await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:
-
-        manager.disconnect(
-            websocket,
-            center_id
-        )
+        manager.disconnect(websocket, center_id)
+    except Exception:
+        manager.disconnect(websocket, center_id)

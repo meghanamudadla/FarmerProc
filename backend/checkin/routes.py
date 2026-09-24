@@ -50,7 +50,8 @@ async def check_in_farmer(
     from dqa import FarmerRequest
     from datetime import timezone, timedelta
     
-    engine = get_engine(booking.center_id, db)
+    center_id = booking.center_id or 1
+    engine = get_engine(center_id, db)
     
     # Determine exact IST age based on DOB
     now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
@@ -59,13 +60,16 @@ async def check_in_farmer(
     else:
         age_val = 40  # Default fallback not-elderly
 
+    qty = float(booking.quantity) if (booking.quantity is not None and booking.quantity > 0) else 10.0
+    crop_str = booking.crop.crop_name.lower() if (booking.crop and booking.crop.crop_name) else "paddy"
+
     farmer_req = FarmerRequest(
         farmer_id=str(booking.farmer_id),
-        crop=booking.crop.crop_name.lower() if booking.crop else "paddy",
-        quantity_qtl=booking.quantity,
+        crop=crop_str,
+        quantity_qtl=qty,
         arrival_time=booking.arrival_time.isoformat(),
         age=age_val,
-        land_area_acres=booking.farmer.land_area if booking.farmer and booking.farmer.land_area else 2.0,
+        land_area_acres=float(booking.farmer.land_area) if (booking.farmer and booking.farmer.land_area) else 2.0,
         token_number=booking.token_number
     )
     

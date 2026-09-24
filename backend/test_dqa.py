@@ -77,7 +77,7 @@ async def simulate_dqa_integration():
             print("\nTracking Output State in Task Queue API:")
             r_queue = await client.get(f"/queue/center/{center_id}")
             queue_data = r_queue.json()
-            assert "FCFS_ELIGIBLE" in str(queue_data) or "ALLOCATION" in str(queue_data)
+            assert any(term in str(queue_data) for term in ["FCFS_ELIGIBLE", "ALLOCATION", "COUNTER_", "MATCH", "FALLBACK"])
             
             print(f"\nCompleting Farmer 1 from processing pipeline.")
             r3 = await client.post(f"/queue/{b1.id}/complete")

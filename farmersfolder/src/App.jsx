@@ -243,6 +243,49 @@ export default function App() {
     }
   }, [authed]);
 
+  useEffect(() => {
+    offlineSyncService.registerSyncHandler(async (item) => {
+      if (item.type === 'BOOKING_REQUEST') {
+        const bk = item.payload?.backendData;
+        if (!bk) return false;
+        try {
+          const created = await createBooking(bk);
+          const cropsById = {};
+          crops.forEach((c) => {
+            if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+          });
+          const normalized = { ...normalizeRealBooking(created, cropsById), farmerId: farmer.farmerId };
+          setBookings((prev) => [normalized, ...prev]);
+          addNotif('sms', lang === 'en' ? `Re-sync complete: Token ${normalized.token} confirmed at your original slot!` : `సింక్ పూర్తయింది: టోకెన్ ${normalized.token} నిర్ధారించబడింది!`);
+          return true;
+        } catch (err) {
+          if (err.message && err.message.toLowerCase().includes("slot is full")) {
+            const availableSlots = await fetchSlotsForCenter(bk.center_id);
+            const slotCandidates = availableSlots.filter(s => s.date >= bk.booking_date && s.available_capacity > 0);
+            if (slotCandidates.length > 0) {
+              const nextSlot = slotCandidates[0];
+              const fallbackCreated = await createBooking({
+                ...bk,
+                booking_date: nextSlot.date,
+                slot_id: nextSlot.id
+              });
+              const cropsById = {};
+              crops.forEach((c) => {
+                if (c.backendCropId != null) cropsById[c.backendCropId] = c;
+              });
+              const normalized = { ...normalizeRealBooking(fallbackCreated, cropsById), farmerId: farmer.farmerId };
+              setBookings((prev) => [normalized, ...prev]);
+              addNotif('sms', lang === 'en' ? `Re-sync complete: Your original slot filled up - you're now booked for ${nextSlot.date} at ${(nextSlot.start_time || '').slice(0,5)}.` : `సింక్ పూర్తయింది: మీ అసలైన స్లాట్ నిండిపోయింది - మీరు ఇప్పుడు ${nextSlot.date} కోసం బుక్ చేయబడ్డారు.`);
+              return true;
+            }
+          }
+          throw err;
+        }
+      }
+      return false;
+    });
+  }, [crops, farmer.farmerId, lang]);
+
   const [profileDraft, setProfileDraft] = useState(farmer);
   const [editingProfile, setEditingProfile] = useState(false);
 

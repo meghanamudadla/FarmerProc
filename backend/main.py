@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from contextlib import asynccontextmanager
@@ -51,34 +51,124 @@ app = FastAPI(
 )
 
 
-# =========================================================
-# CORS - ALLOW ALL LOCAL DEV FRONTENDS
-# =========================================================
+from config import CORS_ALLOWED_ORIGINS, ENVIRONMENT
+
+cors_kwargs = {
+    "allow_origins": CORS_ALLOWED_ORIGINS,
+    "allow_credentials": True,
+    "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "allow_headers": ["*"],
+}
+
+if ENVIRONMENT != "production":
+    cors_kwargs["allow_origin_regex"] = r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-        "http://127.0.0.1:5176",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "https://farmer-proc.vercel.app",
-        "https://center-app-chi.vercel.app",
-        "https://kisanseva-govt.vercel.app",
-    ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$|^https://.*\.vercel\.app$",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **cors_kwargs
 )
+
+
+# =========================================================
+# STRUCTURED LOGGING & ERROR HANDLING MIDDLEWARE
+# =========================================================
+
+import time
+import uuid
+import logging
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+logger = logging.getLogger("farmerproc.api")
+
+
+@app.middleware("http")
+async def structured_logging_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:10].upper()
+    request.state.request_id = request_id
+    start_time = time.time()
+
+    response = await call_next(request)
+    duration_ms = round((time.time() - start_time) * 1000, 2)
+    response.headers["X-Request-ID"] = request_id
+
+    path = request.url.path
+    if not (path.endswith((".js", ".css", ".png", ".ico")) or "/docs" in path or "/openapi.json" in path):
+        logger.info(
+            f"req_id={request_id} method={request.method} path={path} "
+            f"status={response.status_code} duration={duration_ms}ms"
+        )
+    return response
+
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    request_id = getattr(request.state, "request_id", uuid.uuid4().hex[:10].upper())
+    
+    code = "HTTP_ERROR"
+    msg = str(exc.detail)
+    if exc.status_code == 401:
+        code = "AUTH_UNAUTHORIZED"
+    elif exc.status_code == 403:
+        code = "AUTH_FORBIDDEN"
+    elif exc.status_code == 404:
+        code = "RESOURCE_NOT_FOUND"
+    elif exc.status_code == 400:
+        if "slot" in msg.lower() or "capacity" in msg.lower():
+            code = "BOOKING_SLOT_FULL"
+        elif "weigh" in msg.lower() or "tare" in msg.lower():
+            code = "WEIGHING_INVALID"
+        elif "quality" in msg.lower() or "moisture" in msg.lower():
+            code = "QUALITY_CHECK_INVALID"
+        elif "payment" in msg.lower():
+            code = "PAYMENT_ERROR"
+        elif "state" in msg.lower() or "transition" in msg.lower():
+            code = "INVALID_STATE_TRANSITION"
+        else:
+            code = "BAD_REQUEST"
+    elif exc.status_code == 409:
+        code = "CONFLICT"
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": code,
+                "message": msg,
+                "details": {}
+            },
+            "request_id": request_id,
+            "detail": exc.detail
+        },
+        headers={"X-Request-ID": request_id}
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    request_id = getattr(request.state, "request_id", uuid.uuid4().hex[:10].upper())
+    errors = exc.errors()
+    formatted = [{"field": " -> ".join(str(l) for l in err.get("loc", [])), "message": err.get("msg")} for err in errors]
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Input validation failed",
+                "details": {"validation_errors": formatted}
+            },
+            "request_id": request_id,
+            "detail": errors
+        },
+        headers={"X-Request-ID": request_id}
+    )
 
 
 # =========================================================
@@ -113,8 +203,12 @@ async def center_ws_alias(
     await manager.connect(websocket, center_id)
     try:
         while True:
-            await websocket.receive_text()
+            text = await websocket.receive_text()
+            if "ping" in text:
+                await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:
+        manager.disconnect(websocket, center_id)
+    except Exception:
         manager.disconnect(websocket, center_id)
 
 

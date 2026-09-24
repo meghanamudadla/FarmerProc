@@ -31,6 +31,7 @@ export function QueueProvider({ children }) {
   const [centerInfo, setCenterInfo] = useState(initialCenter);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [socketStatus, setSocketStatus] = useState('disconnected');
 
   const loadQueue = useCallback(async () => {
     try {
@@ -77,6 +78,15 @@ export function QueueProvider({ children }) {
     
     // Bind robust reconnectable live socket logic gracefully
     liveQueueSocket.connect(activeCenterId);
+
+    const unsubStatus = liveQueueSocket.onStatusChange((status) => {
+      setSocketStatus(status);
+    });
+
+    const unsubReconnect = liveQueueSocket.onReconnect(() => {
+      console.log("[QueueContext] Reconnection detected, refreshing latest queue state...");
+      loadQueue();
+    });
     
     const unsubscribe = liveQueueSocket.subscribe((payload) => {
       console.log("Live WebSocket Event Fired:", payload);
@@ -106,6 +116,8 @@ export function QueueProvider({ children }) {
 
     return () => {
       unsubscribe();
+      unsubStatus();
+      unsubReconnect();
       liveQueueSocket.disconnect();
     };
   }, [loadQueue, activeCenterId]);
@@ -464,6 +476,7 @@ export function QueueProvider({ children }) {
         centerInfo,
         loading,
         error,
+        socketStatus,
         loadQueue,
         updateTokenStage,
         updateTokenWeighment,
